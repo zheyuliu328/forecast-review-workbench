@@ -12,6 +12,8 @@ A separate read-only agent checked 84 assertions across producer timing, exact r
 
 ## Original review checks retained
 
+A subsequent Linux browser run exposed an import-capacity race: loading four files simultaneously could exceed the server's two-request bound. A local reproduction with 250ms inspection delays returned two HTTP 429 responses. Example and transfer loaders now inspect files sequentially. [The slow-inspection browser check](../tests/browser-loaders.cjs) retains the real server limit and tests four-source forecast and financial examples plus the seven-source maximum transfer; no automatic common-sample acceptance is introduced. This is an additional CI-discovered finding, separate from the earlier four review findings.
+
 The [0.1.0 machine record](local-verification-0.1.0.json) is retained as a dated historical snapshot. The [current record](local-verification.json) binds version 0.2.0 source hashes and installed browser evidence. Both new offline reports were separately opened at desktop and 390-pixel widths with no external requests, page errors or document overflow. CSV/JSON retain complete precision; the readable candidate report rounds score display only.
 
 The original 0.1 workflow contributes **89 passing tests, no skips**, covering parsing, decimal calculations, explicit expected coverage, incompatible definitions, duplicate/invalid/outside-scope rows, baseline edge cases, empty segments, input fingerprint changes, manual-note binding, HTML/CSV output, local HTTP access and installed command-line execution from outside the checkout. Ruff lint and formatting are checked separately.

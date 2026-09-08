@@ -21,9 +21,9 @@
     "inputHashes": {
       "actual.csv": "7874b7f60684fba44f76cd6612f1d05aac9a5c298c40127ce93dfb0ee6e85b4b",
       "candidate-a.csv": "bee51be15f36cacca41138e16567adbb1222ee9df8a8cc258c8262b861b5cb89",
-      "candidate-b.xlsx": "2ce61ff04bcdd2f81c14f4dd85a6a7d85b62a11000b4797fc794e444061b6979"
+      "candidate-b.xlsx": "f4c0a5c08c2fc0a061e0fb595d14a665ff45152533680741e4f5f3df03b06680"
     },
-    "requestFingerprint": "7a82db318b7e69ea4bed0c4c0e4b46b71cb1c061db3d804110765dd93614a35c",
+    "requestFingerprint": "394c071ca90da807e50206ab1c8d79d8acc82d02f88f6b15810a0901e8d72d96",
     "fileSelection": "two CSV files and a two-sheet XLSX with header row 3",
     "desktop": "1440x1000",
     "mobile": "390x844",
@@ -39,11 +39,11 @@
     "browser": "152.0.7977.82",
     "inputHashes": {
       "training-history.csv": "fac3aef20f4ff8c29b3b1b93037a9b5d17e06739f5181c688ce12bd3f6d33ac2",
-      "training-history.xlsx": "197fbe07964bc0fea513b0ef7832741878c92596de1598479554e84477bb079f",
+      "training-history.xlsx": "45bb09b5d4c132a827fd9f9436e7fb9ef6a0335c1f42875548f030e70782a226",
       "reference.csv": "06685d042930a885fbefc575d38dc74b47eefbe483b1a9a7c9867fc403bbd63d",
-      "challenger.xlsx": "8d7a381eefc8d7cc4b6011a13ee4fd1c42fa9a22f7295503cf8ed6f13f7fce7a",
+      "challenger.xlsx": "2903b780ad84b290e38d1b7f1b593b6cb555800c95d42e1b254dc8a35c985f8c",
       "reference-totals.csv": "69187cf40ecc1b937d8547972dba2c56b5b8825b5e3eda90e2a483ea55d51ae3",
-      "challenger-totals.xlsx": "74edb6cf67e36c18d904ecd562fe0f20b534c022ae721e439f10992f025ba1c1",
+      "challenger-totals.xlsx": "b549d3747d747c5a76311fa61cbff8ef4c2c3c9a26e4762b02cbf60cafcb7281",
       "totals-focus-reference.csv": "d5375701070bb98c3a6a842e7972f9535b8bd4531321f994231a66b10d6a267a",
       "totals-focus-challenger.csv": "d5375701070bb98c3a6a842e7972f9535b8bd4531321f994231a66b10d6a267a",
       "totals-focus-left.csv": "4e924b963a280d3f531019493736201285c0d2be362aeccc51cea96365882fcb",
@@ -53,25 +53,25 @@
       {
         "zip": "development-evidence.zip",
         "kind": "development",
-        "fingerprint": "9074a30f0b35f2a92bbdcb5aa49de85bfa6ebb4104f1dc253bedc5b8df7d6b8f",
+        "fingerprint": "34f52dd9c922811dc7d5369b735eb934f3ba88d23044df128ae897f9a7eccc8c",
         "verified": true
       },
       {
         "zip": "holdout-evidence.zip",
         "kind": "holdout",
-        "fingerprint": "84e69ca202ee44e78edbc9d83418ebcebf5dd2e5c85a6d0303a3842c0ba0f88f",
+        "fingerprint": "9c9378a94b0842b0d70dfa7b111b47e5edec08320bd9d7e333db2c8fd07263e8",
         "verified": true
       },
       {
         "zip": "transferred-review.zip",
         "kind": "review",
-        "fingerprint": "86b71f8c902476afb57c9ccfab328f7b72e155023f373acfd0125f7d8fc04f72",
+        "fingerprint": "9336ff0b9da4bf22d13f92f7ed36e9c1f62bd36462fd72112e889093420318ca",
         "verified": true
       },
       {
         "zip": "reconciliation-evidence.zip",
         "kind": "reconcile",
-        "fingerprint": "f869a98a8210a9eb39b686d6604ba331a8eebea53ae51a87e806cad1d83494fb",
+        "fingerprint": "315a900f6f56e903e44a997e56a7c62b4828b14382cae99357c39fcfab597498",
         "verified": true
       }
     ],
@@ -165,14 +165,14 @@
     "src/forecast_review_workbench/reconciliation.py": "d9ecd601da1b709beac871f68e6a6f3730aba0016ce290001c4f0a7365368407",
     "src/forecast_review_workbench/report.html.template": "e76f878b001dee56f4a14f7cccd712a772251c30d9c7a49191d11543b6f30c8d",
     "src/forecast_review_workbench/server.py": "d4cab28cc8830146297742586988ec282ff8f5779ba00a259ebea891b8f5bddb",
-    "src/forecast_review_workbench/static/app.js": "8cbc1c21ece6078f43371387cc94758ddd668317286dbffcc8f99542f164c1f7",
+    "src/forecast_review_workbench/static/app.js": "d7dd5a4c543e71c7051cc2267e7e2235fcc7cc57eccc9f1970199d9bdf249486",
     "src/forecast_review_workbench/static/experiments.html": "ac313209a716eef17847f6ea59d4c5bc170da00d70a8e1d5a4cf2fca42efb872",
     "src/forecast_review_workbench/static/experiments.js": "537fa388c64de1eabc23a59def4fecfe57b981fc63e4c63c06811f752871b6a8",
     "src/forecast_review_workbench/static/extension-common.js": "5cc4c9364b5cbe534073d726ed22dfc632ca974e3af872929e3e791d2ed1d1c5",
     "src/forecast_review_workbench/static/extensions.css": "6a8158823892690976015c676361e5876448635fda9dc48c77b9cc06a363de7e",
     "src/forecast_review_workbench/static/index.html": "dbddb54f8795415dcb19e1fb28d1ed21ce8cb18275762b0f1299bfaae9738770",
     "src/forecast_review_workbench/static/reconcile.html": "834b413fe6012cbced25af9bd10e2dbd08e609ce0dc32a11f861708383fec08a",
-    "src/forecast_review_workbench/static/reconcile.js": "9e5f0a4bebfba449affea0f9b9a3b0eeb6e93f3b981ae363f9c6509e2f296a11",
+    "src/forecast_review_workbench/static/reconcile.js": "e79e52cf160a03e9189788e4b8b0192a0e30c3cb8405d6bf7d5983ed27042984",
     "src/forecast_review_workbench/static/styles.css": "925a3f91964d2c67d7e609cad8ee05b08af71313fbe3ce62618a6f91f119b030",
     "src/forecast_review_workbench/tableio.py": "41889922ce42388e526071b836fc4452cd2c50a1c592682814ec9c084f340953",
     "src/forecast_review_workbench/workflow_exports.py": "2d099558ad9cc2abc7033e785f339a502a29632c9783ae105bac088df0c1234c"
@@ -186,5 +186,24 @@
     "narrow": "390x844",
     "externalRequests": [],
     "browserErrors": []
+  },
+  "slow_source_loading_browser_acceptance": {
+    "status": "pass",
+    "inspectionDelaySeconds": 0.25,
+    "serverRequestCapacity": 2,
+    "scenarios": [
+      "four-source forecast example",
+      "seven-source maximum transfer",
+      "four-source financial example"
+    ],
+    "apiErrors": [],
+    "browserErrors": [],
+    "externalRequests": []
+  },
+  "ci_followup": {
+    "finding": "Concurrent four-file import could exceed the two-request server limit.",
+    "reproduced": "Two HTTP 429 responses with 250ms file-inspection delay.",
+    "fix": "Sequential example and transferred-file inspection; service capacity unchanged.",
+    "verification": "Three slow-server browser scenarios plus both complete installed browser workflows passed."
   }
 }

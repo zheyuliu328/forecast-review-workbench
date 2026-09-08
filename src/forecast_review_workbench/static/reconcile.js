@@ -303,7 +303,8 @@
       state.left_totals = U.restoreSource("left-totals", "Reference reported totals", request.left_totals);
       state.right_totals = U.restoreSource("right-totals", "Challenger reported totals", request.right_totals);
       invalidate(); syncInputs();
-      await Promise.all(["left", "right"].concat(state.leftTotalsEnabled ? ["left_totals"] : [], state.rightTotalsEnabled ? ["right_totals"] : []).map(function (key) { return cards[key].inspect(); }));
+      const keys = ["left", "right"].concat(state.leftTotalsEnabled ? ["left_totals"] : [], state.rightTotalsEnabled ? ["right_totals"] : []);
+      for (const key of keys) await cards[key].inspect();
       U.message("Invented files loaded. Confirm the mappings and explicitly confirm additivity if you want the supplied total checks.", false);
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }

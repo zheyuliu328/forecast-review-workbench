@@ -867,7 +867,8 @@
       state.segments = (request.segments || []).map(function (segment) { return Object.assign({}, segment); });
       state.chartEntity = state.scope.entities[0] || "";
       invalidate(); state.stage = "inputs"; syncForm();
-      await Promise.all(allSources().map(inspectSource));
+      // Keep imports within the local server's bounded request capacity.
+      for (const source of allSources()) await inspectSource(source);
       state.busy = false; updateChrome();
       await runReview(false, true);
   }
