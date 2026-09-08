@@ -1,0 +1,64 @@
+{
+  "date": "2026-09-08",
+  "version": "0.1.0",
+  "python_tests": {
+    "passed": 89,
+    "skipped": 0
+  },
+  "lint": "pass",
+  "format": "pass",
+  "normal_wheel_install": "passed outside checkout; packaged UI assets present",
+  "browser_acceptance": {
+    "status": "pass",
+    "browser": "152.0.7977.82",
+    "expected": 5,
+    "common": 3,
+    "excluded": 2,
+    "inputHashes": {
+      "actual.csv": "7874b7f60684fba44f76cd6612f1d05aac9a5c298c40127ce93dfb0ee6e85b4b",
+      "candidate-a.csv": "bee51be15f36cacca41138e16567adbb1222ee9df8a8cc258c8262b861b5cb89",
+      "candidate-b.xlsx": "5b23c694849c68facc8d671fb7e9d272094909f3a7e3c740dcc66e399ef931b0"
+    },
+    "requestFingerprint": "bd4fb76c8f29f841b35930729885423d882e0996cfa49d223cd685c802af2ab0",
+    "fileSelection": "two CSV files and a two-sheet XLSX with header row 3",
+    "desktop": "1440x1000",
+    "mobile": "390x844",
+    "staleNotes": "blocked until explicit reconsideration even after settings restored",
+    "incompatibleUnits": "metrics and plot blocked",
+    "sourceFilesUnchanged": true,
+    "externalRequests": [],
+    "browserErrors": [],
+    "humanUsabilityTrial": "not performed"
+  },
+  "additional_browser_assertions": {
+    "opinion_controls_locked_during_export": true,
+    "gap_lines_broken": true,
+    "resolved_stale_warning_cleared": true
+  },
+  "independent_review": {
+    "initial_counterexamples_passed": 60,
+    "subsequent_integration_findings": 2,
+    "subsequent_integration_findings_open": 0,
+    "note_lock_rechecks_passed": 7
+  },
+  "runtime_dependency_audit": {
+    "openpyxl": "3.1.5",
+    "defusedxml": "0.7.1",
+    "et-xmlfile": "2.0.0",
+    "known_vulnerabilities": 0
+  },
+  "source_sha256": {
+    "src/forecast_review_workbench/__init__.py": "61506f5f02d6c3aa2c34da56821bf93894cb3ded29cb224cac35148d705a38cf",
+    "src/forecast_review_workbench/engine.py": "11e3a066169964c3dcca874616835780a75453344f51a2349fd3a2c290bdf751",
+    "src/forecast_review_workbench/example.py": "d80abd248bcd1f14eaa9cedcf2a4a91cbe2d03138265fb10a66f626243309dac",
+    "src/forecast_review_workbench/exporter.py": "9b42d1e0a22cffdc075066b0e450485f3ed0ca2a79c4a93e83e94c30458543fb",
+    "src/forecast_review_workbench/report.html.template": "e76f878b001dee56f4a14f7cccd712a772251c30d9c7a49191d11543b6f30c8d",
+    "src/forecast_review_workbench/server.py": "f9887ae1379212acae44e48ee093af390c8422da90aeba1af2f5fd5ab374bd3a",
+    "src/forecast_review_workbench/static/app.js": "4176b993b0225fc1d36b0705b87967786a04a548fe0819d54375cd4d6b325328",
+    "src/forecast_review_workbench/static/index.html": "bfc12f3d9886355d8cbc6c7f44140434e99a8227e12409f9ac573a50fad72852",
+    "src/forecast_review_workbench/static/styles.css": "925a3f91964d2c67d7e609cad8ee05b08af71313fbe3ce62618a6f91f119b030",
+    "src/forecast_review_workbench/tableio.py": "41889922ce42388e526071b836fc4452cd2c50a1c592682814ec9c084f340953"
+  },
+  "human_usability_trial": "not performed",
+  "remote_ci": "see GitHub Actions for the current commit"
+}

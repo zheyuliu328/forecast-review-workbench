@@ -4,12 +4,12 @@ build-backend = "hatchling.build"
 
 [project]
 name = "forecast-review-workbench"
-version = "0.1.0"
-description = "A local browser tool for reviewing supplied forecast files on a common evaluation sample"
+version = "0.2.0"
+description = "Local tools for forecast candidate experiments, common-sample review and additive reconciliation"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
-dependencies = ["openpyxl>=3.1.5,<4", "defusedxml>=0.7,<1"]
+dependencies = ["openpyxl>=3.1.5,<4", "defusedxml>=0.7,<1", "numpy>=1.26,<3"]
 
 [project.optional-dependencies]
 dev = ["pytest>=8,<10", "ruff==0.16.6", "build>=1,<2", "pip-audit>=2,<3"]
@@ -26,6 +26,7 @@ packages = ["src/forecast_review_workbench"]
 [tool.ruff]
 line-length = 110
 target-version = "py310"
+extend-exclude = ["src/forecast_review_workbench/_vendor/forecast_engine.py"]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "W"]

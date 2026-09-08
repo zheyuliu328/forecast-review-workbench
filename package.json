@@ -1,7 +1,11 @@
 {
   "name": "forecast-review-browser-checks",
   "private": true,
-  "version": "0.1.0",
-  "scripts": { "test:browser": "node tests/browser-smoke.cjs" },
-  "devDependencies": { "playwright": "1.62.1" }
+  "version": "0.2.0",
+  "scripts": {
+    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-extensions.cjs && node tests/browser-loaders.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
 }

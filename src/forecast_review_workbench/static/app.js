@@ -849,11 +849,10 @@
     $("scope-start").placeholder = example[0]; $("scope-end").placeholder = example[1]; $("period-help").textContent = example[2];
   }
 
-  async function loadExample() {
-    if (state.busy) return;
-    clearMessages(); state.busy = true; updateChrome();
-    try {
-      const request = await api("/api/example");
+  async function applyForecastRequest(request) {
+      if (!request || !request.actual || !request.scope || !request.contract || !Array.isArray(request.candidates) || request.candidates.length < 1 || request.candidates.length > 5) {
+        throw new Error("The transferred forecast review is incomplete. Return to Training experiments and transfer it again.");
+      }
       state.title = request.title || "Invented forecast example";
       state.scope = Object.assign({entities: []}, request.scope);
       state.contract = Object.assign({}, request.contract);
@@ -868,11 +867,37 @@
       state.segments = (request.segments || []).map(function (segment) { return Object.assign({}, segment); });
       state.chartEntity = state.scope.entities[0] || "";
       invalidate(); state.stage = "inputs"; syncForm();
-      await Promise.all(allSources().map(inspectSource));
+      // Keep imports within the local server's bounded request capacity.
+      for (const source of allSources()) await inspectSource(source);
       state.busy = false; updateChrome();
       await runReview(false, true);
+  }
+
+  async function loadExample() {
+    if (state.busy) return;
+    clearMessages(); state.busy = true; updateChrome();
+    try {
+      const request = await api("/api/example");
+      await applyForecastRequest(request);
       if (state.result && !state.dirty) showMessage("Invented example loaded. It deliberately contains different gaps across forecasts. Replace any file in Inputs & definition to review your own data.", false);
     } catch (error) { showMessage(error.message, true); }
+    finally { state.busy = false; updateChrome(); }
+  }
+
+  async function importTransferredRequest() {
+    let encoded;
+    try {
+      encoded = sessionStorage.getItem("frw.import.request");
+      if (encoded) sessionStorage.removeItem("frw.import.request");
+    } catch (_error) { return; }
+    if (!encoded) return;
+    state.busy = true; updateChrome();
+    try {
+      const request = JSON.parse(encoded);
+      request.accept_common_sample = false;
+      await applyForecastRequest(request);
+      if (state.result && !state.dirty) showMessage("Generated holdout forecasts imported. Review coverage and explicitly accept the common sample before comparing metrics.", false);
+    } catch (error) { showMessage(error.message || "The transferred review could not be opened.", true); }
     finally { state.busy = false; updateChrome(); }
   }
 
@@ -906,5 +931,5 @@
       resizeTimer = window.setTimeout(replaceChart, 120);
     });
   }
-  bindEvents(); syncForm(); updateChrome();
+  bindEvents(); syncForm(); updateChrome(); importTransferredRequest();
 })();

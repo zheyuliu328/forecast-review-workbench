@@ -1,0 +1,17 @@
+{
+  "repository": "https://github.com/zheyuliu328/model-risk-lab",
+  "commit": "8b002e3b29ff81966e463ccde66cc58578ecb09e",
+  "release": "0.2.0",
+  "license": "MIT",
+  "retrieval": "Byte-identical public source and retained license, verified during local integration.",
+  "files": {
+    "forecast_engine.py": {
+      "source_path": "src/model_risk_lab/forecast.py",
+      "sha256": "7c0187b879ca5869734a00c05a529bcb240a839dd661e8b8937f3bdedd1325db"
+    },
+    "MODEL_RISK_LAB_LICENSE.txt": {
+      "source_path": "LICENSE",
+      "sha256": "940c88d1796115b90fc29cad3cd2455a09df43024d7fcedbd4b69361c4be9638"
+    }
+  }
+}

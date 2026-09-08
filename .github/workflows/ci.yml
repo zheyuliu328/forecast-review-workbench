@@ -18,8 +18,9 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: python -m pip install --upgrade pip
       - run: python -m pip install '.[dev]'
-      - run: python -m ruff check src tests
-      - run: python -m ruff format --check src tests
+      - run: python -m ruff check src tests tools
+      - run: python -m ruff format --check src tests tools
+      - run: python tools/check_vendor.py
       - run: python -m pytest -q
       - run: python -m build --wheel
       - name: Normal wheel installation and execution outside the checkout
@@ -27,6 +28,7 @@ jobs:
         run: |
           python -m venv "$RUNNER_TEMP/frw-wheel"
           "$RUNNER_TEMP/frw-wheel/bin/python" -m pip install dist/*.whl
+          "$RUNNER_TEMP/frw-wheel/bin/python" tools/check_installed_workflows.py
           cd "$RUNNER_TEMP"
           "$RUNNER_TEMP/frw-wheel/bin/forecast-review" --example --output "$RUNNER_TEMP/frw-evidence"
           "$RUNNER_TEMP/frw-wheel/bin/python" -c 'import json; from pathlib import Path; d=json.loads(Path("frw-evidence/results.json").read_text()); assert d["summary"]["expected"]==12 and d["summary"]["common"]==7 and d["comparison_ready"]'
@@ -50,7 +52,7 @@ jobs:
         if: always()
         with:
           name: browser-evidence
-          path: outputs/browser-check/
+          path: outputs/browser*/
   dependency-audit:
     runs-on: ubuntu-latest
     steps:

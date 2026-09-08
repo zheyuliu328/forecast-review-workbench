@@ -16,8 +16,11 @@ from urllib.parse import urlsplit
 from . import __version__
 from .engine import review
 from .example import example_request
+from .experiments import experiment_example, experiment_result, reveal_experiment, transfer_experiment
 from .exporter import build_bundle, bundle_zip, write_bundle
+from .reconciliation import reconcile, reconciliation_example
 from .tableio import inspect_table
+from .workflow_exports import build_experiment_bundle, build_reconciliation_bundle
 
 MAX_REQUEST = 40 * 1024 * 1024
 ASSETS = {
@@ -27,6 +30,20 @@ ASSETS = {
     "/static/app.js": ("app.js", "text/javascript; charset=utf-8"),
     "/static/styles.css": ("styles.css", "text/css; charset=utf-8"),
 }
+ASSETS.update(
+    {
+        "/experiments": ("experiments.html", "text/html; charset=utf-8"),
+        "/reconcile": ("reconcile.html", "text/html; charset=utf-8"),
+        **{
+            f"/{name}": (name, "text/javascript; charset=utf-8")
+            for name in ("experiments.js", "reconcile.js", "extension-common.js")
+        },
+        "/extensions.css": ("extensions.css", "text/css; charset=utf-8"),
+    }
+)
+ASSETS.update(
+    {f"/static/{name}": (name, mime) for name, mime in list(ASSETS.values()) if not name.endswith(".html")}
+)
 
 
 def _reject_constant(value):
@@ -123,10 +140,14 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == "/api/example":
             self._send(200, example_request())
+        elif path == "/api/experiments/example":
+            self._send(200, experiment_example())
+        elif path == "/api/reconcile/example":
+            self._send(200, reconciliation_example())
         elif path in ASSETS:
             name, mime = ASSETS[path]
             content = Path(__file__).with_name("static").joinpath(name).read_bytes()
-            if name == "index.html":
+            if name.endswith(".html"):
                 content, count = re.subn(
                     rb'(<meta name="csrf-token" content=")[^"]*(">)',
                     lambda match: match[1] + self.server.csrf_token.encode() + match[2],
@@ -190,6 +211,44 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 )
             elif path == "/api/review":
                 self._send(200, review(payload))
+            elif path == "/api/experiments/prepare":
+                self._send(200, experiment_result(payload))
+            elif path == "/api/experiments/reveal":
+                self._send(200, reveal_experiment(payload.get("request"), payload.get("fingerprint")))
+            elif path == "/api/experiments/transfer":
+                self._send(
+                    200,
+                    {
+                        "request": transfer_experiment(
+                            payload.get("request"),
+                            payload.get("fingerprint"),
+                            payload.get("model_ids"),
+                            payload.get("baseline_id"),
+                        )
+                    },
+                )
+            elif path == "/api/experiments/export":
+                files, result = build_experiment_bundle(
+                    payload.get("request"), payload.get("fingerprint"), payload.get("stage")
+                )
+                self._send(
+                    200,
+                    bundle_zip(files),
+                    "application/zip",
+                    download=f"forecast-experiment-{result['stage']}-{result['fingerprint'][:12]}.zip",
+                )
+            elif path == "/api/reconcile":
+                self._send(200, reconcile(payload))
+            elif path == "/api/reconcile/export":
+                files, result = build_reconciliation_bundle(
+                    payload.get("request"), payload.get("fingerprint"), payload.get("notes", [])
+                )
+                self._send(
+                    200,
+                    bundle_zip(files),
+                    "application/zip",
+                    download=f"result-reconciliation-{result['fingerprint'][:12]}.zip",
+                )
             elif path == "/api/export":
                 files, result = build_bundle(
                     payload.get("request"), payload.get("fingerprint"), payload.get("notes", [])
@@ -212,11 +271,17 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
             self.server.review_slots.release()
 
 
-def _resolve_files(request, base):
+def _resolve_files(request, base, workflow="review"):
     """CLI convenience: explicit paths become immutable byte snapshots before evaluation."""
-    sources = [request.get("actual"), *request.get("candidates", [])]
-    if request.get("baseline"):
-        sources.append(request["baseline"])
+    if workflow == "experiment":
+        sources = [request]
+    elif workflow == "reconcile":
+        sources = [request.get("left"), request.get("right")]
+        sources.extend(request[key] for key in ("left_totals", "right_totals") if request.get(key))
+    else:
+        sources = [request.get("actual"), *request.get("candidates", [])]
+        if request.get("baseline"):
+            sources.append(request["baseline"])
     for source in sources:
         if not isinstance(source, dict) or not isinstance(source.get("file"), dict):
             raise ValueError("Each source must declare a file object.")
@@ -249,11 +314,63 @@ def main(argv=None):
     group = parser.add_mutually_exclusive_group()
     group.add_argument("--review", type=Path, help="Run an explicit JSON request instead of starting the GUI")
     group.add_argument("--example", action="store_true", help="Export the invented common-sample example")
+    group.add_argument("--experiment", type=Path, help="Run a monthly candidate request JSON")
+    group.add_argument("--reconcile", type=Path, help="Run an additive reconciliation request JSON")
+    parser.add_argument(
+        "--reveal-holdout", action="store_true", help="Explicitly score the experiment holdout"
+    )
     parser.add_argument(
         "--output", type=Path, help="New directory for a CLI review; existing paths are refused"
     )
     args = parser.parse_args(argv)
     try:
+        if args.reveal_holdout and not args.experiment:
+            raise ValueError("--reveal-holdout applies only to --experiment.")
+        if args.experiment or args.reconcile:
+            if not args.output:
+                raise ValueError("CLI evidence requires --output with a new directory.")
+            if args.output.exists() or args.output.is_symlink():
+                raise FileExistsError("Choose a new output directory; existing paths are never replaced.")
+            path = args.experiment or args.reconcile
+            if path.stat().st_size > MAX_REQUEST:
+                raise ValueError("The settings file must be under 40 MiB.")
+            workflow = "experiment" if args.experiment else "reconcile"
+            request = _resolve_files(load_json(path.read_bytes()), path.parent, workflow)
+            if args.experiment:
+                result = experiment_result(request, reveal=args.reveal_holdout)
+                files, result = build_experiment_bundle(request, result["fingerprint"], result["stage"])
+                selected = next(
+                    (row for row in result["candidates"] if row["id"] == result["selected_on_development"]),
+                    None,
+                )
+                attention = selected is None or (args.reveal_holdout and not selected["holdout"])
+                summary = {
+                    "stage": result["stage"],
+                    "selected_on_development": result["selected_on_development"],
+                    "coverage": result["coverage"],
+                }
+            else:
+                result = reconcile(request)
+                files, result = build_reconciliation_bundle(request, result["fingerprint"])
+                summary = result["summary"]
+                attention = (
+                    summary["pass"] != summary["expected"]
+                    or summary["group_attention"]
+                    or summary["reported_totals_attention"]
+                )
+            write_bundle(files, args.output)
+            print(
+                json.dumps(
+                    {
+                        "output": str(args.output.absolute()),
+                        "fingerprint": result["fingerprint"],
+                        "attention": bool(attention),
+                        **summary,
+                    },
+                    indent=2,
+                )
+            )
+            return 1 if attention else 0
         if args.example or args.review:
             if not args.output:
                 raise ValueError("CLI review requires --output with a new directory.")
@@ -282,7 +399,7 @@ def main(argv=None):
             )
             return 0 if result["comparison_ready"] else 1
         if args.output:
-            raise ValueError("--output applies to --review or --example, not the browser application.")
+            raise ValueError("--output applies to a CLI workflow, not the browser application.")
         if not 0 <= args.port <= 65535:
             raise ValueError("Port must be between 0 and 65535.")
         try:

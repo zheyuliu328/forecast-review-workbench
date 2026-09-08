@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="__CSRF_TOKEN__">
+  <meta name="color-scheme" content="light">
+  <title>Training experiments · Forecast review workbench</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/extensions.css">
+  <script src="/static/extension-common.js" defer></script>
+  <script src="/static/experiments.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to experiments</a>
+  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Forecast review<span class="brand-subtitle">WORKBENCH</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> Local session</span><button id="example-button" class="button button-quiet" type="button">Explore an example ↗</button></div></header>
+  <nav class="workbench-nav" aria-label="Workbench tools"><a href="/">Forecast review</a><a href="/experiments" aria-current="page">Training experiments</a><a href="/reconcile">Financial reconciliation</a></nav>
+  <main id="main">
+    <section class="intro extension-intro"><div><p class="eyebrow">TRAIN, CHALLENGE, THEN REVIEW</p><h1>Test useful signals.<br><span>Keep the future aside.</span></h1><p class="lead">Bring a monthly history. Compare transparent candidates on development data, lock the choice, then inspect the later holdout.</p></div><aside class="privacy-note"><span class="privacy-icon" aria-hidden="true">↳</span><div><strong>Your data stays on this computer.</strong><p>Local fitting and explicit time splits. Every attempted candidate remains in the results, including failures.</p></div></aside></section>
+    <div id="notice" class="notice hidden" role="status" aria-live="polite"></div><div id="error" class="notice notice-error hidden" role="alert"></div>
+    <form id="experiment-form" novalidate><fieldset id="experiment-fields" class="extension-form-lock">
+      <div class="section-heading"><div><p class="eyebrow">01 / DEFINE THE EXPERIMENT</p><h2>One target, a clear time boundary.</h2></div><span class="tag">Monthly time series</span></div>
+      <div class="setup-grid"><div class="panel"><label class="field full">Experiment title<input id="experiment-title" value="Training experiment" maxlength="160"></label><div class="form-grid">
+        <label class="field">Target name<input id="target-name" placeholder="e.g. Demand" maxlength="120"></label><label class="field">Unit<input id="target-unit" placeholder="e.g. units, decimal rate" maxlength="80"></label>
+        <label class="field">Transformation<input id="target-transformation" value="none" maxlength="80"><small>Declares supplied values. No inverse transformation is applied.</small></label><label class="field">Forecast horizon<input id="horizon" type="number" min="1" step="1" value="1"><small>Whole months ahead. Predictor timing must respect this horizon.</small></label>
+      </div></div><div class="panel"><h3>Development &amp; holdout</h3><p class="muted compact">The holdout starts after this boundary. Its results stay hidden until you explicitly reveal them.</p><div class="form-grid">
+        <label class="field">Development ends<input id="development-end" placeholder="2021-12"><small>Inclusive month, YYYY-MM.</small></label><label class="field">Validation folds<input id="n-splits" type="number" min="1" step="1" value="3"></label>
+        <label class="field">Months per validation fold<input id="validation-months" type="number" min="1" step="1" value="12"></label><label class="field">Minimum training months<input id="min-train" type="number" min="1" step="1" value="36"></label>
+      </div></div></div>
+      <div class="section-heading source-section-heading"><div><p class="eyebrow">02 / MAP THE HISTORY</p><h2>Choose observations and candidate signals.</h2><p class="muted">Use one monthly series with the target and feature values already in their declared form.</p></div><span class="file-types">CSV <span>·</span> XLSX</span></div>
+      <div id="training-source"></div>
+      <div class="panel extension-details"><div class="features-heading"><div><h3>Candidate features <span id="feature-count" class="tag">1 / 5</span></h3><p class="extension-help">Lag moves a feature back in time. Release delay states how many months pass before that feature becomes available.</p></div><button id="add-feature" class="button button-small" type="button">＋ Add feature</button></div><div id="feature-rows" class="feature-rows"></div><p class="limit-note">Each feature needs a unique name, lag and release delay. Missing lagged features exclude rows with reasons; missing targets, invalid numbers, formulas or calendar errors stop the run.</p></div>
+      <label class="field extension-input-note">Source note<textarea id="source-note" rows="2" maxlength="1000" placeholder="Where this history came from and any relevant restrictions"></textarea><small>Recorded as your declaration; it does not verify the source or its publication history.</small></label>
+      <div class="action-bar"><div><strong>Evaluate development data first.</strong><p>Candidate selection uses these folds. Holdout values are not used to choose the model.</p></div><button id="prepare-button" class="button button-primary" type="submit">Run development experiment →</button></div>
+    </fieldset></form>
+    <div id="stale-result"></div>
+    <section id="experiment-results" class="hidden" aria-labelledby="development-heading">
+      <div class="section-heading extension-result-heading"><div><p class="eyebrow">03 / COMPARE DEVELOPMENT EVIDENCE</p><h2 id="development-heading">Every candidate, on the record.</h2><p id="development-context" class="muted"></p></div></div>
+      <div id="experiment-coverage" class="extension-summary"></div><div id="selection-summary" class="panel"></div>
+      <div class="panel"><div class="panel-heading"><div><h3>Development performance</h3><p class="muted compact">Prediction minus actual defines bias. Lower MAE and RMSE mean smaller errors on the stated sample.</p></div></div><div id="candidate-table"></div></div>
+      <div id="holdout-panel"></div>
+      <div id="transfer-panel"></div>
+      <details class="panel extension-details"><summary>Time splits, fitted model details &amp; limitations</summary><div id="experiment-protocol"></div><div id="fold-table"></div><div id="fit-details"></div></details>
+      <details class="panel extension-details"><summary>Inspect original rows and excluded observations</summary><div id="experiment-input-rows"></div></details>
+      <details class="panel extension-details"><summary>Inspect model predictions</summary><div id="experiment-predictions"></div></details>
+      <div class="extension-stage-actions"><div><strong>Keep the complete experiment.</strong><p>Includes attempted candidates, fit details, predictions and row diagnostics for the current stage.</p></div><div class="export-actions"><button id="experiment-export" class="button button-primary" type="button">Download experiment ZIP ↓</button></div></div>
+      <p id="experiment-fingerprint" class="run-fingerprint"></p>
+    </section>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>Transparent experiments. A separate holdout. Human review.</span><span>Local processing only</span></footer>
+  </main>
+</body>
+</html>

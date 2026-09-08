@@ -1,6 +1,6 @@
 # Data, methods and attribution
 
-## What this tool implements
+## Forecast-file review
 
 A review starts with a caller-defined expected universe: an inclusive period range, optionally crossed with explicitly named entities. A row is eligible only when actuals, every candidate and the optional supplied baseline each have exactly one valid observation for its key. Missing observations remain in the expected denominator. Duplicate keys are never paired arbitrarily.
 
@@ -19,13 +19,31 @@ For the same accepted observations, let `e = prediction - actual`:
 
 The engine uses bounded decimal input and Decimal arithmetic with a 600-digit working context. Reported metrics are decimal strings with up to 40 significant digits. The UI and HTML report round values for readability; exact reported values and residuals remain in JSON/CSV. Period segments use the accepted common keys within each declared interval. An empty interval has no metric, rather than a manufactured zero. No automatic winner or model approval is generated.
 
-## What is included in an export
+## What is included in a forecast-review export
 
 The ZIP contains nine files: readable offline HTML, exact results JSON, manual notes, common-sample metrics CSV, all expected evaluation rows, every nonempty mapped input row, issues, mappings/declarations and a manifest. Raw source files remain separate; input byte hashes identify them. The export includes selected source values and should be handled as carefully as the inputs.
 
 Source notes and definitions are caller declarations. Hashes detect byte changes but do not establish who supplied a file or authenticate its contents. A manual opinion is bound to the input/settings fingerprint. Changing the reviewed inputs or sample acceptance invalidates that opinion; the GUI requires explicit reconsideration even if a setting is later restored to its old value. Export recomputes the results before accepting notes.
 
 Excel inputs are read only. Selected formulas are blocked even if cached values are present; provide a values-only extract. Formula-like CSV text is escaped for spreadsheet use, while controlled numerical result columns stay numeric. JSON preserves the selected raw field values. The application does not modify input files or existing output directories.
+
+## Monthly candidate production
+
+The separate training tool accepts one to five raw monthly features and a continuous target. It enumerates every single/pair OLS combination and two baselines. The public [producer protocol](https://github.com/zheyuliu328/model-risk-lab/blob/main/docs/FORECAST_METHOD.md) defines calendar folds, availability, train-only scaling, original-unit coefficients, condition/VIF diagnostics and failure accounting. NumPy performs this calculation in floating-point arithmetic; it does not use the forecast-review engine's Decimal path.
+
+For target month `t`, each feature uses observation `t-lag`, with `lag >= horizon + release_delay`. All successful candidates and baselines share eligible target months. Preparation reports pooled development metrics and selects the minimum-MAE successful OLS candidate, with stable IDs breaking exact ties. An explicit reveal scores the later holdout with frozen coefficients. Features and persistence history update as observations become available at later origins. These are rolling origins, not all future predictions made at one initial origin.
+
+Missing lagged features are accounted for on their affected target months. Invalid targets, malformed numbers, formulas, duplicate months and missing calendar months reject an experiment. A candidate failing a fold or final fit remains in the evidence with its reason and cannot be selected. A constant target has undefined R2. No significance or approval claim follows from these diagnostics.
+
+Experiment exports retain full raw input, all candidates, folds, predictions, failures, fit diagnostics and a selection record. Development exports contain no holdout predictions or scores, although original holdout input values remain available. The full run fingerprint binds file bytes, mappings, declarations, stage, kernel checksum, tool version and NumPy version; the development fingerprint excludes holdout observations. Transfers are explicit subsets, preserve the expected holdout range and identify non-preselected models as exploratory. Code cannot prove that a human has never viewed the holdout.
+
+## Additive financial result reconciliation
+
+Row identity is `(record_id, date, measure, risk_type, tenor)`. Currency and unit are separate checks; a mismatch blocks a numerical residual. For reference `a` and challenger `b`, pass means `abs(b-a) <= absolute_tolerance + relative_tolerance*abs(a)`, with relative tolerance supplied as a ratio. Inputs use bounded Decimal values and a 600-digit working context. Every nonempty source row remains in the input ledger; duplicates, invalid records and missing counterparts remain visible.
+
+The expected universe is the union of supplied identities. Without another controlling universe it cannot detect a record absent from both files. Explicit additivity is required before summing by date, measure, risk type, tenor, currency and unit. Net agreement cannot clear a member-row breach, duplicate, invalid value or missing counterpart. Optional reported totals are independently compared with each side's own raw groups; missing, extra and repeated groups are retained. Total attention appears separately from row and cross-source group attention.
+
+Reconciliation exports include full request snapshots, row/group/reported-total CSVs, raw input accounting, declarations, exact JSON, offline HTML and a manifest. Fingerprints bind input hashes, field/default declarations, tolerances, additivity and tool version. Source-bound manual opinions never change calculated statuses. This is an additive check, not nonlinear margin aggregation, unit conversion or a proprietary pricing implementation.
 
 ## Independent material and acknowledged reuse
 
@@ -34,6 +52,8 @@ All bundled data, field layouts, forecasts and tests are independently invented.
 The problem design draws on general reconciliation and model-review practices: explicit definitions, expected coverage, key alignment, comparable denominators and traceable opinions. No employer or customer code, templates, identifiers, data, screenshots or private repository history are included.
 
 One small implementation is adapted from the author's public MIT-licensed [Financial Control Tower](https://github.com/zheyuliu328/financial-control-tower): atomic publication into a new directory without replacing an existing output. Its attribution is retained in `exporter.py`. The review engine, file contract, interface and fixtures are new implementations for this project.
+
+The monthly numerical kernel is a byte-identical copy of the author's separately published MIT-licensed Model Risk Lab `forecast.py`. Its [provenance record](../src/forecast_review_workbench/_vendor/provenance.json) and retained license identify the public commit, source path and SHA-256. File transport, expanded prediction rows and source lineage are separate code. `tools/check_vendor.py` checks the vendored bytes offline. No private repository code or data is reused.
 
 ## Primary technical references
 
