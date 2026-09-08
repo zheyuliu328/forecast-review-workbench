@@ -1,0 +1,62 @@
+name: Tool checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python: ['3.10', '3.12', '3.14']
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+      - run: python -m pip install --upgrade pip
+      - run: python -m pip install '.[dev]'
+      - run: python -m ruff check src tests
+      - run: python -m ruff format --check src tests
+      - run: python -m pytest -q
+      - run: python -m build --wheel
+      - name: Normal wheel installation and execution outside the checkout
+        shell: bash
+        run: |
+          python -m venv "$RUNNER_TEMP/frw-wheel"
+          "$RUNNER_TEMP/frw-wheel/bin/python" -m pip install dist/*.whl
+          cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/frw-wheel/bin/forecast-review" --example --output "$RUNNER_TEMP/frw-evidence"
+          "$RUNNER_TEMP/frw-wheel/bin/python" -c 'import json; from pathlib import Path; d=json.loads(Path("frw-evidence/results.json").read_text()); assert d["summary"]["expected"]==12 and d["summary"]["common"]==7 and d["comparison_ready"]'
+  browser:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - run: python -m pip install .
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Real CSV and Excel browser workflow, local requests only
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-evidence
+          path: outputs/browser-check/
+  dependency-audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install --upgrade pip pip-audit
+      - run: pip-audit -r requirements-runtime.txt

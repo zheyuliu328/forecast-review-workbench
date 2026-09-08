@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'">
+<title>${title} · Forecast Review</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f5f6f8;color:#172738;font:15px/1.65 system-ui,sans-serif}
+main{max-width:1220px;margin:auto;padding:40px 28px}h1{font-size:34px;line-height:1.2;margin:12px 0}h2{margin-top:36px}
+.eyebrow{text-transform:uppercase;letter-spacing:.13em;font-size:12px;color:#38665b}.intro{max-width:850px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin:26px 0}.card,article{background:white;padding:20px;border:1px solid #dce2e6;border-radius:10px}
+.card b{display:block;font-size:30px}.notice{background:#eaf1ee;border-left:4px solid #3f7663;padding:18px}a{color:#185c72}
+.table-wrap{overflow:auto;border:1px solid #dce2e6;border-radius:8px;background:white}table{border-collapse:collapse;width:100%;font-size:13px}
+th,td{padding:12px;text-align:left;border-bottom:1px solid #e8edf0;vertical-align:top;min-width:90px;max-width:420px;overflow-wrap:anywhere}
+th{background:#edf2f4;white-space:nowrap}article{margin:12px 0}small,footer{color:#536574}.preserve{white-space:pre-wrap}code{word-break:break-all}
+@media(max-width:650px){main{padding:22px 16px}h1{font-size:27px}.cards{gap:8px}.card{padding:12px}}
+</style></head><body><main><div class="eyebrow">Forecast Review · offline evidence</div>
+<h1>${title}</h1><p>${state}</p><p class="intro">${interpretation}</p>
+<div class="cards"><div class="card"><b>${expected}</b>Expected keys</div>
+<div class="card"><b>${common}</b>Common valid keys</div><div class="card"><b>${excluded}</b>Excluded keys</div></div>
+<p class="notice">Target: ${target} · Unit: ${unit} · Horizon: ${horizon} period(s) · Transformation: ${transformation}. Definitions are declarations; no conversion or model fitting is performed.</p>
+<h2>Same-sample metrics</h2>${metrics_table}<p>Metrics shown to seven significant digits for reading; CSV/JSON retain the reported precision. MAE = mean absolute error. RMSE = square root of mean squared error. Bias = mean(prediction − actual). Baseline gain = (baseline error − candidate error) / baseline error × 100; positive means smaller error. A zero baseline denominator is undefined.</p>
+<h2>Definitions and conflicts</h2>${conflicts}<h2>Excluded expected keys</h2>${exclusions_table}
+<p>Showing ${shown_exclusions} of ${exclusion_count} excluded keys. Every expected key and reason is in the CSV/JSON files, including periods excluded by missing actual values or a missing baseline.</p>
+<h2>Manual review</h2>${notes_html}<h2>Sources</h2>${sources}<h2>Files for a second reviewer</h2><ul>${metric_files}</ul>
+<p>CSV text is protected against spreadsheet formula execution; import identifiers as text. Exact originals of the selected fields are retained in JSON. The original files remain separate and are identified by their hashes.</p>
+<h2>Interpretation</h2><ul>${warnings}</ul><footer>Forecast Review Workbench ${version}. Fingerprint: <code>${fingerprint}</code>. This report can be opened without the application or an internet connection. File hashes detect changes; they do not authenticate source data or approve a model.</footer>
+</main></body></html>

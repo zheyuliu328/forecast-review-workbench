@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="__CSRF_TOKEN__">
+  <meta name="color-scheme" content="light">
+  <title>Forecast review workbench</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to the workbench</a>
+  <header class="app-header">
+    <a class="brand" href="/" aria-label="Forecast review workbench home">
+      <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
+      <span>Forecast review<span class="brand-subtitle">WORKBENCH</span></span>
+    </a>
+    <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> Local session</span><button id="example-button" class="button button-quiet" type="button">Explore an example <span aria-hidden="true">↗</span></button></div>
+  </header>
+
+  <main id="main">
+    <section class="intro">
+      <div><p class="eyebrow">INDEPENDENT FORECAST REVIEW</p><h1>Compare forecasts.<br><span>Start with equal ground.</span></h1><p class="lead">Bring your actuals and predictions. Check what is missing, agree on a common sample, then examine the evidence.</p></div>
+      <aside class="privacy-note"><span class="privacy-icon" aria-hidden="true">↳</span><div><strong>Your files stay on this computer.</strong><p>No account or external upload. Choose CSV or Excel files, and download your review when you are ready.</p></div></aside>
+    </section>
+
+    <nav class="step-nav" aria-label="Review stages">
+      <button type="button" class="step active" id="step-inputs" data-stage="inputs" aria-current="step"><span class="step-number">01</span><span>Inputs & definition<small>Set the terms of your review</small></span></button>
+      <button type="button" class="step" id="step-coverage" data-stage="coverage" disabled><span class="step-number">02</span><span>Coverage<small>See which rows can be compared</small></span></button>
+      <button type="button" class="step" id="step-review" data-stage="review" disabled><span class="step-number">03</span><span>Review & export<small>Interpret results and record a view</small></span></button>
+    </nav>
+    <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
+    <div id="error" class="notice notice-error hidden" role="alert"></div>
+
+    <section id="panel-inputs" class="stage-panel" aria-labelledby="inputs-heading">
+      <form id="review-form" novalidate>
+        <div class="section-heading"><div><p class="eyebrow">01 / DEFINE THE COMPARISON</p><h2 id="inputs-heading">What are you reviewing?</h2></div><span class="tag">One target · one agreed unit</span></div>
+        <div class="setup-grid">
+          <div class="panel definition-panel">
+            <label class="field full">Review title<input id="review-title" value="Forecast review" maxlength="160" placeholder="e.g. Monthly revenue forecast review"></label>
+            <div class="form-grid">
+              <label class="field">Target<input id="target" required placeholder="e.g. Monthly revenue" maxlength="120"><small>The quantity each file measures.</small></label>
+              <label class="field">Unit<input id="unit" required placeholder="e.g. USD, decimal rate" maxlength="80"><small>Values must already use this unit.</small></label>
+              <label class="field">Forecast horizon<input id="horizon" type="number" min="1" step="1" value="1" required><small>Declared periods ahead. Dates are not shifted.</small></label>
+              <label class="field">Target transformation<input id="transformation" list="transformations" value="none" required maxlength="80"><datalist id="transformations"><option value="none"></option><option value="log"></option><option value="logit"></option><option value="difference"></option></datalist><small>Describe supplied values; no conversion is applied.</small></label>
+            </div>
+            <div class="definition-footer"><span class="muted">Each source has its own declaration below.</span><button id="copy-definition" class="text-button" type="button">Use this definition for all files <span aria-hidden="true">↓</span></button></div>
+          </div>
+          <div class="panel scope-panel">
+            <h3>Expected scope</h3><p class="muted compact">Set the full range you expected to receive. Missing rows remain part of the review.</p>
+            <label class="field">Frequency<select id="frequency"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="daily">Daily</option></select></label>
+            <div class="form-grid"><label class="field">Start period<input id="scope-start" required placeholder="2024-01" aria-describedby="period-help"></label><label class="field">End period<input id="scope-end" required placeholder="2024-12" aria-describedby="period-help"></label></div>
+            <p class="field-help" id="period-help">Use YYYY-MM. Both endpoints are included.</p>
+            <label class="field">Entity IDs <span class="optional">if comparing multiple series</span><textarea id="entities" rows="3" placeholder="One exact ID per line" aria-describedby="entity-help"></textarea></label><p id="entity-help" class="field-help">Map an entity column in every file when using this list. Leading zeros and spaces matter. Leave empty for one series.</p>
+          </div>
+        </div>
+
+        <div class="section-heading source-section-heading"><div><p class="eyebrow">02 / BRING YOUR OWN FILES</p><h2>Actuals, candidates & a reference</h2><p class="muted">Select files, confirm column mappings, and declare what each table contains.</p></div><span class="file-types">CSV <span>·</span> XLSX</span></div>
+        <div id="actual-source"></div>
+        <div class="source-subheading"><h3>Candidate forecasts <span id="candidate-count" class="count-badge">1 / 5</span></h3><button id="add-candidate" class="button button-small" type="button">＋ Add candidate</button></div>
+        <div id="candidate-sources" class="source-stack"></div>
+        <div id="baseline-source"></div>
+        <button id="add-baseline" class="baseline-add" type="button"><span aria-hidden="true">＋</span><span><strong>Add a baseline</strong><small>Optional: a supplied benchmark forecast to measure improvement against.</small></span></button>
+
+        <details class="panel segments-panel"><summary><span><strong>Review specific periods</strong><span class="optional">Optional</span></span><span class="muted">Compare the same sample within chosen date ranges</span></summary><div id="segments"></div><button id="add-segment" class="text-button" type="button">＋ Add a period segment</button></details>
+        <div class="action-bar"><div><strong>Coverage comes first.</strong><p>You will review exclusions before accepting the sample used for metrics.</p></div><button id="run-review" class="button button-primary" type="submit">Check coverage <span aria-hidden="true">→</span></button></div>
+      </form>
+    </section>
+
+    <section id="panel-coverage" class="stage-panel hidden" aria-labelledby="coverage-heading">
+      <div class="section-heading"><div><p class="eyebrow">02 / UNDERSTAND THE SAMPLE</p><h2 id="coverage-heading">What can fairly be compared?</h2><p id="coverage-context" class="muted"></p></div><button class="button button-small" type="button" data-go-inputs>Edit inputs</button></div>
+      <div id="stale-coverage"></div>
+      <div id="coverage-summary" class="stat-grid"></div>
+      <div id="contract-errors"></div>
+      <div class="panel"><div class="panel-heading"><div><h3>Coverage by forecast</h3><p class="muted compact">These counts use the full expected period and entity scope.</p></div><span class="tag">Coverage before performance</span></div><div id="coverage-table" class="table-wrap"></div></div>
+      <div id="acceptance" class="acceptance-panel"></div>
+      <details id="available-panel" class="panel available-panel"><summary><span><strong>Each forecast’s own available sample</strong><span class="tag tag-warning">Not comparable across models</span></span></summary><p class="muted">These metrics can use different rows. A lower error here cannot establish that one forecast is better than another. Use the accepted common sample for comparison.</p><div id="available-metrics" class="table-wrap"></div></details>
+      <div class="section-heading"><div><h3>Inspect exclusions and original rows</h3><p class="muted">Nothing is repaired, filled with zero, or paired arbitrarily.</p></div></div>
+      <div id="diagnostics-coverage"></div>
+      <div class="action-bar"><div><strong id="coverage-next-label">Accept a common sample to continue.</strong><p id="coverage-next-help">All candidates and the optional baseline will use those exact rows.</p></div><button id="go-review" class="button button-primary" type="button" disabled>Review results <span aria-hidden="true">→</span></button></div>
+    </section>
+
+    <section id="panel-review" class="stage-panel hidden" aria-labelledby="results-heading">
+      <div class="section-heading"><div><p class="eyebrow">03 / FORM YOUR VIEW</p><h2 id="results-heading">The evidence, side by side.</h2><p id="review-context" class="muted"></p></div><button id="back-coverage" class="button button-small" type="button">Review sample</button></div>
+      <div id="stale-review"></div>
+      <div id="results-content"></div>
+      <div class="section-heading notes-heading"><div><h2>Your review notes</h2><p class="muted">Keep the evidence and your judgement distinct. No model is selected automatically.</p></div><span class="tag">Human judgement</span></div>
+      <div id="notes" class="notes-grid"></div>
+      <div class="panel sources-panel"><details><summary><strong>Sources, declarations & limitations</strong></summary><div id="source-metadata"></div></details></div>
+      <div class="action-bar export-bar"><div><strong>Keep a review you can trace.</strong><p id="export-help">Download results, source references, diagnostics and your notes as one ZIP.</p><small class="muted">The download contains selected source values; share it with the same care as your inputs.</small></div><button id="export-review" class="button button-primary" type="button">Download review ZIP <span aria-hidden="true">↓</span></button></div>
+    </section>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>Independent checks. Explicit assumptions. Your decision.</span><span>Local processing only</span></footer>
+  </main>
+</body>
+</html>

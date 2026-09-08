@@ -1,0 +1,4 @@
+# Versions used for the recorded release checks; install with pip -c when desired.
+openpyxl==3.1.5
+defusedxml==0.7.1
+et-xmlfile==2.0.0

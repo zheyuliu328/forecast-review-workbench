@@ -1,0 +1,112 @@
+{
+  "schema_version": 1,
+  "title": "A lower error can hide missing periods",
+  "scope": {
+    "start": "2024-01",
+    "end": "2024-12",
+    "frequency": "monthly",
+    "entities": []
+  },
+  "contract": {
+    "target": "Monthly revenue",
+    "unit": "USD",
+    "horizon": 1,
+    "transformation": "none"
+  },
+  "actual": {
+    "file": {
+      "path": "actual.csv"
+    },
+    "sheet": null,
+    "header_row": 1,
+    "mapping": {
+      "date": "Month",
+      "value": "Observed",
+      "entity": null
+    },
+    "contract": {
+      "target": "Monthly revenue",
+      "unit": "USD",
+      "horizon": 1,
+      "transformation": "none",
+      "frequency": "monthly"
+    },
+    "source_note": "Independently invented illustration; no fitted model or business data."
+  },
+  "candidates": [
+    {
+      "id": "model-a",
+      "name": "Candidate A",
+      "file": {
+        "path": "candidate-a.csv"
+      },
+      "sheet": null,
+      "header_row": 1,
+      "mapping": {
+        "date": "period",
+        "value": "Forecast",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data."
+    },
+    {
+      "id": "model-b",
+      "name": "Candidate B",
+      "file": {
+        "path": "candidate-b.csv"
+      },
+      "sheet": null,
+      "header_row": 1,
+      "mapping": {
+        "date": "snapshot",
+        "value": "prediction",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data."
+    }
+  ],
+  "baseline": {
+    "id": "baseline",
+    "name": "Provided baseline",
+    "file": {
+      "path": "baseline.csv"
+    },
+    "sheet": null,
+    "header_row": 1,
+    "mapping": {
+      "date": "Month",
+      "value": "Reference",
+      "entity": null
+    },
+    "contract": {
+      "target": "Monthly revenue",
+      "unit": "USD",
+      "horizon": 1,
+      "transformation": "none",
+      "frequency": "monthly"
+    },
+    "source_note": "Independently invented illustration; no fitted model or business data."
+  },
+  "accept_common_sample": false,
+  "segments": [
+    {
+      "name": "Later half",
+      "start": "2024-07",
+      "end": "2024-12"
+    }
+  ]
+}
