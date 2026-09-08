@@ -1,4 +1,5 @@
-# Versions used for the recorded release checks; install with pip -c when desired.
+# Versions used for Python 3.12 release checks; Python 3.10 resolves its compatible NumPy version.
 openpyxl==3.1.5
 defusedxml==0.7.1
 et-xmlfile==2.0.0
+numpy==2.5.3

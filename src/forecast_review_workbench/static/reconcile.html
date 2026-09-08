@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="__CSRF_TOKEN__">
+  <meta name="color-scheme" content="light">
+  <title>Financial reconciliation · Forecast review workbench</title>
+  <link rel="stylesheet" href="/static/styles.css">
+  <link rel="stylesheet" href="/static/extensions.css">
+  <script src="/static/extension-common.js" defer></script>
+  <script src="/static/reconcile.js" defer></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to reconciliation</a>
+  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Forecast review<span class="brand-subtitle">WORKBENCH</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> Local session</span><button id="example-button" class="button button-quiet" type="button">Explore an example ↗</button></div></header>
+  <nav class="workbench-nav" aria-label="Workbench tools"><a href="/">Forecast review</a><a href="/experiments">Training experiments</a><a href="/reconcile" aria-current="page">Financial reconciliation</a></nav>
+  <main id="main">
+    <section class="intro extension-intro"><div><p class="eyebrow">FROM ROW DIFFERENCES TO EXPLAINABLE TOTALS</p><h1>Reconcile the details.<br><span>Explain the difference.</span></h1><p class="lead">Compare reference and challenger values by record and financial dimensions. Keep missing rows, incompatible units and offsetting differences visible.</p></div><aside class="privacy-note"><span class="privacy-icon" aria-hidden="true">↳</span><div><strong>Your original files stay unchanged.</strong><p>Select CSV or Excel extracts. All matching, comparison and review downloads happen locally.</p></div></aside></section>
+    <div id="notice" class="notice hidden" role="status" aria-live="polite"></div><div id="error" class="notice notice-error hidden" role="alert"></div>
+    <form id="reconcile-form" novalidate><fieldset id="reconcile-fields" class="extension-form-lock">
+      <div class="section-heading"><div><p class="eyebrow">01 / SET THE COMPARISON</p><h2>What counts as a difference?</h2></div></div>
+      <div class="panel"><label class="field full">Review title<input id="reconcile-title" value="Financial reconciliation" maxlength="160"></label><div class="form-grid">
+        <label class="field">Absolute tolerance<input id="absolute-tolerance" inputmode="decimal" value="0.01"><small>In the value’s declared unit.</small></label><label class="field">Relative tolerance<input id="relative-tolerance" inputmode="decimal" value="0.0001"><small>A ratio: 0.0001 means 0.01%.</small></label>
+      </div><p class="extension-help">Allowed difference = absolute tolerance + relative tolerance × |reference value|. Tolerances never repair missing, duplicate or invalid rows.</p>
+      <div class="additive-choice"><label class="check-label"><input id="additive" type="checkbox"><span>I confirm values are additive within each date, measure, risk type, tenor, currency and unit group.</span></label><p>Only then will the tool show group sums and checks against reported totals. Different currencies or units are never combined.</p></div></div>
+      <div class="section-heading source-section-heading"><div><p class="eyebrow">02 / BRING BOTH SIDES</p><h2>Map values and their exact meaning.</h2><p class="muted">Map a dimension to a column, or declare one constant for that file. Text IDs preserve leading zeros.</p></div><span class="file-types">CSV <span>·</span> XLSX</span></div>
+      <div class="reconcile-sources"><div><div id="left-source"></div><label class="source-switch"><input id="left-totals-enabled" type="checkbox">Include reference reported totals</label><div id="left-totals-source" class="hidden"></div></div><div><div id="right-source"></div><label class="source-switch"><input id="right-totals-enabled" type="checkbox">Include challenger reported totals</label><div id="right-totals-source" class="hidden"></div></div></div>
+      <div class="action-bar"><div><strong>Start with individual records.</strong><p>A matching net total cannot explain away differences that offset each other.</p></div><button id="reconcile-button" class="button button-primary" type="submit">Reconcile selected files →</button></div>
+    </fieldset></form>
+    <div id="stale-result"></div>
+    <section id="reconcile-results" class="hidden" aria-labelledby="reconcile-heading">
+      <div class="section-heading extension-result-heading"><div><p class="eyebrow">03 / INSPECT THE EVIDENCE</p><h2 id="reconcile-heading">The differences remain visible.</h2><p id="reconcile-context" class="muted"></p></div></div>
+      <div id="reconcile-summary" class="extension-summary"></div><div id="reconcile-warnings"></div>
+      <nav id="result-tabs" class="review-tab-nav" aria-label="Reconciliation views"><button type="button" data-view="rows" aria-pressed="true">Individual records</button><button type="button" data-view="groups" aria-pressed="false">Financial groups</button><button type="button" data-view="totals" aria-pressed="false">Reported totals</button></nav>
+      <div id="view-rows" class="panel"><div class="panel-heading"><div><h3>Record comparison</h3><p class="muted compact">Use row references to trace gaps and differences. Add a review note without changing the computed classification.</p></div></div><div id="record-table"></div></div>
+      <div id="view-groups" class="panel hidden"><h3>Group comparison</h3><p class="muted compact">Groups use date, measure, risk type, tenor, currency and unit. Gross differences stay visible when net differences cancel.</p><div id="group-table"></div></div>
+      <div id="view-totals" class="panel hidden"><h3>Check supplied reported totals</h3><p class="muted compact">Compare each side’s detailed rows with its independently supplied totals, within the same declared dimensions.</p><div id="reported-totals-table"></div></div>
+      <details class="panel extension-details"><summary>Inspect every original input row</summary><div id="reconcile-input-rows"></div></details>
+      <div class="section-heading notes-heading"><div><h2>Record the review decision.</h2><p class="muted">Notes describe the evidence. Accepting a difference does not change the numeric result.</p></div><span class="tag">Human judgement</span></div>
+      <div id="reconcile-notes" class="reconcile-notes-list"></div>
+      <details class="panel extension-details"><summary>Source declarations &amp; run details</summary><div id="reconcile-metadata"></div></details>
+      <div class="extension-stage-actions"><div><strong>Keep the explanation with the numbers.</strong><p>The ZIP includes row comparisons, group checks, source references and notes for this exact run.</p></div><div class="export-actions"><button id="reconcile-export" class="button button-primary" type="button">Download reconciliation ZIP ↓</button></div></div>
+      <p id="reconcile-fingerprint" class="run-fingerprint"></p>
+    </section>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>Exact dimensions. Visible gaps. Traceable decisions.</span><span>Local processing only</span></footer>
+  </main>
+</body>
+</html>
