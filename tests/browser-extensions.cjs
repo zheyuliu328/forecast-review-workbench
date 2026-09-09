@@ -72,14 +72,20 @@ const {chromium} = require("playwright");
         return node && !node.disabled && !node.closest("fieldset:disabled");
       }, selector);
     }
+    async function openDetailsFor(selector) {
+      const details = page.locator(selector).locator("xpath=ancestor::details[1]");
+      if (await details.count() && !await details.evaluate(node => node.open)) await details.locator("summary").first().click();
+    }
     async function upload(id, filename, sheet, header = 1) {
       await postAction("/api/inspect", () => page.locator("#" + id + "-file").setInputFiles(path.join(output, filename)));
       await ready("#" + id + "-header-row");
       if (sheet) {
+        await openDetailsFor("#" + id + "-sheet");
         await postAction("/api/inspect", () => page.locator("#" + id + "-sheet").selectOption(sheet));
         await ready("#" + id + "-header-row");
       }
       if (header !== 1) {
+        await openDetailsFor("#" + id + "-header-row");
         await page.locator("#" + id + "-header-row").fill(String(header));
         await postAction("/api/inspect", () => page.locator("#" + id + "-header-row").press("Tab"));
         await ready("#" + id + "-header-row");
@@ -136,10 +142,12 @@ const {chromium} = require("playwright");
         }
       }
     }
-    async function mapTraining() {
+    async function mapTrainingHistory() {
       await ready("#training-date");
       await page.locator("#training-date").selectOption("Observation month");
       await page.locator("#training-target").selectOption("Observed units");
+    }
+    async function mapTrainingFeatures() {
       while (await page.locator(".feature-row").count() < 5) await page.locator("#add-feature").click();
       for (let index = 0; index < 5; index += 1) {
         await page.locator("#feature-column-" + index).selectOption(expected.training.feature_columns[index]);
@@ -150,21 +158,36 @@ const {chromium} = require("playwright");
     }
     await page.goto(url + "/experiments");
     assert.equal(await page.locator(".workbench-nav a").count(), 3);
+    assert.equal(await page.locator("#experiment-file-step").isVisible(), true);
+    assert.equal(await page.locator("#experiment-settings-step").isVisible(), false);
+    await upload("training", "training-history.csv");
+    await mapTrainingHistory();
+    await screenshot("experiments-files-desktop");
+    await page.locator("#setup-next").click();
+    assert.equal(await page.locator("#experiment-file-step").isVisible(), false);
+    assert.equal(await page.locator("#experiment-settings-step").isVisible(), true);
+    await openDetailsFor("#experiment-title");
     await page.locator("#experiment-title").fill("Independent 180-month experiment");
     await page.locator("#target-name").fill("Invented demand");
     await page.locator("#target-unit").fill("units");
     await page.locator("#development-end").fill("2021-12");
+    await openDetailsFor("#source-note");
     await page.locator("#source-note").fill("Independently generated arithmetic fixture; no external data.");
-    await upload("training", "training-history.csv");
-    await mapTraining();
+    await mapTrainingFeatures();
     const csvDevelopment = await postAction("/api/experiments/prepare", () => page.locator("#prepare-button").click());
     validateExperiment(csvDevelopment, "development");
     await page.locator("#experiment-results").waitFor({state: "visible"});
     await ready("#prepare-button");
+    assert.equal(await page.locator("#experiment-form").isVisible(), false, "Completed results replace the setup form");
     assert.equal(await page.locator("#candidate-table tbody tr").count(), 17);
     console.log("CSV development: 15 OLS candidates and two baselines, with failures retained.");
+    await page.locator("#edit-experiment-inputs").click();
+    await page.locator("#setup-back").click();
     await upload("training", "training-history.xlsx", "Monthly history", 3);
-    await mapTraining();
+    await mapTrainingHistory();
+    await screenshot("experiments-files-mobile", true);
+    await page.locator("#setup-next").click();
+    await mapTrainingFeatures();
     assert.equal(await page.locator("#experiment-results").isVisible(), false, "Replacing files must invalidate old results");
     await screenshot("experiments-inputs-desktop");
     await screenshot("experiments-inputs-mobile", true);
@@ -221,16 +244,27 @@ const {chromium} = require("playwright");
     console.log("XLSX header row 3, explicit holdout, ZIP recomputation and non-accepting review transfer passed.");
 
     const mapping = {record_id: "Record code", date: "As of", measure: "Metric", risk_type: "Risk class", tenor: "Maturity", currency: "CCY", unit: "Value unit", value: "Amount"};
-    async function mapFinancial(id, totals = false) {
-      await ready("#" + id + "-value");
+    async function mapFinancial(id, totals = false, meaning = false) {
+      await ready("#" + id + "-" + (meaning ? "date" : "value"));
       for (const [field, column] of Object.entries(mapping)) {
-        if (!totals || field !== "record_id") await page.locator("#" + id + "-" + field).selectOption(column);
+        const core = field === "record_id" || field === "value";
+        if (totals ? field !== "record_id" : meaning ? !core : core) await page.locator("#" + id + "-" + field).selectOption(column);
       }
     }
     await page.goto(url + "/reconcile");
-    await page.locator("#reconcile-title").fill("Independent offsets and units review");
+    assert.equal(await page.locator("#reconcile-file-step").isVisible(), true);
+    assert.equal(await page.locator("#reconcile-settings-step").isVisible(), false);
     await upload("left", "reference.csv"); await mapFinancial("left");
     await upload("right", "challenger.xlsx", "Challenger values", 3); await mapFinancial("right");
+    await screenshot("reconcile-files-desktop");
+    await screenshot("reconcile-files-mobile", true);
+    await page.locator("#setup-next").click();
+    assert.equal(await page.locator("#reconcile-file-step").isVisible(), false);
+    assert.equal(await page.locator("#reconcile-settings-step").isVisible(), true);
+    await mapFinancial("left", false, true); await mapFinancial("right", false, true);
+    await openDetailsFor("#reconcile-title");
+    await page.locator("#reconcile-title").fill("Independent offsets and units review");
+    await openDetailsFor("#left-totals-enabled");
     await page.locator("#left-totals-enabled").check();
     await page.locator("#right-totals-enabled").check();
     await upload("left-totals", "reference-totals.csv"); await mapFinancial("left-totals", true);
@@ -250,6 +284,7 @@ const {chromium} = require("playwright");
     assert.equal(Number(offsets.difference), 0); assert.equal(offsets.offsetting_breaches, true);
     assert.notEqual(offsets.status, "pass");
     await page.locator("#reconcile-results").waitFor({state: "visible"});
+    assert.equal(await page.locator("#reconcile-form").isVisible(), false, "Completed results replace the setup form");
     await ready("#reconcile-export");
     const firstRecord = page.locator("#record-table tbody tr").filter({has: page.getByText("001", {exact: true})});
     await firstRecord.getByRole("button", {name: "Add / view note"}).click();
@@ -264,6 +299,7 @@ const {chromium} = require("playwright");
     });
     assert.equal(await page.locator("#reconcile-text-0").isEnabled(), true);
     // Even restoring the exact same tolerance requires explicit reconsideration.
+    await page.locator("#edit-reconcile-inputs").click();
     await page.locator("#absolute-tolerance").fill("0.02");
     await page.locator("#absolute-tolerance").fill("0.01");
     assert.equal(await page.locator("#reconcile-results").isVisible(), false);
@@ -288,6 +324,9 @@ const {chromium} = require("playwright");
     await page.goto(url + "/reconcile");
     await upload("left", "totals-focus-reference.csv"); await mapFinancial("left");
     await upload("right", "totals-focus-challenger.csv"); await mapFinancial("right");
+    await page.locator("#setup-next").click();
+    await mapFinancial("left", false, true); await mapFinancial("right", false, true);
+    await openDetailsFor("#left-totals-enabled");
     await page.locator("#left-totals-enabled").check();
     await page.locator("#right-totals-enabled").check();
     await upload("left-totals", "totals-focus-left.csv"); await mapFinancial("left-totals", true);

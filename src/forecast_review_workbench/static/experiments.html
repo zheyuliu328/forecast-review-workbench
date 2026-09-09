@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -12,41 +12,49 @@
   <script src="/static/experiments.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to experiments</a>
-  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>Forecast review<span class="brand-subtitle">WORKBENCH</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> Local session</span><button id="example-button" class="button button-quiet" type="button">Explore an example ↗</button></div></header>
-  <nav class="workbench-nav" aria-label="Workbench tools"><a href="/">Forecast review</a><a href="/experiments" aria-current="page">Training experiments</a><a href="/reconcile">Financial reconciliation</a></nav>
+  <a class="skip-link" href="#main">跳到操作区</a>
+  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW WORKBENCH</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">用示例走一遍 ↗</button></div></header>
+  <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments" aria-current="page"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
   <main id="main">
-    <section class="intro extension-intro"><div><p class="eyebrow">TRAIN, CHALLENGE, THEN REVIEW</p><h1>Test useful signals.<br><span>Keep the future aside.</span></h1><p class="lead">Bring a monthly history. Compare transparent candidates on development data, lock the choice, then inspect the later holdout.</p></div><aside class="privacy-note"><span class="privacy-icon" aria-hidden="true">↳</span><div><strong>Your data stays on this computer.</strong><p>Local fitting and explicit time splits. Every attempted candidate remains in the results, including failures.</p></div></aside></section>
+    <section class="intro first-use-intro"><div><h1>用月度历史试建模型</h1><p class="lead">先选一份历史表，指定实际值和特征。工具比较回归候选，把较晚的留出期单独保留。</p></div><p class="local-explanation">文件只在本机处理 · 不修改原件<br>支持 CSV、Excel，无需账号</p></section>
     <div id="notice" class="notice hidden" role="status" aria-live="polite"></div><div id="error" class="notice notice-error hidden" role="alert"></div>
     <form id="experiment-form" novalidate><fieldset id="experiment-fields" class="extension-form-lock">
-      <div class="section-heading"><div><p class="eyebrow">01 / DEFINE THE EXPERIMENT</p><h2>One target, a clear time boundary.</h2></div><span class="tag">Monthly time series</span></div>
-      <div class="setup-grid"><div class="panel"><label class="field full">Experiment title<input id="experiment-title" value="Training experiment" maxlength="160"></label><div class="form-grid">
-        <label class="field">Target name<input id="target-name" placeholder="e.g. Demand" maxlength="120"></label><label class="field">Unit<input id="target-unit" placeholder="e.g. units, decimal rate" maxlength="80"></label>
-        <label class="field">Transformation<input id="target-transformation" value="none" maxlength="80"><small>Declares supplied values. No inverse transformation is applied.</small></label><label class="field">Forecast horizon<input id="horizon" type="number" min="1" step="1" value="1"><small>Whole months ahead. Predictor timing must respect this horizon.</small></label>
-      </div></div><div class="panel"><h3>Development &amp; holdout</h3><p class="muted compact">The holdout starts after this boundary. Its results stay hidden until you explicitly reveal them.</p><div class="form-grid">
-        <label class="field">Development ends<input id="development-end" placeholder="2021-12"><small>Inclusive month, YYYY-MM.</small></label><label class="field">Validation folds<input id="n-splits" type="number" min="1" step="1" value="3"></label>
-        <label class="field">Months per validation fold<input id="validation-months" type="number" min="1" step="1" value="12"></label><label class="field">Minimum training months<input id="min-train" type="number" min="1" step="1" value="36"></label>
-      </div></div></div>
-      <div class="section-heading source-section-heading"><div><p class="eyebrow">02 / MAP THE HISTORY</p><h2>Choose observations and candidate signals.</h2><p class="muted">Use one monthly series with the target and feature values already in their declared form.</p></div><span class="file-types">CSV <span>·</span> XLSX</span></div>
-      <div id="training-source"></div>
-      <div class="panel extension-details"><div class="features-heading"><div><h3>Candidate features <span id="feature-count" class="tag">1 / 5</span></h3><p class="extension-help">Lag moves a feature back in time. Release delay states how many months pass before that feature becomes available.</p></div><button id="add-feature" class="button button-small" type="button">＋ Add feature</button></div><div id="feature-rows" class="feature-rows"></div><p class="limit-note">Each feature needs a unique name, lag and release delay. Missing lagged features exclude rows with reasons; missing targets, invalid numbers, formulas or calendar errors stop the run.</p></div>
-      <label class="field extension-input-note">Source note<textarea id="source-note" rows="2" maxlength="1000" placeholder="Where this history came from and any relevant restrictions"></textarea><small>Recorded as your declaration; it does not verify the source or its publication history.</small></label>
-      <div class="action-bar"><div><strong>Evaluate development data first.</strong><p>Candidate selection uses these folds. Holdout values are not used to choose the model.</p></div><button id="prepare-button" class="button button-primary" type="submit">Run development experiment →</button></div>
+      <nav id="input-progress" class="input-progress" aria-label="准备进度"><button id="setup-files" type="button" class="active">1 选择历史数据</button><span aria-hidden="true">→</span><button id="setup-settings" type="button">2 确认特征与时间</button></nav>
+      <section data-input-panel="files" id="experiment-file-step">
+        <div class="section-heading"><div><h2>先选一份月度历史表</h2><p class="muted">表内需要月份、实际值和至少一个特征列。下一步再确认特征何时可获得。</p></div><span class="file-types">CSV · XLSX</span></div>
+        <div id="training-source"></div>
+        <div class="action-bar"><p>日期必须逐月连续且不重复。工具会检查全部记录。</p><button id="setup-next" class="button button-primary" type="button">确认数据，下一步 →</button></div>
+      </section>
+      <section data-input-panel="settings" id="experiment-settings-step" hidden>
+        <div class="section-heading"><div><h2>确认特征与时间边界</h2><p id="setup-summary" class="muted"></p></div><button id="setup-back" class="button button-small" type="button">← 修改文件或字段</button></div>
+        <div class="setup-grid"><div class="panel"><h3>这次要预测什么</h3><div class="form-grid setup-fields">
+          <label class="field">目标名称<input id="target-name" placeholder="例如：月度需求" maxlength="120"></label><label class="field">单位<input id="target-unit" placeholder="例如：件、十进制概率" maxlength="80"><small>请按实际输入填写；不自动换算。</small></label>
+          <label class="field">提前几个月预测<input id="horizon" type="number" min="1" step="1" value="1"><small>影响每个特征所需的最短滞后。</small></label>
+        </div></div><div class="panel"><h3>先留出较晚的数据</h3><p class="muted compact">开发期用于比较和选择候选；其后的数据是留出期。先运行开发期，再由你决定揭示留出结果。</p>
+          <label class="field setup-fields">开发期最后一个月<input id="development-end" placeholder="例如：2021-12"><small>格式 YYYY-MM，包含该月。请根据预先约定填写，不按结果挑选。</small></label>
+        </div></div>
+        <div class="panel extension-details"><div class="features-heading"><div><h3>选哪些特征 <span id="feature-count" class="tag">1 / 5</span></h3><p class="extension-help">例如预测下月需求时，经济指标在公布前不能使用。请核实每个特征的公布延迟；默认 0 并不证明当月已知。</p></div><button id="add-feature" class="button button-small" type="button">＋ 添加特征</button></div><div id="feature-rows" class="feature-rows"></div><p class="limit-note">滞后月数须 ≥ 预测期限 + 公布延迟。输入原始列，工具执行滞后；不要预先平移。</p></div>
+        <details class="panel setup-advanced"><summary>开发划分与报告设置 <span class="optional">已填默认值，运行前可调整</span></summary><div class="form-grid">
+          <label class="field">开发验证段数<input id="n-splits" type="number" min="1" step="1" value="3"></label><label class="field">每段验证月数<input id="validation-months" type="number" min="1" step="1" value="12"></label><label class="field">最少训练月数<input id="min-train" type="number" min="1" step="1" value="36"></label><label class="field">输入值的变换<input id="target-transformation" value="none" maxlength="80"><small>none 表示未变换；只声明输入含义，不做反变换。</small></label><label class="field">报告名称<input id="experiment-title" value="月度回归实验" maxlength="160"></label>
+        </div><p class="extension-help">按时间向前验证。数据不足或时间不连续时会说明原因，工具不会自行缩短训练要求。</p></details>
+        <details class="panel setup-advanced"><summary>记录数据来源（可选）</summary><label class="field">来源说明<textarea id="source-note" rows="2" maxlength="1000" placeholder="数据来自哪里，有哪些使用限制"></textarea><small>这是你的声明，不代表工具验证过来源或历史公布时间。</small></label></details>
+        <div class="action-bar"><div><strong>只运行开发期，留出结果保持隐藏。</strong><p>所有尝试及失败都保留，开发期误差决定预选候选。</p></div><button id="prepare-button" class="button button-primary" type="submit">运行开发期实验 →</button></div>
+      </section>
     </fieldset></form>
     <div id="stale-result"></div>
     <section id="experiment-results" class="hidden" aria-labelledby="development-heading">
-      <div class="section-heading extension-result-heading"><div><p class="eyebrow">03 / COMPARE DEVELOPMENT EVIDENCE</p><h2 id="development-heading">Every candidate, on the record.</h2><p id="development-context" class="muted"></p></div></div>
+      <div class="section-heading extension-result-heading"><div><p class="eyebrow">开发结果</p><h2 id="development-heading">比较全部候选，包括失败尝试</h2><p id="development-context" class="muted"></p></div><button id="edit-experiment-inputs" class="button button-small" type="button">修改输入或设置</button></div>
       <div id="experiment-coverage" class="extension-summary"></div><div id="selection-summary" class="panel"></div>
-      <div class="panel"><div class="panel-heading"><div><h3>Development performance</h3><p class="muted compact">Prediction minus actual defines bias. Lower MAE and RMSE mean smaller errors on the stated sample.</p></div></div><div id="candidate-table"></div></div>
+      <div class="panel"><div class="panel-heading"><div><h3>开发期表现</h3><p class="muted compact">平均偏差为预测减实际值。MAE、RMSE 越低，代表当前样本上的误差越小。</p></div></div><div id="candidate-table"></div></div>
       <div id="holdout-panel"></div>
       <div id="transfer-panel"></div>
-      <details class="panel extension-details"><summary>Time splits, fitted model details &amp; limitations</summary><div id="experiment-protocol"></div><div id="fold-table"></div><div id="fit-details"></div></details>
-      <details class="panel extension-details"><summary>Inspect original rows and excluded observations</summary><div id="experiment-input-rows"></div></details>
-      <details class="panel extension-details"><summary>Inspect model predictions</summary><div id="experiment-predictions"></div></details>
-      <div class="extension-stage-actions"><div><strong>Keep the complete experiment.</strong><p>Includes attempted candidates, fit details, predictions and row diagnostics for the current stage.</p></div><div class="export-actions"><button id="experiment-export" class="button button-primary" type="button">Download experiment ZIP ↓</button></div></div>
+      <details class="panel extension-details"><summary>查看时间划分、拟合详情与适用范围</summary><div id="experiment-protocol"></div><div id="fold-table"></div><div id="fit-details"></div></details>
+      <details class="panel extension-details"><summary>查看原始行和排除记录</summary><div id="experiment-input-rows"></div></details>
+      <details class="panel extension-details"><summary>查看逐期预测</summary><div id="experiment-predictions"></div></details>
+      <div class="extension-stage-actions"><div><strong>保存完整实验。</strong><p>包含当前阶段的全部候选、拟合、预测及逐行诊断。</p></div><div class="export-actions"><button id="experiment-export" class="button button-primary" type="button">下载完整实验包 ↓</button></div></div>
       <p id="experiment-fingerprint" class="run-fingerprint"></p>
     </section>
-    <footer class="app-footer"><span>Forecast review workbench</span><span>Transparent experiments. A separate holdout. Human review.</span><span>Local processing only</span></footer>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>先开发，再揭示留出期，由你复核。</span><span>仅在本机处理</span></footer>
   </main>
 </body>
 </html>

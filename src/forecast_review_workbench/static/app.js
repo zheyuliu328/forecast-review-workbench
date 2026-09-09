@@ -7,7 +7,7 @@
   const PAGE_SIZE = 25;
   const MAX_BYTES = 10 * 1024 * 1024;
   const state = {
-    title: "Forecast review",
+    title: "预测结果复核",
     scope: {start: "", end: "", frequency: "monthly", entities: []},
     contract: {target: "", unit: "", horizon: 1, transformation: "none"},
     actual: null, candidates: [], baseline: null, segments: [],
@@ -16,6 +16,7 @@
     diagnosticTab: "expected", diagnosticSearch: "", diagnosticFilter: "all", diagnosticPage: 1,
     sourceCounter: 1
   };
+  let inputFlow;
 
   function append(parent, child) {
     if (Array.isArray(child)) child.forEach(function (item) { append(parent, item); });
@@ -77,8 +78,8 @@
       mapping: {date: null, value: null, entity: null}, contract: sharedContract(), source_note: "",
       headers: [], sheets: [], preview: [], row_count: null, inspectionError: "", loading: false, epoch: 0, declarationOpen: false};
   }
-  state.actual = makeSource("actual", "Observed actuals", "actual");
-  state.candidates = [makeSource("model-a", "Candidate A", "candidate")];
+  state.actual = makeSource("actual", "实际值", "actual");
+  state.candidates = [makeSource("model-a", "预测 A", "candidate")];
 
   function showMessage(text, isError) {
     const target = isError ? $("error") : $("notice");
@@ -120,8 +121,9 @@
     updateChrome();
   }
   function updateChrome() {
+    if (inputFlow) inputFlow.update(state.busy || allSources().some(function (source) { return source.loading; }));
     $("run-review").disabled = state.busy || allSources().some(function (source) { return source.loading; });
-    $("run-review").textContent = state.busy ? "Checking your files…" : "Check coverage →";
+    $("run-review").textContent = state.busy ? "正在检查文件…" : "检查可比较的样本 →";
     $("example-button").disabled = state.busy;
     $("step-coverage").disabled = !state.result;
     $("step-review").disabled = !state.result;
@@ -179,14 +181,14 @@
     return Object.keys(shared).every(function (key) { return String(source.contract[key]).trim() === String(shared[key]).trim(); });
   }
   function sourceBadge(source) {
-    if (source.loading) return element("span", {className: "tag"}, "Reading file…");
-    if (!source.file) return element("span", {className: "tag"}, "Choose a file");
-    if (source.inspectionError) return element("span", {className: "tag tag-warning"}, "Needs attention");
-    if (!source.mapping.date || !source.mapping.value) return element("span", {className: "tag tag-warning"}, "Confirm mappings");
-    return element("span", {className: "tag tag-success"}, "Mapped · " + (source.row_count === null ? "ready" : source.row_count + " rows"));
+    if (source.loading) return element("span", {className: "tag"}, "读取中…");
+    if (!source.file) return element("span", {className: "tag"}, "等待选择");
+    if (source.inspectionError) return element("span", {className: "tag tag-warning"}, "请检查");
+    if (!source.mapping.date || !source.mapping.value) return element("span", {className: "tag tag-warning"}, "请确认字段");
+    return element("span", {className: "tag tag-success"}, "已选字段 · " + (source.row_count === null ? "ready" : source.row_count + " 行"));
   }
   function definitionBadge(source) {
-    return element("span", {className: "tag " + (contractMatches(source) ? "tag-success" : "tag-warning")}, contractMatches(source) ? "Matches review" : "Check definition");
+    return element("span", {className: "tag " + (contractMatches(source) ? "tag-success" : "tag-warning")}, contractMatches(source) ? "与复核说明一致" : "待核对含义");
   }
   function refreshSourcePresentation(source) {
     const badge = $("source-badge-" + source.id);
@@ -201,7 +203,7 @@
   }
 
   function renderSource(source, index) {
-    const roleNames = {actual: "Actual observations", candidate: "Candidate forecast", baseline: "Reference forecast · optional"};
+    const roleNames = {actual: "实际发生的数值", candidate: "需要复核的预测", baseline: "基线预测（可选）"};
     const letter = source.role === "actual" ? "Y" : source.role === "baseline" ? "B₀" : String(index + 1).padStart(2, "0");
     const headActions = [element("span", {id: "source-badge-" + source.id}, sourceBadge(source))];
     if (source.role !== "actual") headActions.push(button("×", "icon-button", function () {
@@ -219,12 +221,12 @@
     const fileControl = element("div", {className: "file-control"}, [
       element("span", {className: "file-symbol", "aria-hidden": "true"}, "▤"),
       element("div", {}, [
-        element("span", {className: "file-name"}, source.file ? source.file.name : "Choose a CSV or Excel file"),
-        element("span", {className: "file-detail"}, source.file ? "Selected locally · original file remains unchanged" : "Up to 10 MiB · values are read locally")
+        element("span", {className: "file-name"}, source.file ? source.file.name : "选择 CSV 或 Excel 文件"),
+        element("span", {className: "file-detail"}, source.file ? "仅在本机读取 · 原文件保持不变" : "不超过 10 MiB · 数值只在本机读取")
       ]),
-      element("label", {className: "button file-choose", for: source.id + "-file"}, [source.file ? "Replace" : "Choose file", fileInput])
+      element("label", {className: "button file-choose", for: source.id + "-file"}, [source.file ? "更换文件" : "选择文件", fileInput])
     ]);
-    const sheetOptions = [{value: "", label: source.file && source.file.name.toLowerCase().endsWith(".csv") ? "CSV · no worksheet" : "Choose a worksheet"}]
+    const sheetOptions = [{value: "", label: source.file && source.file.name.toLowerCase().endsWith(".csv") ? "CSV · no worksheet" : "选择工作表"}]
       .concat(source.sheets.map(function (name) { return {value: name, label: name}; }));
     const sheetSelect = select(sheetOptions, source.sheet || "", function (event) {
       source.sheet = event.target.value || null; invalidate(); inspectSource(source);
@@ -233,35 +235,43 @@
       source.header_row = Number(event.target.value); source.inspectionError = "Header row changed. Read the selected header to update mappings."; invalidate();
     }, {type: "number", min: "1", step: "1", disabled: !source.file || source.loading});
     headerInput.addEventListener("change", function () { if (source.file && Number.isInteger(source.header_row) && source.header_row > 0) inspectSource(source); });
-    const fileLine = element("div", {className: "source-file-line"}, [fileControl, field("Worksheet", sheetSelect), field("Header row", headerInput)]);
     const body = element("div", {className: "source-body"}, []);
-    if (source.role !== "actual") {
-      const nameField = field("Name in this review", inputForSource(source, "name", source.name, function (event) {
+    if (source.role !== "actual" && source.file) {
+      const nameField = field("结果中的名称", inputForSource(source, "name", source.name, function (event) {
         source.name = event.target.value; invalidate();
       }, {maxlength: "80", required: true}));
       nameField.classList.add("source-name-field");
       body.appendChild(nameField);
     }
-    body.appendChild(fileLine);
-    if (source.file) body.appendChild(element("div", {className: "source-extra-controls"}, [
-      button("Read selected header ↻", "text-button", function () { inspectSource(source); }, {disabled: source.loading})
-    ]));
+    body.appendChild(fileControl);
+    if (source.file) {
+      const isCsv = /\.csv$/i.test(source.file.name);
+      const sheetField = field("工作表", sheetSelect); sheetField.hidden = isCsv;
+      body.appendChild(element("details", {className: "table-options", id: source.id + "-table-options", open: Boolean(source.inspectionError || (!isCsv && !source.sheet))}, [
+        element("summary", {}, isCsv ? "表头不在第 1 行？调整读取位置" : "工作表与表头 · " + (source.sheet || "请选择工作表") + " · 第 " + source.header_row + " 行"),
+        element("div", {className: "form-grid"}, [sheetField, field("表头所在行", headerInput)]),
+        button("重新读取表头 ↻", "text-button", function () { inspectSource(source); }, {disabled: source.loading})
+      ]));
+    }
     if (source.inspectionError) body.appendChild(element("div", {className: "source-status error", role: "status"}, source.inspectionError));
-    if (source.loading) body.appendChild(element("div", {className: "source-status loading", role: "status"}, "Reading the selected table…"));
+    if (source.loading) body.appendChild(element("div", {className: "source-status loading", role: "status"}, "正在读取所选表格…"));
 
-    const mappingChoices = [{value: "", label: "Choose a column"}].concat(source.headers.map(function (name) { return {value: name, label: name}; }));
+    const mappingChoices = [{value: "", label: "选择列"}].concat(source.headers.map(function (name) { return {value: name, label: name}; }));
     const mappings = [
-      field("Target period", select(mappingChoices, source.mapping.date, function (event) { source.mapping.date = event.target.value || null; invalidate(); }, {id: source.id + "-date", disabled: !source.headers.length || source.loading}), "The period being predicted, not when the forecast was made."),
-      field(source.role === "actual" ? "Observed value" : "Predicted value", select(mappingChoices, source.mapping.value, function (event) { source.mapping.value = event.target.value || null; invalidate(); }, {id: source.id + "-value", disabled: !source.headers.length || source.loading})),
-      field("Entity ID", select([{value: "", label: "No entity · single series"}].concat(mappingChoices.slice(1)), source.mapping.entity, function (event) { source.mapping.entity = event.target.value || null; invalidate(); }, {id: source.id + "-entity", disabled: !source.headers.length || source.loading}))
+      field("被预测的日期", select(mappingChoices, source.mapping.date, function (event) { source.mapping.date = event.target.value || null; invalidate(); }, {id: source.id + "-date", disabled: !source.headers.length || source.loading}), "选择被预测的日期，而非制作预测的日期。"),
+      field(source.role === "actual" ? "实际值列" : "预测值列", select(mappingChoices, source.mapping.value, function (event) { source.mapping.value = event.target.value || null; invalidate(); }, {id: source.id + "-value", disabled: !source.headers.length || source.loading})),
+      field("实体 ID（可选）", select([{value: "", label: "单个序列，无需实体 ID"}].concat(mappingChoices.slice(1)), source.mapping.entity, function (event) { source.mapping.entity = event.target.value || null; invalidate(); }, {id: source.id + "-entity", disabled: !source.headers.length || source.loading}))
     ];
-    body.appendChild(element("div", {className: "mapping-grid"}, mappings));
+    if (source.headers.length) {
+      body.appendChild(element("p", {className: "mapping-suggestion"}, "已按列名建议字段，请对照预览确认；建议不代表已核实含义。"));
+      body.appendChild(element("div", {className: "mapping-grid"}, mappings));
+    }
     if (source.preview.length || source.headers.length) {
       const previewTable = table(source.headers, source.preview.slice(0, 5).map(function (row) {
         return element("tr", {}, row.map(function (value) { return element("td", {}, textValue(value)); }));
       }));
-      const preview = element("details", {}, [
-        element("summary", {}, "Preview selected table · first " + Math.min(5, source.preview.length) + " rows"),
+      const preview = element("details", {open: true}, [
+        element("summary", {}, "核对预览 · 前 " + Math.min(5, source.preview.length) + " 行"),
         element("div", {className: "preview-panel table-wrap"}, previewTable)
       ]);
       body.appendChild(element("div", {className: "source-bottom"}, preview));
@@ -270,11 +280,11 @@
     const declaration = element("details", {className: "source-contract", open: source.declarationOpen}, []);
     declaration.addEventListener("toggle", function () { source.declarationOpen = declaration.open; });
     declaration.appendChild(element("summary", {}, [
-      element("span", {}, "Definition & source note"),
+      element("span", {}, source.name + " · 数值含义与来源"),
       element("span", {id: "source-definition-badge-" + source.id}, definitionBadge(source))
     ]));
     const declarationFields = [];
-    [["target", "Target"], ["unit", "Unit"], ["horizon", "Horizon"], ["transformation", "Transformation"]].forEach(function (pair) {
+    [["target", "目标"], ["unit", "单位"], ["horizon", "预测期限"], ["transformation", "数值变换"]].forEach(function (pair) {
       const key = pair[0];
       declarationFields.push(field(pair[1], inputForSource(source, "contract-" + key, source.contract[key], function (event) {
         source.contract[key] = key === "horizon" ? Number(event.target.value) : event.target.value; invalidate();
@@ -283,18 +293,18 @@
     declarationFields.push(field("Frequency", select(["monthly", "quarterly", "daily"], source.contract.frequency, function (event) {
       source.contract.frequency = event.target.value; invalidate();
     }, {id: source.id + "-contract-frequency"})));
-    const provenance = field("Source note", element("input", {id: source.id + "-source-note", value: source.source_note, placeholder: "e.g. Frozen extract supplied by the forecasting team", maxlength: "1000", oninput: function (event) {
+    const provenance = field("来源说明（可选）", element("input", {id: source.id + "-source-note", value: source.source_note, placeholder: "e.g. Frozen extract supplied by the forecasting team", maxlength: "1000", oninput: function (event) {
       source.source_note = event.target.value; invalidate();
-    }}), "A caller-declared description, not independently verified provenance.");
+    }}), "这是你的来源声明，未经独立核实。");
     provenance.classList.add("full");
     declaration.appendChild(element("div", {className: "source-contract-content"}, [
       element("div", {className: "contract-actions"}, [
-        element("p", {}, "State what this file contains, even if it differs from the requested definition."),
-        button("Use review definition", "text-button", function () { source.contract = sharedContract(); invalidate(); renderSources(); })
+        element("p", {}, "按该文件的实际含义填写，不能用声明掩盖差异。"),
+        button("此文件使用复核说明", "text-button", function () { source.contract = sharedContract(); invalidate(); renderSources(); })
       ]),
       element("div", {className: "form-grid"}, declarationFields), provenance
     ]));
-    body.appendChild(declaration);
+    $("source-declarations").appendChild(declaration);
     return element("article", {className: "source-card", "aria-label": roleNames[source.role] + ": " + source.name}, [
       element("div", {className: "source-head"}, [
         element("div", {className: "source-heading"}, [
@@ -307,6 +317,7 @@
   }
 
   function renderSources() {
+    $("source-declarations").replaceChildren();
     $("actual-source").replaceChildren(renderSource(state.actual, 0));
     $("candidate-sources").replaceChildren.apply($("candidate-sources"), state.candidates.map(renderSource));
     $("baseline-source").replaceChildren();
@@ -398,15 +409,15 @@
   }
 
   function validateForm() {
-    if (!state.contract.target.trim() || !state.contract.unit.trim() || !state.contract.transformation.trim()) throw new Error("Set the review target, unit and transformation before checking coverage.");
+    if (!state.contract.target.trim() || !state.contract.unit.trim() || !state.contract.transformation.trim()) throw new Error("请填写比较目标、单位和输入值的变换说明。");
     if (!Number.isInteger(Number(state.contract.horizon)) || Number(state.contract.horizon) < 1) throw new Error("The forecast horizon must be a positive whole number of periods.");
-    if (!state.scope.start.trim() || !state.scope.end.trim()) throw new Error("Set both the start and end of the expected scope.");
+    if (!state.scope.start.trim() || !state.scope.end.trim()) throw new Error("请填写原本预期的开始和结束期间。");
     allSources().forEach(function (source) {
       if (!source.file) throw new Error("Choose a file for " + source.name + ".");
       if (source.loading) throw new Error("Wait for " + source.name + " to finish loading.");
       if (source.inspectionError) throw new Error(source.name + ": " + source.inspectionError);
       if (!source.mapping.date || !source.mapping.value) throw new Error("Choose the target-period and numeric value columns for " + source.name + ".");
-      if (!source.contract.target.trim() || !source.contract.unit.trim() || !source.contract.transformation.trim()) throw new Error("Complete the definition for " + source.name + ", or use the review definition.");
+      if (!source.contract.target.trim() || !source.contract.unit.trim() || !source.contract.transformation.trim()) throw new Error("请填写文件的含义声明：" + source.name + "；一致时可明确应用统一说明。");
       if (!source.name.trim()) throw new Error("Give every candidate a name.");
     });
     const mapped = allSources().filter(function (source) { return Boolean(source.mapping.entity); }).length;
@@ -414,6 +425,17 @@
     if (mapped && !state.scope.entities.length) throw new Error("Enter the exact entity IDs in the expected scope. They are not inferred from the uploaded rows.");
     if (!mapped && state.scope.entities.length) throw new Error("Entity IDs are listed in the scope. Map an entity column in every file, or clear the list for a single series.");
     state.segments.forEach(function (segment) { if (!segment.name.trim() || !segment.start.trim() || !segment.end.trim()) throw new Error("Give every period segment a name, start and end, or remove the unfinished segment."); });
+  }
+
+  function validateSelectedFiles() {
+    allSources().forEach(function (source) {
+      if (!source.file) throw new Error("请先选择“" + source.name + "”的文件。");
+      if (source.loading) throw new Error("请等待“" + source.name + "”读取完成。");
+      if (source.inspectionError) throw new Error(source.name + "：" + source.inspectionError);
+      if (!source.mapping.date || !source.mapping.value) throw new Error("请为“" + source.name + "”确认日期列和数值列。");
+      if (!source.name.trim()) throw new Error("请给每份预测填写名称。");
+    });
+    if (allSources().some(function (source) { return Boolean(source.mapping.entity); })) $("entity-scope-options").open = true;
   }
 
   async function runReview(accept, navigate) {
@@ -605,7 +627,7 @@
     }
     $("diagnostic-data").replaceChildren(rows.length ? table(headers, body, {className: "diagnostic-table"}) : element("div", {className: "empty-state"}, "No rows match this view."));
     $("diagnostic-pagination").replaceChildren(
-      element("span", {}, rows.length ? (start + 1) + "–" + Math.min(start + PAGE_SIZE, rows.length) + " of " + rows.length + " rows" : "0 rows"),
+      element("span", {}, rows.length ? (start + 1) + "–" + Math.min(start + PAGE_SIZE, rows.length) + " of " + rows.length + " 行" : "0 rows"),
       element("div", {className: "pagination-controls"}, [
         button("←", "", function () { state.diagnosticPage -= 1; renderDiagnosticRows(); }, {disabled: state.diagnosticPage === 1, "aria-label": "Previous diagnostics page"}),
         element("span", {}, state.diagnosticPage + " / " + pages),
@@ -844,7 +866,7 @@
     updatePeriodHelp(); renderSources(); renderSegments();
   }
   function updatePeriodHelp() {
-    const examples = {monthly: ["2024-01", "2024-12", "Use YYYY-MM. Both endpoints are included."], quarterly: ["2024-Q1", "2024-Q4", "Use YYYY-Q1 through YYYY-Q4. Both endpoints are included."], daily: ["2024-01-01", "2024-12-31", "Use YYYY-MM-DD. Every calendar date in the inclusive range is expected."]};
+    const examples = {monthly: ["2024-01", "2024-12", "格式 YYYY-MM，包含开始和结束月。"], quarterly: ["2024-Q1", "2024-Q4", "格式 YYYY-Q1 至 YYYY-Q4，包含首尾季度。"], daily: ["2024-01-01", "2024-12-31", "格式 YYYY-MM-DD，包含首尾之间每个自然日。"]};
     const example = examples[state.scope.frequency];
     $("scope-start").placeholder = example[0]; $("scope-end").placeholder = example[1]; $("period-help").textContent = example[2];
   }
@@ -904,14 +926,14 @@
   function bindEvents() {
     document.querySelectorAll("[data-stage]").forEach(function (control) { control.addEventListener("click", function () { goStage(control.dataset.stage); }); });
     document.querySelectorAll("[data-go-inputs]").forEach(function (control) { control.addEventListener("click", function () { goStage("inputs"); }); });
-    $("review-form").addEventListener("submit", function (event) { event.preventDefault(); runReview(false, true); });
+    $("review-form").addEventListener("submit", function (event) { event.preventDefault(); if (inputFlow.current() === "files") inputFlow.next(); else runReview(false, true); });
     $("review-title").addEventListener("input", function (event) { state.title = event.target.value; });
     ["target", "unit", "transformation"].forEach(function (key) { $(key).addEventListener("input", function (event) { state.contract[key] = event.target.value; invalidate(); }); });
     $("horizon").addEventListener("input", function (event) { state.contract.horizon = Number(event.target.value); invalidate(); });
     $("frequency").addEventListener("change", function (event) { state.scope.frequency = event.target.value; updatePeriodHelp(); invalidate(); });
     [["scope-start", "start"], ["scope-end", "end"]].forEach(function (item) { $(item[0]).addEventListener("input", function (event) { state.scope[item[1]] = event.target.value; invalidate(); }); });
     $("entities").addEventListener("input", function (event) { state.scope.entities = event.target.value.split(/\r?\n/).filter(function (line) { return line.trim() !== ""; }); invalidate(); });
-    $("copy-definition").addEventListener("click", function () { allSources().forEach(function (source) { source.contract = sharedContract(); }); invalidate(); renderSources(); showMessage("The current review definition has been copied to every source. Confirm it describes the values each file actually contains.", false); });
+    $("copy-definition").addEventListener("click", function () { allSources().forEach(function (source) { source.contract = sharedContract(); }); invalidate(); renderSources(); showMessage("已按你的确认应用到各文件。下方仍可分别修改声明。", false); });
     $("add-candidate").addEventListener("click", function () {
       if (state.candidates.length >= 5) return;
       let id;
@@ -931,5 +953,8 @@
       resizeTimer = window.setTimeout(replaceChart, 120);
     });
   }
+  inputFlow = window.WorkbenchUI.setupFlow({formId: "review-form", validateFiles: validateSelectedFiles, summary: function () {
+    return allSources().filter(function (source) { return source.file; }).length + " 份文件已选。请填写预期完整期间，明确每份文件的数值含义。";
+  }});
   bindEvents(); syncForm(); updateChrome(); importTransferredRequest();
 })();

@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -8,91 +8,90 @@
   <title>Forecast review workbench</title>
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/extensions.css">
+  <script src="/static/extension-common.js" defer></script>
   <script src="/static/app.js" defer></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Skip to the workbench</a>
+  <a class="skip-link" href="#main">跳到操作区</a>
   <header class="app-header">
     <a class="brand" href="/" aria-label="Forecast review workbench home">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span>Forecast review<span class="brand-subtitle">WORKBENCH</span></span>
+      <span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW WORKBENCH</span></span>
     </a>
-    <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> Local session</span><button id="example-button" class="button button-quiet" type="button">Explore an example <span aria-hidden="true">↗</span></button></div>
+    <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">用示例走一遍 <span aria-hidden="true">↗</span></button></div>
   </header>
-  <nav class="workbench-nav" aria-label="Workbench tools"><a href="/" aria-current="page">Forecast review</a><a href="/experiments">Training experiments</a><a href="/reconcile">Financial reconciliation</a></nav>
+  <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/" aria-current="page"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
 
   <main id="main">
-    <section class="intro">
-      <div><p class="eyebrow">INDEPENDENT FORECAST REVIEW</p><h1>Compare forecasts.<br><span>Start with equal ground.</span></h1><p class="lead">Bring your actuals and predictions. Check what is missing, agree on a common sample, then examine the evidence.</p></div>
-      <aside class="privacy-note"><span class="privacy-icon" aria-hidden="true">↳</span><div><strong>Your files stay on this computer.</strong><p>No account or external upload. Choose CSV or Excel files, and download your review when you are ready.</p></div></aside>
-    </section>
+    <section class="intro first-use-intro"><div><h1>比较已有预测</h1><p class="lead">先选实际值和预测表，再确认比较范围。最后会得到同一批样本上的误差、缺失记录和可下载报告。</p></div><p class="local-explanation">文件只在本机处理 · 不修改原件<br>支持 CSV、Excel，无需账号</p></section>
 
     <nav class="step-nav" aria-label="Review stages">
-      <button type="button" class="step active" id="step-inputs" data-stage="inputs" aria-current="step"><span class="step-number">01</span><span>Inputs & definition<small>Set the terms of your review</small></span></button>
-      <button type="button" class="step" id="step-coverage" data-stage="coverage" disabled><span class="step-number">02</span><span>Coverage<small>See which rows can be compared</small></span></button>
-      <button type="button" class="step" id="step-review" data-stage="review" disabled><span class="step-number">03</span><span>Review & export<small>Interpret results and record a view</small></span></button>
+      <button type="button" class="step active" id="step-inputs" data-stage="inputs" aria-current="step"><span class="step-number">01</span><span>准备文件<small>文件、范围和单位</small></span></button>
+      <button type="button" class="step" id="step-coverage" data-stage="coverage" disabled><span class="step-number">02</span><span>检查样本<small>查看缺失与共同范围</small></span></button>
+      <button type="button" class="step" id="step-review" data-stage="review" disabled><span class="step-number">03</span><span>结果与导出<small>比较误差并记录意见</small></span></button>
     </nav>
     <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
     <div id="error" class="notice notice-error hidden" role="alert"></div>
 
     <section id="panel-inputs" class="stage-panel" aria-labelledby="inputs-heading">
       <form id="review-form" novalidate>
-        <div class="section-heading"><div><p class="eyebrow">01 / DEFINE THE COMPARISON</p><h2 id="inputs-heading">What are you reviewing?</h2></div><span class="tag">One target · one agreed unit</span></div>
-        <div class="setup-grid">
-          <div class="panel definition-panel">
-            <label class="field full">Review title<input id="review-title" value="Forecast review" maxlength="160" placeholder="e.g. Monthly revenue forecast review"></label>
-            <div class="form-grid">
-              <label class="field">Target<input id="target" required placeholder="e.g. Monthly revenue" maxlength="120"><small>The quantity each file measures.</small></label>
-              <label class="field">Unit<input id="unit" required placeholder="e.g. USD, decimal rate" maxlength="80"><small>Values must already use this unit.</small></label>
-              <label class="field">Forecast horizon<input id="horizon" type="number" min="1" step="1" value="1" required><small>Declared periods ahead. Dates are not shifted.</small></label>
-              <label class="field">Target transformation<input id="transformation" list="transformations" value="none" required maxlength="80"><datalist id="transformations"><option value="none"></option><option value="log"></option><option value="logit"></option><option value="difference"></option></datalist><small>Describe supplied values; no conversion is applied.</small></label>
+        <nav id="input-progress" class="input-progress" aria-label="准备进度"><button id="setup-files" type="button" class="active">1 选择文件和字段</button><span aria-hidden="true">→</span><button id="setup-settings" type="button">2 确认范围与单位</button></nav>
+        <section id="review-file-step" data-input-panel="files">
+          <div class="section-heading"><div><h2 id="inputs-heading">先选实际值，再选预测表</h2><p class="muted">每份文件至少需要日期和数值两列。读入后，请核对工具建议的列。</p></div><span class="file-types">CSV · XLSX</span></div>
+          <div id="actual-source"></div>
+          <div class="source-subheading"><h3>预测结果 <span id="candidate-count" class="count-badge">1 / 5</span></h3><button id="add-candidate" class="button button-small" type="button">＋ 再加一份预测</button></div>
+          <div id="candidate-sources" class="source-stack"></div>
+          <div id="baseline-source"></div>
+          <button id="add-baseline" class="baseline-add" type="button"><span aria-hidden="true">＋</span><span><strong>添加基线预测（可选）</strong><small>例如现用模型的结果，用来衡量改进。</small></span></button>
+          <div class="action-bar"><p>下一步只需确认要比较的期间和数值含义。</p><button id="setup-next" class="button button-primary" type="button">确认文件，下一步 →</button></div>
+        </section>
+        <section id="review-settings-step" data-input-panel="settings" hidden>
+          <div class="section-heading"><div><h2>确认比较范围与单位</h2><p id="setup-summary" class="muted"></p></div><button id="setup-back" class="button button-small" type="button">← 修改文件或字段</button></div>
+          <div class="setup-grid">
+            <div class="panel definition-panel">
+              <div class="form-grid">
+                <label class="field">比较的是什么<input id="target" required placeholder="例如：每月收入" maxlength="120"><small>所有文件应描述同一个目标。</small></label>
+                <label class="field">数值单位<input id="unit" required placeholder="例如：港元、件、十进制概率" maxlength="80"><small>请确认原文件已使用此单位；工具不换算。</small></label>
+                <label class="field">提前多少期预测<input id="horizon" type="number" min="1" step="1" value="1" required><small>例如提前 1 个月。文件日期仍是被预测的月份。</small></label>
+              </div>
+              <details class="setup-advanced"><summary>报告名称与数值变换</summary><label class="field">报告名称<input id="review-title" value="预测结果复核" maxlength="160"></label><label class="field">输入值的变换<input id="transformation" list="transformations" value="none" required maxlength="80"><datalist id="transformations"><option value="none"></option><option value="log"></option><option value="logit"></option><option value="difference"></option></datalist><small>none 表示未变换；这里只声明输入含义，不做转换。</small></label></details>
             </div>
-            <div class="definition-footer"><span class="muted">Each source has its own declaration below.</span><button id="copy-definition" class="text-button" type="button">Use this definition for all files <span aria-hidden="true">↓</span></button></div>
+            <div class="panel scope-panel"><h3>原本预期收到的完整范围</h3><p class="muted compact">不要只填各文件共有的期间；缺失日期需要保留下来。</p>
+              <label class="field">数据频率<select id="frequency"><option value="monthly">每月</option><option value="quarterly">每季</option><option value="daily">每天</option></select></label>
+              <div class="form-grid"><label class="field">开始期间<input id="scope-start" required placeholder="2024-01" aria-describedby="period-help"></label><label class="field">结束期间<input id="scope-end" required placeholder="2024-12" aria-describedby="period-help"></label></div><p class="field-help" id="period-help">格式 YYYY-MM，包含开始和结束月。</p>
+              <details id="entity-scope-options" class="setup-advanced"><summary>比较多个实体／序列（可选）</summary><label class="field">完整实体 ID 清单<textarea id="entities" rows="3" placeholder="每行一个准确 ID" aria-describedby="entity-help"></textarea></label><p id="entity-help" class="field-help">使用清单时，每份文件都须选择实体 ID 列。前导零和空格有含义。</p></details>
+            </div>
           </div>
-          <div class="panel scope-panel">
-            <h3>Expected scope</h3><p class="muted compact">Set the full range you expected to receive. Missing rows remain part of the review.</p>
-            <label class="field">Frequency<select id="frequency"><option value="monthly">Monthly</option><option value="quarterly">Quarterly</option><option value="daily">Daily</option></select></label>
-            <div class="form-grid"><label class="field">Start period<input id="scope-start" required placeholder="2024-01" aria-describedby="period-help"></label><label class="field">End period<input id="scope-end" required placeholder="2024-12" aria-describedby="period-help"></label></div>
-            <p class="field-help" id="period-help">Use YYYY-MM. Both endpoints are included.</p>
-            <label class="field">Entity IDs <span class="optional">if comparing multiple series</span><textarea id="entities" rows="3" placeholder="One exact ID per line" aria-describedby="entity-help"></textarea></label><p id="entity-help" class="field-help">Map an entity column in every file when using this list. Leading zeros and spaces matter. Leave empty for one series.</p>
-          </div>
-        </div>
-
-        <div class="section-heading source-section-heading"><div><p class="eyebrow">02 / BRING YOUR OWN FILES</p><h2>Actuals, candidates & a reference</h2><p class="muted">Select files, confirm column mappings, and declare what each table contains.</p></div><span class="file-types">CSV <span>·</span> XLSX</span></div>
-        <div id="actual-source"></div>
-        <div class="source-subheading"><h3>Candidate forecasts <span id="candidate-count" class="count-badge">1 / 5</span></h3><button id="add-candidate" class="button button-small" type="button">＋ Add candidate</button></div>
-        <div id="candidate-sources" class="source-stack"></div>
-        <div id="baseline-source"></div>
-        <button id="add-baseline" class="baseline-add" type="button"><span aria-hidden="true">＋</span><span><strong>Add a baseline</strong><small>Optional: a supplied benchmark forecast to measure improvement against.</small></span></button>
-
-        <details class="panel segments-panel"><summary><span><strong>Review specific periods</strong><span class="optional">Optional</span></span><span class="muted">Compare the same sample within chosen date ranges</span></summary><div id="segments"></div><button id="add-segment" class="text-button" type="button">＋ Add a period segment</button></details>
-        <div class="action-bar"><div><strong>Coverage comes first.</strong><p>You will review exclusions before accepting the sample used for metrics.</p></div><button id="run-review" class="button button-primary" type="submit">Check coverage <span aria-hidden="true">→</span></button></div>
+          <div class="panel declaration-confirmation"><h3>确认各文件实际使用的含义</h3><p class="muted">只有确认所有文件的目标、单位、期限、频率和变换一致后，再应用上面的说明。也可分别填写，含义冲突会阻止数值比较。</p><button id="copy-definition" class="button" type="button">我确认一致，应用到所有文件</button><div id="source-declarations"></div></div>
+          <details class="panel segments-panel"><summary><strong>单独查看某些期间（可选）</strong><span class="muted">例如旺季与淡季</span></summary><div id="segments"></div><button id="add-segment" class="text-button" type="button">＋ 添加期间</button></details>
+          <div class="action-bar"><div><strong>先检查缺失，再决定比较样本。</strong><p>下一页会列出被排除的记录，等待你明确接受共同样本。</p></div><button id="run-review" class="button button-primary" type="submit">检查可比较的样本 →</button></div>
+        </section>
       </form>
     </section>
 
     <section id="panel-coverage" class="stage-panel hidden" aria-labelledby="coverage-heading">
-      <div class="section-heading"><div><p class="eyebrow">02 / UNDERSTAND THE SAMPLE</p><h2 id="coverage-heading">What can fairly be compared?</h2><p id="coverage-context" class="muted"></p></div><button class="button button-small" type="button" data-go-inputs>Edit inputs</button></div>
+      <div class="section-heading"><div><p class="eyebrow">检查样本</p><h2 id="coverage-heading">哪些记录可以公平比较？</h2><p id="coverage-context" class="muted"></p></div><button class="button button-small" type="button" data-go-inputs>修改输入</button></div>
       <div id="stale-coverage"></div>
       <div id="coverage-summary" class="stat-grid"></div>
       <div id="contract-errors"></div>
-      <div class="panel"><div class="panel-heading"><div><h3>Coverage by forecast</h3><p class="muted compact">These counts use the full expected period and entity scope.</p></div><span class="tag">Coverage before performance</span></div><div id="coverage-table" class="table-wrap"></div></div>
+      <div class="panel"><div class="panel-heading"><div><h3>每份预测的覆盖情况</h3><p class="muted compact">以下数量以你声明的完整期间和实体范围为准。</p></div><span class="tag">先看覆盖，再比误差</span></div><div id="coverage-table" class="table-wrap"></div></div>
       <div id="acceptance" class="acceptance-panel"></div>
-      <details id="available-panel" class="panel available-panel"><summary><span><strong>Each forecast’s own available sample</strong><span class="tag tag-warning">Not comparable across models</span></span></summary><p class="muted">These metrics can use different rows. A lower error here cannot establish that one forecast is better than another. Use the accepted common sample for comparison.</p><div id="available-metrics" class="table-wrap"></div></details>
-      <div class="section-heading"><div><h3>Inspect exclusions and original rows</h3><p class="muted">Nothing is repaired, filled with zero, or paired arbitrarily.</p></div></div>
+      <details id="available-panel" class="panel available-panel"><summary><span><strong>各自可用样本的指标</strong><span class="tag tag-warning">不能直接横向比较</span></span></summary><p class="muted">这些指标可能使用不同的记录，误差较低不能说明模型更好。请以确认后的共同样本作比较。</p><div id="available-metrics" class="table-wrap"></div></details>
+      <div class="section-heading"><div><h3>查看排除原因和原始行</h3><p class="muted">缺失不会填零，重复记录不会随意配对。</p></div></div>
       <div id="diagnostics-coverage"></div>
-      <div class="action-bar"><div><strong id="coverage-next-label">Accept a common sample to continue.</strong><p id="coverage-next-help">All candidates and the optional baseline will use those exact rows.</p></div><button id="go-review" class="button button-primary" type="button" disabled>Review results <span aria-hidden="true">→</span></button></div>
+      <div class="action-bar"><div><strong id="coverage-next-label">确认共同样本后继续。</strong><p id="coverage-next-help">所有预测和基线将使用完全相同的记录。</p></div><button id="go-review" class="button button-primary" type="button" disabled>查看比较结果 <span aria-hidden="true">→</span></button></div>
     </section>
 
     <section id="panel-review" class="stage-panel hidden" aria-labelledby="results-heading">
-      <div class="section-heading"><div><p class="eyebrow">03 / FORM YOUR VIEW</p><h2 id="results-heading">The evidence, side by side.</h2><p id="review-context" class="muted"></p></div><button id="back-coverage" class="button button-small" type="button">Review sample</button></div>
+      <div class="section-heading"><div><p class="eyebrow">查看结果</p><h2 id="results-heading">在相同样本上比较预测</h2><p id="review-context" class="muted"></p></div><button id="back-coverage" class="button button-small" type="button">返回样本检查</button></div>
       <div id="stale-review"></div>
       <div id="results-content"></div>
-      <div class="section-heading notes-heading"><div><h2>Your review notes</h2><p class="muted">Keep the evidence and your judgement distinct. No model is selected automatically.</p></div><span class="tag">Human judgement</span></div>
+      <div class="section-heading notes-heading"><div><h2>记录复核意见（可选）</h2><p class="muted">意见与计算结果分别保留，工具不会自动批准模型。</p></div><span class="tag">人工判断</span></div>
       <div id="notes" class="notes-grid"></div>
-      <div class="panel sources-panel"><details><summary><strong>Sources, declarations & limitations</strong></summary><div id="source-metadata"></div></details></div>
-      <div class="action-bar export-bar"><div><strong>Keep a review you can trace.</strong><p id="export-help">Download results, source references, diagnostics and your notes as one ZIP.</p><small class="muted">The download contains selected source values; share it with the same care as your inputs.</small></div><button id="export-review" class="button button-primary" type="button">Download review ZIP <span aria-hidden="true">↓</span></button></div>
+      <div class="panel sources-panel"><details><summary><strong>来源、声明与适用范围</strong></summary><div id="source-metadata"></div></details></div>
+      <div class="action-bar export-bar"><div><strong>把结果与依据一起保存。</strong><p id="export-help">下载结果、来源、逐行诊断及意见。</p><small class="muted">下载包含来源数值，请按原文件的敏感程度保管。</small></div><button id="export-review" class="button button-primary" type="button">下载完整复核包 <span aria-hidden="true">↓</span></button></div>
     </section>
-    <footer class="app-footer"><span>Forecast review workbench</span><span>Independent checks. Explicit assumptions. Your decision.</span><span>Local processing only</span></footer>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>保留缺口与假设，由你判断。</span><span>仅在本机处理</span></footer>
   </main>
 </body>
 </html>

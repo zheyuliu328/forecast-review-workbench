@@ -44,7 +44,7 @@
   function table(headers, rows) {
     return el("div", {className: "table-wrap", tabindex: "0", "aria-label": "Scrollable data table"}, el("table", {}, [
       el("thead", {}, el("tr", {}, headers.map(function (label) { return el("th", {}, label); }))),
-      el("tbody", {}, rows.length ? rows : el("tr", {}, el("td", {colspan: headers.length, className: "empty-state"}, "No rows in this view.")))
+      el("tbody", {}, rows.length ? rows : el("tr", {}, el("td", {colspan: headers.length, className: "empty-state"}, "当前没有符合条件的记录。")))
     ]));
   }
   function stat(label, value, detail, emphasis) { return el("div", {className: "stat-card" + (emphasis ? " emphasis" : "")}, [el("div", {className: "stat-label"}, label), el("div", {className: "stat-value"}, text(value)), el("div", {className: "stat-description"}, detail)]); }
@@ -96,39 +96,48 @@
       const disabled = item.loading;
       const fileInput = el("input", {type: "file", id: item.id + "-file", accept: ".csv,.xlsx", disabled: disabled, onchange: function (event) { if (event.target.files[0]) readFile(event.target.files[0]); }});
       const body = el("div", {className: "source-body"}, [
-        el("div", {className: "source-file-line"}, [
           el("div", {className: "file-control"}, [
             el("span", {className: "file-symbol", "aria-hidden": "true"}, "▤"),
-            el("div", {}, [el("span", {className: "file-name"}, item.file ? item.file.name : "Choose a CSV or Excel file"), el("span", {className: "file-detail"}, "Up to 10 MiB · original file stays unchanged")]),
-            el("label", {className: "button file-choose", for: item.id + "-file"}, [item.file ? "Replace" : "Choose file", fileInput])
-          ]),
-          field("Worksheet", select([{value: "", label: item.file && /\.csv$/i.test(item.file.name) ? "CSV · no worksheet" : "Choose a worksheet"}].concat(item.sheets), item.sheet, function (event) {
-            item.sheet = event.target.value || null; item.headers = []; item.preview = []; changed(); inspect();
-          }, {id: item.id + "-sheet", disabled: disabled || !item.file || /\.csv$/i.test(item.file.name)})),
-          field("Header row", el("input", {id: item.id + "-header-row", type: "number", min: 1, step: 1, value: item.header_row, disabled: disabled || !item.file,
-            oninput: function (event) { item.header_row = Number(event.target.value); item.error = "Read the selected header to update columns."; item.headers = []; changed(); },
-            onchange: function () { inspect(); }}))
-        ])
+            el("div", {}, [el("span", {className: "file-name"}, item.file ? item.file.name : "选择 CSV 或 Excel 文件"), el("span", {className: "file-detail"}, "不超过 10 MiB · 原文件保持不变")]),
+            el("label", {className: "button file-choose", for: item.id + "-file"}, [item.file ? "更换文件" : "选择文件", fileInput])
+          ])
       ]);
-      if (item.file) body.appendChild(el("div", {className: "source-extra-controls"}, button("Read selected header ↻", inspect, {className: "text-button", disabled: disabled})));
-      if (item.loading) body.appendChild(el("p", {className: "source-status loading", role: "status"}, "Reading the selected table…"));
+      if (item.file) {
+        const isCsv = /\.csv$/i.test(item.file.name);
+        const options = el("details", {className: "table-options", id: item.id + "-table-options", open: Boolean(item.error || (!isCsv && !item.sheet))}, [
+          el("summary", {}, isCsv ? "表头不在第 1 行？调整读取位置" : "工作表与表头 · " + (item.sheet || "请选择工作表") + " · 第 " + item.header_row + " 行"),
+          el("div", {className: "form-grid"}, [
+          el("div", {hidden: isCsv}, field("工作表", select([{value: "", label: "选择工作表"}].concat(item.sheets), item.sheet, function (event) {
+            item.sheet = event.target.value || null; item.headers = []; item.preview = []; changed(); inspect();
+          }, {id: item.id + "-sheet", disabled: disabled || isCsv}))),
+          field("表头所在行", el("input", {id: item.id + "-header-row", type: "number", min: 1, step: 1, value: item.header_row, disabled: disabled,
+            oninput: function (event) { item.header_row = Number(event.target.value); item.error = "请重新读取当前表头。"; item.headers = []; changed(); },
+            onchange: function () { inspect(); }}))
+          ]), button("重新读取表头 ↻", inspect, {className: "text-button", disabled: disabled})
+        ]);
+        body.appendChild(options);
+      }
+      if (item.loading) body.appendChild(el("p", {className: "source-status loading", role: "status"}, "正在读取所选表格…"));
       if (item.error) body.appendChild(el("p", {className: "source-status error", role: "status"}, item.error));
-      if (opts.mapping) body.appendChild(opts.mapping(item, disabled));
-      if (item.headers.length || item.preview.length) body.appendChild(el("details", {className: "extension-preview"}, [
-        el("summary", {}, "Preview selected table · " + text(item.row_count) + " nonempty rows"),
+      if (opts.mapping && item.headers.length) {
+        body.appendChild(el("p", {className: "mapping-suggestion"}, "已按列名建议字段，请对照预览确认；建议不代表已核实含义。"));
+        body.appendChild(opts.mapping(item, disabled));
+      }
+      if (item.headers.length || item.preview.length) body.appendChild(el("details", {className: "extension-preview", open: true}, [
+        el("summary", {}, "查看前 5 行 · 共 " + text(item.row_count) + " 个非空行"),
         table(item.headers, item.preview.slice(0, 5).map(function (row) { return el("tr", {}, row.map(function (value) { return cell(value); })); }))
       ]));
       host.replaceChildren(el("article", {className: "source-card", "aria-label": item.name}, [
         el("div", {className: "source-head"}, [
           el("div", {className: "source-heading"}, [el("span", {className: "source-letter"}, opts.letter || "F"), el("div", {}, [el("h3", {}, item.name), opts.caption ? el("span", {className: "role-caption"}, opts.caption) : null])]),
-          badge(item.loading ? "Reading file…" : item.error ? "Needs attention" : item.headers.length ? text(item.row_count) + " rows" : "Choose a file", item.error ? "warning" : item.headers.length ? "success" : "")
+          badge(item.loading ? "读取中…" : item.error ? "请检查" : item.headers.length ? text(item.row_count) + " 行" : "等待选择", item.error ? "warning" : item.headers.length ? "success" : "")
         ]), body
       ]));
       if (opts.updated) opts.updated();
     }
     async function inspect() {
-      if (!item.file || !Number.isInteger(item.header_row) || item.header_row < 1) { item.error = "Set a positive whole-number header row."; render(); return; }
-      item.epoch += 1; const epoch = item.epoch; item.loading = true; item.error = ""; render();
+      if (!item.file || !Number.isInteger(item.header_row) || item.header_row < 1) { item.error = "表头行号须为正整数。"; render(); return; }
+      item.epoch += 1; const epoch = item.epoch; item.loading = true; item.error = ""; changed(); render();
       try {
         const data = await api("/api/inspect", {file: item.file, sheet: item.sheet, header_row: item.header_row});
         if (epoch !== item.epoch) return;
@@ -139,7 +148,7 @@
       finally { if (epoch === item.epoch) { item.loading = false; render(); } }
     }
     async function readFile(file) {
-      if (!/\.(csv|xlsx)$/i.test(file.name)) { message("Choose a UTF-8 CSV or .xlsx file.", true); return; }
+      if (!/\.(csv|xlsx)$/i.test(file.name)) { message("请选择 UTF-8 CSV 或 .xlsx 文件。", true); return; }
       if (file.size > 10 * 1024 * 1024) { message(file.name + " exceeds 10 MiB. Choose a smaller values-only extract.", true); return; }
       clearMessages(); item.epoch += 1; const epoch = item.epoch;
       item.file = null; item.sheet = null; item.sheets = []; item.headers = []; item.preview = []; item.error = ""; item.loading = true;
@@ -159,12 +168,50 @@
     render();
     return {render: render, inspect: inspect};
   }
-  function columns(item, emptyLabel) { return [{value: "", label: emptyLabel || "Choose a column"}].concat(item.headers); }
+  function columns(item, emptyLabel) { return [{value: "", label: emptyLabel || "选择列"}].concat(item.headers); }
+  function setupFlow(options) {
+    const form = document.getElementById(options.formId);
+    const next = document.getElementById("setup-next"), back = document.getElementById("setup-back");
+    const fileStep = document.getElementById("setup-files"), settingsStep = document.getElementById("setup-settings");
+    let current = "files", locked = false;
+    function show(step, scroll) {
+      current = step;
+      form.querySelectorAll("[data-input-panel]").forEach(function (panel) { panel.hidden = panel.dataset.inputPanel !== step; });
+      [[fileStep, "files"], [settingsStep, "settings"]].forEach(function (pair) {
+        pair[0].classList.toggle("active", pair[1] === step);
+        if (pair[1] === step) pair[0].setAttribute("aria-current", "step");
+        else pair[0].removeAttribute("aria-current");
+      });
+      const summary = document.getElementById("setup-summary");
+      if (summary && options.summary) summary.textContent = options.summary();
+      if (scroll) {
+        document.getElementById("input-progress").scrollIntoView({behavior: "smooth", block: "start"});
+        const heading = form.querySelector('[data-input-panel="' + step + '"] h2');
+        if (heading) { heading.tabIndex = -1; heading.focus({preventScroll: true}); }
+      }
+    }
+    function advance() {
+      if (locked) return;
+      clearMessages();
+      try { options.validateFiles(); show("settings", true); }
+      catch (error) { message(error.message, true); }
+    }
+    next.addEventListener("click", advance);
+    settingsStep.addEventListener("click", advance);
+    [back, fileStep].forEach(function (control) { control.addEventListener("click", function () { if (!locked) show("files", true); }); });
+    show("files", false);
+    return {show: show, next: advance, current: function () { return current; }, update: function (busy) {
+      locked = Boolean(busy);
+      [next, back, fileStep, settingsStep].forEach(function (control) { control.disabled = locked; });
+      const summary = document.getElementById("setup-summary");
+      if (summary && options.summary) summary.textContent = options.summary();
+    }};
+  }
   function requireSource(item) {
-    if (!item.file) throw new Error("Choose a file for " + item.name + ".");
-    if (item.loading) throw new Error("Wait for " + item.name + " to finish reading.");
+    if (!item.file) throw new Error("请先选择文件：" + item.name + ".");
+    if (item.loading) throw new Error("请等待 " + item.name + " 读取完成。");
     if (item.error) throw new Error(item.name + ": " + item.error);
-    if (!item.headers.length) throw new Error("Confirm the worksheet and header row for " + item.name + ".");
+    if (!item.headers.length) throw new Error("请确认工作表和表头行：" + item.name + ".");
   }
   function pagedTable(host, rows, columnsSpec, options) {
     const opts = options || {}; let page = 0, query = "", pageSize = 25;
@@ -190,5 +237,5 @@
     render();
   }
   window.WorkbenchUI = {el: el, button: button, field: field, select: select, text: text, number: number, cell: cell, table: table, stat: stat, badge: badge,
-    clearMessages: clearMessages, message: message, api: api, download: download, source: source, restoreSource: restoreSource, fileCard: fileCard, columns: columns, requireSource: requireSource, pagedTable: pagedTable};
+    clearMessages: clearMessages, message: message, api: api, download: download, source: source, restoreSource: restoreSource, fileCard: fileCard, columns: columns, requireSource: requireSource, pagedTable: pagedTable, setupFlow: setupFlow};
 })();
