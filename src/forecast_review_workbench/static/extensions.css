@@ -6,11 +6,21 @@
 @media(max-width:760px){.task-picker{gap:7px}.task-picker a{padding:9px}.task-picker a strong{font-size:12px;line-height:1.6}.task-picker a small{display:none}.first-use-intro{padding:21px 0 17px}.first-use-intro h1{font-size:25px;letter-spacing:0;margin-bottom:8px}.first-use-intro .lead{font-size:12px}.local-explanation{font-size:10px;margin-top:10px}.input-progress{gap:10px;padding:10px 12px}.input-progress button{font-size:12px}.setup-advanced>.form-grid{grid-template-columns:1fr 1fr}.table-options>.form-grid{grid-template-columns:1fr 1fr}.declaration-confirmation .button{width:100%;font-size:12px}.first-use-intro~.step-nav{margin-bottom:16px}.local-explanation br{display:none}}
 
 /* Compact working surfaces and readable guidance. */
-:root{--radius:6px;--shadow:none;--canvas:#f8f9f8;--muted:#53655e}
+:root{--radius:6px;--shadow:none;--canvas:#fff;--surface:#fff;--soft:#f6f7f8;--ink:#243238;--muted:#556168;--line:#dce1e3;--accent:#345c70;--accent-dark:#243f4d;--teal-soft:#edf3f5}
 .app-header{min-height:72px;height:auto;padding-top:14px;padding-bottom:14px;background:#fff}
-.brand-mark{border-radius:5px}.brand-subtitle{letter-spacing:1px}.status-dot{box-shadow:none}
+.brand{font-size:18px;letter-spacing:0}.status-dot{display:none}
 .step-nav,.source-card,.panel,.note-card{border-radius:6px;box-shadow:none}
 .field,.field small,.field-help,.file-detail,.source-heading .role-caption{font-size:12px;color:#53655e}
 .step small,.stat-label,.stat-description{font-size:12px}.runtime-status{position:sticky;top:0;z-index:20;padding:12px 16px;border:1px solid var(--line);background:#fff;display:flex;align-items:center;justify-content:space-between;gap:15px;margin-top:15px}.runtime-status[hidden]{display:none}
 .app-footer{font-size:12px;gap:14px;flex-wrap:wrap}.app-footer a{white-space:nowrap}
 @media(max-width:760px){.task-picker a{padding:10px}.task-picker small{font-size:11px}.app-header{padding:14px 20px}.brand-subtitle{display:none}.form-grid{grid-template-columns:1fr}.input-progress{flex-wrap:wrap}.source-heading{min-width:0}.source-heading h3{overflow-wrap:anywhere}.runtime-status{font-size:12px}.app-footer{font-size:11px}}
+
+/* Navigation and progress remain compact beside the working data. */
+.task-picker{gap:24px;padding-top:0;border-bottom:1px solid var(--line)}
+.task-picker a{border:0;border-bottom:2px solid transparent;border-radius:0;background:none;padding:15px 0}
+.task-picker a[aria-current="page"]{background:none;border-bottom-color:var(--accent)}
+.input-progress{padding:8px 0;background:none;border:0;border-bottom:1px solid var(--line);border-radius:0}
+.panel,.source-card,.note-card{border-radius:4px}
+.first-use-intro h1{font-size:26px;font-weight:650;letter-spacing:0}
+.source-head{background:#fafbfc}
+@media(max-width:760px){.task-picker{gap:14px}.task-picker a{padding:12px 0}.first-use-intro h1{font-size:23px}.input-progress{padding:8px 0}}

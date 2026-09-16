@@ -83,7 +83,7 @@ const {chromium} = require("playwright");
     await page.locator("#note-text-model-a").fill("Three shared periods support this comparison; obtain the missing fifth-month prediction before judging full-scope performance.");
     await screenshot("review");
     const reviewZip=await download("#export-review","real-file-review");
-    execFileSync(python,[path.join(__dirname,"verify_browser_export.py"),reviewZip,output]);
+    execFileSync(python,[path.join(__dirname,"verify_browser_export.py"),reviewZip,output,"--browser"]);
     await page.locator("#step-inputs").click();await page.locator("#unit").fill("different unit");
     assert(await page.locator("#export-review").isDisabled());
     const blocked=await action("/api/review",()=>page.locator("#run-review").click());
@@ -106,6 +106,10 @@ const {chromium} = require("playwright");
 
     await page.goto(url+"/reconcile");await page.locator("#example-button").click();await ready("#example-button");
     await page.locator("#setup-next").click();assert.equal(await page.locator("#additive").isChecked(),false);
+    await page.locator("#reconcile-button").click();
+    await page.locator("#error").filter({hasText:"explicit confirmation"}).waitFor();
+    assert.equal(await page.evaluate(()=>window.__started.filter(x=>x==="/api/reconcile").length),0);
+    await openDetails("#additive");await page.locator("#additive").check();
     const reconciliation=await action("/api/reconcile",()=>page.locator("#reconcile-button").click());
     await ready("#reconcile-export");await screenshot("reconciliation");await download("#reconcile-export","reconciliation");
     fs.writeFileSync(path.join(output,"reconciliation-result.json"),JSON.stringify(reconciliation));
@@ -124,7 +128,7 @@ const {chromium} = require("playwright");
       await page.locator("#error").filter({hasText:"文件没有上传"}).waitFor();
       const input=route==="/"?"#actual-file":route.includes("experiments")?"#training-file":"#left-file";
       await page.locator(input).setInputFiles(path.join(output,"actual.csv"));
-      await page.getByText("浏览器计算组件未能加载。请刷新后重试；文件没有上传。",{exact:true}).first().waitFor();
+      await page.locator(".source-status.error").filter({hasText:"浏览器计算组件未能加载"}).first().waitFor();
     }
     assert.deepEqual(uploads,[]);assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
     // Every ZIP's added runtime metadata and existing files must match its manifest.

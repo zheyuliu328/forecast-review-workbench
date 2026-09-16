@@ -15,7 +15,7 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到操作区</a>
-  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">试用示例 ↗</button></div></header>
+  <header class="app-header"><a class="brand" href="/"><span>预测审阅</span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">试用示例</button></div></header>
   <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments" aria-current="page"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
   <main id="main">
     <section class="intro first-use-intro"><div><h1>用月度历史试建模型</h1><p class="lead">先选一份历史表，指定实际值和特征。工具比较回归候选，把较晚的留出期单独保留。</p></div><p class="local-explanation">文件只在本机处理 · 不修改原件<br>支持 CSV、Excel，无需账号</p></section>
@@ -56,7 +56,7 @@
       <div class="extension-stage-actions"><div><strong>保存完整实验。</strong><p>包含当前阶段的全部候选、拟合、预测及逐行诊断。</p></div><div class="export-actions"><button id="experiment-export" class="button button-primary" type="button">下载完整实验包 ↓</button></div></div>
       <p id="experiment-fingerprint" class="run-fingerprint"></p>
     </section>
-    <footer class="app-footer"><span>Forecast review workbench</span><span>先开发，再揭示留出期，由你复核。</span><span>仅在本机处理</span></footer>
+    <footer class="app-footer"><span>预测审阅</span><span>开发期与留出期分别计算。</span><span>仅在本机处理</span></footer>
   </main>
 </body>
 </html>

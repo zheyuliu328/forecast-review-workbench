@@ -10,7 +10,7 @@ from decimal import Decimal
 from pathlib import Path
 
 
-def verify(zip_path, output):
+def verify(zip_path, output, browser=False):
     output = Path(output)
     with zipfile.ZipFile(zip_path) as bundle:
         result = json.loads(bundle.read("results.json"))
@@ -41,8 +41,15 @@ def verify(zip_path, output):
             "config.json",
             "manifest.json",
         }
+        if browser:
+            expected.add("browser-build.json")
         assert set(bundle.namelist()) == expected
         manifest = json.loads(bundle.read("manifest.json"))
+        assert set(manifest["files_sha256"]) == expected - {"manifest.json"}
+        if browser:
+            runtime = json.loads(bundle.read("browser-build.json"))
+            assert runtime["pyodide_version"] == "314.0.6"
+            assert manifest["execution"] == "Browser-local Pyodide Worker; input files are not uploaded."
         for name, fingerprint in manifest["files_sha256"].items():
             assert hashlib.sha256(bundle.read(name)).hexdigest() == fingerprint
         destination = output / "unpacked"
@@ -52,4 +59,4 @@ def verify(zip_path, output):
 
 
 if __name__ == "__main__":
-    verify(sys.argv[1], sys.argv[2])
+    verify(sys.argv[1], sys.argv[2], browser="--browser" in sys.argv[3:])
