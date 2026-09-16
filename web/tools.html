@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><meta name="description" content="按任务选择预测审阅和表格对账，查看全部项目的实际发布状态。"><title>工具与发布状态</title><link rel="stylesheet" href="/static/styles.css"><link rel="stylesheet" href="/static/extensions.css"><link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23203430'/%3E%3Cpath d='M8 10h16M8 16h16M8 22h10' stroke='white' stroke-width='2'/%3E%3C/svg%3E"></head>
+<body><a class="skip-link" href="#main">跳到工具列表</a><header class="app-header"><a href="/" class="brand">预测审阅</a><a href="https://github.com/zheyuliu328/risk-practice-portfolio">作品与案例</a></header><main id="main">
+<section class="intro first-use-intro"><div><h1>选择你要完成的工作</h1><p class="lead">两个工具可以直接在网页使用。其余项目保留本地运行、实验或学习用途。</p></div></section>
+<section class="panel"><h2>比较实际值和预测</h2><p>选择 CSV 或 Excel，检查遗漏和样本范围，在共同样本上比较误差，下载复核报告。</p><p><a class="button button-primary" href="/">打开预测审阅</a></p><p><a href="/experiments/">用历史数据试建模型</a> · <a href="/reconcile/">核对逐笔结果和上报总额</a></p></section>
+<section class="panel"><h2>找出两份表的差异</h2><p>对应编号和数值列，定位金额差异、遗漏、重复编号和币种冲突。</p><a class="button button-primary" href="https://table-check-zheyuliu.mystic-pear-2111.chatgpt.site/">打开表格对账</a></section>
+<section class="panel"><h2>当前发布状态</h2><p>更新：2026-09-16。公开可用表示已发布和经过软件流程检查；外部真人独立使用与重复使用效果仍待验证。</p><div class="table-wrap"><table><thead><tr><th>项目</th><th>状态</th><th>用途与边界</th></tr></thead><tbody>
+<tr><td>预测审阅</td><td>公开网页</td><td>比较预测、开发期实验、逐笔对账；结果不能自动批准模型。</td></tr>
+<tr><td>表格对账</td><td>公开网页</td><td>文件差异核对；不会计算 Excel 公式或自动换算汇率。</td></tr>
+<tr><td><a href="https://github.com/zheyuliu328/model-risk-lab">Model Risk Lab</a></td><td>本地专业实验</td><td>回归及 FX 敏感度校验，也是预测审阅的计算基础。</td></tr>
+<tr><td><a href="https://github.com/zheyuliu328/risk-var-dashboard">VaR 工具</a></td><td>本地工具</td><td>单资产风险估计和回测，未作为独立网页发布。</td></tr>
+<tr><td><a href="https://github.com/zheyuliu328/algorithmic-credit-risk-engine">CreditOne</a></td><td>未完成的研究原型</td><td>通用模型验证、部分 ECL 等功能仍有缺口。</td></tr>
+<tr><td><a href="https://github.com/zheyuliu328/risk-practice-portfolio">Risk Practice Portfolio</a></td><td>作品与案例入口</td><td>可复算练习、审阅案例和学习路线，不能当作多个成熟产品。</td></tr>
+</tbody></table></div></section>
+<section class="panel"><h2>文件如何处理</h2><p>两个网页工具均在浏览器内计算，无需注册。预测审阅每份文件最多 10 MiB、10,000 行、100 列；表格对账每份最多 8 MiB。首次使用需要下载计算组件，处理超过两分钟会停止。</p><p>预测审阅的实验转入比较流程时，会在当前标签页临时保存转换结果，目标页读取后删除。刷新会丢失当前结果，请及时下载。实验和金融对账的 ZIP 包含完整原文件，请按原文件的敏感程度保管。</p></section>
+<footer class="app-footer"><a href="/">返回预测审阅</a><a href="https://github.com/zheyuliu328/risk-practice-portfolio/blob/main/catalog/RELEASE_STATUS.zh-CN.md">全部项目状态</a><a href="/THIRD_PARTY_NOTICES.txt">开源许可</a></footer></main></body></html>

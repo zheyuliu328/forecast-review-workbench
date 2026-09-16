@@ -1,5 +1,10 @@
 # Verification record
 
+## Browser release work — 2026-09-16
+
+See [0.3 public browser release](WEB_RELEASE.md). The dated 0.2 records below remain historical evidence, not a fresh re-run of those versions.
+
+
 Release 0.2.0, 2026-09-09. This record describes software checks on invented fixtures. It does not establish predictive skill, source authenticity, model approval or adoption by users.
 
 ## Current extension checks

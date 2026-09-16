@@ -48,28 +48,39 @@ const {chromium} = require("playwright");
     page.on("pageerror", error => errors.push(error.message));
     page.on("response", response => { if (response.url().includes("/api/") && response.status() >= 400) apiErrors.push([response.url(), response.status()]); });
     await page.goto(url);
-    await page.locator("#review-title").fill("Independent five-period review");
-    await page.locator("#target").fill("Illustrative demand");
-    await page.locator("#unit").fill("units");
-    await page.locator("#scope-start").fill("2025-01");
-    await page.locator("#scope-end").fill("2025-05");
-    await page.locator("#copy-definition").click();
+    assert.equal(await page.locator("#review-file-step").isVisible(), true, "File selection must be the first step");
+    assert.equal(await page.locator("#review-settings-step").isVisible(), false, "Settings must not overwhelm the initial file step");
+    async function openDetailsFor(selector) {
+      const details = page.locator(selector).locator("xpath=ancestor::details[1]");
+      if (await details.count() && !await details.evaluate(node => node.open)) await details.locator("summary").first().click();
+    }
+    async function ready(selector) {
+      await page.waitForFunction(selector => {
+        const node = document.querySelector(selector);
+        return node && !node.disabled;
+      }, selector);
+    }
     await page.locator("#add-candidate").click();
     async function upload(id, name, date, value, sheet, header) {
       await Promise.all([
         page.waitForResponse(response => response.url().endsWith("/api/inspect")),
         page.locator("#" + id + "-file").setInputFiles(path.join(output, name))
       ]);
+      await ready("#" + id + "-header-row");
       if (sheet) {
+        await openDetailsFor("#" + id + "-sheet");
         await Promise.all([
           page.waitForResponse(response => response.url().endsWith("/api/inspect")),
           page.locator("#" + id + "-sheet").selectOption(sheet)
         ]);
+        await ready("#" + id + "-header-row");
+        await openDetailsFor("#" + id + "-header-row");
         await page.locator("#" + id + "-header-row").fill(String(header));
         await Promise.all([
           page.waitForResponse(response => response.url().endsWith("/api/inspect")),
           page.locator("#" + id + "-header-row").press("Tab")
         ]);
+        await ready("#" + id + "-header-row");
       }
       await page.locator("#" + id + "-date").selectOption(date);
       await page.locator("#" + id + "-value").selectOption(value);
@@ -77,6 +88,17 @@ const {chromium} = require("playwright");
     await upload("actual", "actual.csv", "report_month", "realised_units");
     await upload("model-a", "candidate-a.csv", "for_month", "estimate_units");
     await upload("candidate-2", "candidate-b.xlsx", "evaluation_month", "output", "Forecasts", 3);
+    await page.screenshot({path: path.join(output, "files-desktop.png"), fullPage: true});
+    await page.locator("#setup-next").click();
+    assert.equal(await page.locator("#review-file-step").isVisible(), false);
+    assert.equal(await page.locator("#review-settings-step").isVisible(), true);
+    await openDetailsFor("#review-title");
+    await page.locator("#review-title").fill("Independent five-period review");
+    await page.locator("#target").fill("Illustrative demand");
+    await page.locator("#unit").fill("units");
+    await page.locator("#scope-start").fill("2025-01");
+    await page.locator("#scope-end").fill("2025-05");
+    await page.locator("#copy-definition").click();
     await page.screenshot({path: path.join(output, "inputs-desktop.png"), fullPage: true});
     const first = page.waitForResponse(response => response.url().endsWith("/api/review"));
     await page.locator("#run-review").click();
@@ -126,8 +148,7 @@ const {chromium} = require("playwright");
     execFileSync(python, [path.join(__dirname, "verify_browser_export.py"), zipPath, output]);
     // Returning to the exact original setting still requires reconsidering old notes.
     await page.locator("#step-inputs").click();
-    const details = page.locator("#actual-source .source-contract");
-    await details.locator("summary").click();
+    await openDetailsFor("#actual-source-note");
     await page.locator("#actual-source-note").fill("Temporary revised provenance");
     await page.locator("#actual-source-note").fill("");
     await page.locator("#run-review").click();
@@ -144,6 +165,13 @@ const {chromium} = require("playwright");
       await page.locator("#step-" + stage).click();
       assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, stage + " overflows narrow viewport");
       await page.screenshot({path: path.join(output, stage + "-mobile.png"), fullPage: true});
+      if (stage === "inputs") {
+        await page.locator("#setup-back").click();
+        assert.equal(await page.locator("#review-file-step").isVisible(), true);
+        assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true, "File step overflows narrow viewport");
+        await page.screenshot({path: path.join(output, "files-mobile.png"), fullPage: true});
+        await page.locator("#setup-next").click();
+      }
     }
     await page.setViewportSize({width: 1440, height: 1000});
     await page.locator("#step-inputs").click();

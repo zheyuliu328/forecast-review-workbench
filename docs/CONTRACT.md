@@ -1,5 +1,8 @@
 # First-release interface
 
+The public website uses the same calculation and export contracts through a browser-local Worker, with no upload API. The HTTP routes below apply only to the optional installed loopback application. Public requests are capped at 40 MiB; each file retains the 10 MiB / 10,000-row / 100-column bounds. A missing browser transport fails closed. See [browser release and privacy](WEB_RELEASE.md).
+
+
 This is an implementation contract for a local browser tool, not a cloud service. Public data is never fetched at runtime. User-selected file bytes travel only between their browser and a loopback Python process. The process keeps requests in memory; it does not persist inputs. Output is an explicitly downloaded ZIP or a CLI-created new directory.
 
 ## Python boundary

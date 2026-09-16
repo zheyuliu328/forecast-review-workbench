@@ -76,6 +76,13 @@ server.serve_forever()
       const button = document.getElementById("reconcile-button");
       return value && value.value === "Amount" && !value.disabled && button && !button.disabled;
     });
+    assert.equal(await page.locator("#reconcile-file-step").isVisible(), true, "Example must retain the file confirmation step");
+    assert.equal(await page.locator("#reconcile-settings-step").isVisible(), false);
+    await page.locator("#setup-next").click();
+    assert.equal(await page.locator("#reconcile-settings-step").isVisible(), true);
+    const totalsOptions = page.locator("#aggregation-options");
+    if (!await totalsOptions.evaluate(node => node.open)) await totalsOptions.locator("summary").first().click();
+    assert.equal(await page.locator("#additive").isChecked(), false, "Loading an example must not accept additivity");
     await page.locator("#additive").check();
     const response = page.waitForResponse(r => r.url().endsWith("/api/reconcile"));
     await page.locator("#reconcile-button").click();

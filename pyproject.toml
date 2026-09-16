@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "forecast-review-workbench"
-version = "0.2.0"
+version = "0.3.0"
 description = "Local tools for forecast candidate experiments, common-sample review and additive reconciliation"
 readme = "README.md"
 license = "MIT"
