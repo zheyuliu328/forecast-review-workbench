@@ -136,7 +136,7 @@
     const acceptanceCheckbox = $("accept-common-sample");
     if (acceptanceCheckbox && state.result) {
       acceptanceCheckbox.disabled = state.busy || state.dirty || (state.result.contract_errors || []).length > 0 || state.result.summary.common <= 0;
-      acceptanceCheckbox.checked = !state.dirty && Boolean(state.result.accepted_common_sample);
+      if (!state.busy) acceptanceCheckbox.checked = !state.dirty && Boolean(state.result.accepted_common_sample);
     }
     ["inputs", "coverage", "review"].forEach(function (stage) {
       const active = state.stage === stage;
