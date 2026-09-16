@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="__CSRF_TOKEN__">
   <meta name="color-scheme" content="light">
+  <meta name="description" content="选择 CSV 或 Excel，比较预测、检查缺口、核对逐笔结果并下载复核报告。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23203430'/%3E%3Cpath d='M7 23V9m0 14h18M10 20l5-7 4 3 6-9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
   <title>Financial reconciliation · Forecast review workbench</title>
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/extensions.css">
@@ -13,7 +15,7 @@
 </head>
 <body>
   <a class="skip-link" href="#main">跳到操作区</a>
-  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW WORKBENCH</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">用示例走一遍 ↗</button></div></header>
+  <header class="app-header"><a class="brand" href="/"><span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span><span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW</span></span></a><div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">试用示例 ↗</button></div></header>
   <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile" aria-current="page"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
   <main id="main">
     <section class="intro first-use-intro"><div><h1>核对逐笔结果和总额</h1><p class="lead">先选参考表和待比较表。工具定位逐笔差异，并在你确认可相加后检查分组和上报总额。</p></div><p class="local-explanation">文件只在本机处理 · 不修改原件<br>支持 CSV、Excel，无需账号</p></section>

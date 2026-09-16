@@ -1,5 +1,8 @@
 # Executable workflow extensions
 
+The public website uses the same calculation and export contracts through a browser-local Worker, with no upload API. The HTTP routes below apply only to the optional installed loopback application. Public requests are capped at 40 MiB; each file retains the 10 MiB / 10,000-row / 100-column bounds. A missing browser transport fails closed. See [browser release and privacy](WEB_RELEASE.md).
+
+
 The original forecast-file review remains at `/`. `/experiments` prepares regression candidates and explicitly reveals a holdout; `/reconcile` compares financial result rows and their additive totals. All endpoints use the existing loopback access checks and request token. All supplied examples are newly invented.
 
 ## Regression browser boundary

@@ -1,8 +1,8 @@
 # Forecast Review Workbench
 
-[中文使用指南](docs/QUICKSTART.zh-CN.md)
+[直接打开网页版](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) · [全部工具与状态](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/tools.html) · [中文使用指南](docs/QUICKSTART.zh-CN.md)
 
-A local browser workbench with three usable tools: **train monthly regression candidates, review forecast files, and reconcile financial result rows with additive totals**. Bring CSV/XLSX files, map their columns, inspect failures and coverage, and download an offline evidence bundle.
+A browser workbench with three tools: **train monthly regression candidates, review forecast files, and reconcile financial result rows with additive totals**. Bring CSV/XLSX files, map their columns, inspect failures and coverage, and download an offline evidence bundle.
 
 | Open from the navigation | What you bring | What you get |
 | --- | --- | --- |
@@ -10,13 +10,17 @@ A local browser workbench with three usable tools: **train monthly regression ca
 | **Forecast review** | Actuals, one to five prediction files and an optional supplied baseline | Common-sample MAE/RMSE/bias, coverage gaps, row diagnostics and source-bound manual opinions |
 | **Financial reconciliation** | Reference/challenger result files and optional reported totals | Exact row differences, dimension-safe additive groups, raw-vs-reported total checks and retained manual opinions |
 
-The application reads CSV and value-only Excel files. Files travel only between your browser and a Python process on this computer; there is no external upload, account, API key, telemetry or runtime data download.
+The public website processes CSV and value-only Excel inside a browser Worker; selected files are not uploaded. It needs no account or API key. The first calculation downloads about 17 MB of self-hosted components. Each file is limited to 10 MiB, 10,000 data rows and 100 columns; combined requests are capped at 40 MiB and tasks stop after two minutes. The separately installed desktop application sends files only to its loopback Python process.
+
+Version 0.3 adds a file-first interface, browser-only execution for all three workflows, cancel/error recovery and a shared public tool-status page. External human first-use and repeat-use evidence remains unverified.
 
 ![Actual workbench with invented forecasts, shared-sample metrics and visible date gaps](docs/images/workbench.png)
 
 The original file-review workflow remains available. Version 0.2 adds executable candidate production and layered reconciliation. [Verification record](docs/VALIDATION.md) · [Recorded local evidence](docs/local-verification.json).
 
 ## Open the tool
+
+[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) and choose a task, or click **试用示例**. No installation is needed. For an offline desktop installation instead:
 
 Python 3.10 or newer. From this checkout:
 
@@ -54,7 +58,7 @@ Changing inputs, mappings, definitions, source declarations or sample acceptance
 
 ## Try the coverage trap
 
-The optional **Explore an example** uses newly invented files with 12 expected months: candidate A covers nine, candidate B covers ten, and only seven are shared. A appears better on its own easier sample; B has lower error on the common seven months. All five excluded months remain visible. These are deliberately constructed forecasts, not fitted model results.
+The optional **试用示例** uses newly invented files with 12 expected months: candidate A covers nine, candidate B covers ten, and only seven are shared. A appears better on its own easier sample; B has lower error on the common seven months. All five excluded months remain visible. These are deliberately constructed forecasts, not fitted model results.
 
 The tool does not depend on this fixture: the same file pickers and mappings accept external CSV/XLSX. [Example files](examples) can also be selected manually.
 
@@ -96,7 +100,9 @@ Exit 1 exports evidence needing attention: no eligible OLS candidate/holdout sco
 - Values must already occupy the declared target space. The tool does not infer Excel formula freshness, convert units, invert transformations, calculate nonlinear margin or implement a proprietary pricing engine.
 - A supplied prediction file cannot establish that training was independent, free of leakage, or untouched by holdout inspection. Source definitions and manual opinions remain caller declarations.
 - Available-sample metrics are diagnostic only. Coverage gaps restrict the meaning of the common-sample conclusion, even when its error is small.
-- The local server binds to loopback only. It is a personal desktop tool, not a network deployment or multiuser service.
+- The optional desktop server remains loopback-only. The public version is a static site running the same engines in the browser, not a multiuser data server.
+- Experiment-to-review transfer temporarily uses session storage in the same tab and removes it when the destination reads it. Refreshing clears ordinary page state. Experiment and reconciliation ZIPs include full selected file snapshots (including unmapped columns and other sheets); forecast-review ZIPs include selected source values and hashes.
+- Browser NumPy is pinned to its compatible WASM build; environment-aware experiment fingerprints need not equal desktop fingerprints. Review the dependencies recorded in each bundle.
 
 An independent project by Zheyu Liu, implemented with AI assistance and explicit reviewable checks. All bundled examples are newly invented. No employer/client code, templates, business data or private history are included. [Methods and source declaration](docs/DATA_AND_METHODS.md) · [Verification record](docs/VALIDATION.md).
 
@@ -110,6 +116,6 @@ python -m ruff format --check src tests
 python -m build --wheel
 ```
 
-The [browser acceptance check](docs/VALIDATION.md) uses real CSV/Excel file selection, downloads and independently recomputes the evidence, and checks desktop/narrow layouts. Node is needed for development browser tests only.
+The [browser acceptance check](docs/VALIDATION.md) uses real CSV/Excel file selection, downloads and independently recomputes the evidence, and checks desktop/narrow layouts. Node is needed for public-site builds and development browser tests. Run `npm ci`, `npm run build:web`, then `npm run test:web`. Public builds copy only explicitly allowlisted assets, pin dependency hashes and include third-party licenses.
 
 MIT licensed.

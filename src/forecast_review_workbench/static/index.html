@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="csrf-token" content="__CSRF_TOKEN__">
   <meta name="color-scheme" content="light">
-  <title>Forecast review workbench</title>
+  <meta name="description" content="选择 CSV 或 Excel，比较预测、检查缺口、核对逐笔结果并下载复核报告。">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='5' fill='%23203430'/%3E%3Cpath d='M7 23V9m0 14h18M10 20l5-7 4 3 6-9' fill='none' stroke='%23fff' stroke-width='2'/%3E%3C/svg%3E">
+  <title>预测审阅 · 比较预测结果</title>
   <link rel="stylesheet" href="/static/styles.css">
   <link rel="stylesheet" href="/static/extensions.css">
   <script src="/static/extension-common.js" defer></script>
@@ -16,9 +18,9 @@
   <header class="app-header">
     <a class="brand" href="/" aria-label="Forecast review workbench home">
       <span class="brand-mark" aria-hidden="true"><i></i><i></i><i></i><i></i></span>
-      <span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW WORKBENCH</span></span>
+      <span>预测与结果复核<span class="brand-subtitle">FORECAST REVIEW</span></span>
     </a>
-    <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">用示例走一遍 <span aria-hidden="true">↗</span></button></div>
+    <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">试用示例 <span aria-hidden="true">↗</span></button></div>
   </header>
   <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/" aria-current="page"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
 
@@ -91,7 +93,7 @@
       <div class="panel sources-panel"><details><summary><strong>来源、声明与适用范围</strong></summary><div id="source-metadata"></div></details></div>
       <div class="action-bar export-bar"><div><strong>把结果与依据一起保存。</strong><p id="export-help">下载结果、来源、逐行诊断及意见。</p><small class="muted">下载包含来源数值，请按原文件的敏感程度保管。</small></div><button id="export-review" class="button button-primary" type="button">下载完整复核包 <span aria-hidden="true">↓</span></button></div>
     </section>
-    <footer class="app-footer"><span>Forecast review workbench</span><span>保留缺口与假设，由你判断。</span><span>仅在本机处理</span></footer>
+    <footer class="app-footer"><span>Forecast review workbench</span><span>每份最多 10 MiB · 10,000 行 · 100 列</span><span>仅在本机处理</span></footer>
   </main>
 </body>
 </html>

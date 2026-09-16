@@ -114,7 +114,7 @@
       if (revision !== state.revision) throw new Error("The inputs changed. Run the updated development experiment.");
       state.result = result; state.request = request; state.dirty = false; state.revealAccepted = false; state.modelIds = []; state.editing = false;
       renderResult();
-      U.message("Development experiment complete. Holdout scores and predictions remain hidden until you explicitly reveal them.", false);
+      U.message("开发期实验完成。确认后才会显示留出期得分和预测。", false);
       $("experiment-results").scrollIntoView({behavior: "smooth", block: "start"});
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }
@@ -122,14 +122,14 @@
   function metricCells(metrics) { return [U.cell(metrics ? metrics.n : null, true), U.cell(metrics ? metrics.mae : null, true), U.cell(metrics ? metrics.rmse : null, true), U.cell(metrics ? metrics.bias : null, true)]; }
   function candidateName(candidate) {
     const selected = candidate.id === state.result.selected_on_development;
-    return U.el("td", {className: "candidate-name"}, [candidate.name, U.el("small", {}, candidate.role === "baseline" ? "BASELINE" : selected ? "SELECTED ON DEVELOPMENT" : "OLS CANDIDATE")]);
+    return U.el("td", {className: "candidate-name"}, [candidate.name, U.el("small", {}, candidate.role === "baseline" ? "基线" : selected ? "开发期选中" : "OLS 候选")]);
   }
   function metricsTable(stage) {
-    return U.table(["Candidate", "Features", "Status", "Rows", "MAE", "RMSE", "Bias", "Failure / limitation"], (state.result.candidates || []).map(function (candidate) {
+    return U.table(["候选模型", "特征", "状态", "记录数", "MAE", "RMSE", "Bias", "失败原因 / 限制"], (state.result.candidates || []).map(function (candidate) {
       const metrics = candidate[stage];
       return U.el("tr", {className: candidate.id === state.result.selected_on_development ? "selected-candidate" : null}, [
         candidateName(candidate), U.el("td", {className: "candidate-features"}, U.text(candidate.features)),
-        U.el("td", {className: "status-cell"}, U.badge(candidate.status !== "ok" ? "Failed" : stage === "holdout" && !metrics ? "No holdout score" : "Fitted", candidate.status === "ok" && (stage !== "holdout" || metrics) ? "success" : "warning")),
+        U.el("td", {className: "status-cell"}, U.badge(candidate.status !== "ok" ? "失败" : stage === "holdout" && !metrics ? "无留出期结果" : "已拟合", candidate.status === "ok" && (stage !== "holdout" || metrics) ? "success" : "warning")),
         metricCells(metrics), U.el("td", {className: "candidate-reason"}, candidate.reason || (stage === "holdout" ? candidate.holdout_reason || (!metrics ? "No usable holdout result." : "—") : "—"))
       ]);
     }));
@@ -145,11 +145,11 @@
     );
     const chosen = (result.candidates || []).find(function (candidate) { return candidate.id === result.selected_on_development; });
     $("selection-summary").replaceChildren(
-      U.el("div", {className: "panel-heading"}, [U.el("div", {}, [U.el("h3", {}, chosen ? "Development selection: " + chosen.name : "No successful OLS candidate selected"), U.el("p", {className: "muted compact"}, chosen ? "The lowest pooled development MAE among successful OLS candidates determines this choice. Baselines stay visible; the holdout cannot change this selection." : "Inspect candidate failures and row exclusions before proceeding.")]), U.badge("Development selection locked", chosen ? "success" : "warning")]),
+      U.el("div", {className: "panel-heading"}, [U.el("div", {}, [U.el("h3", {}, chosen ? "Development selection: " + chosen.name : "No successful OLS candidate selected"), U.el("p", {className: "muted compact"}, chosen ? "The lowest pooled development MAE among successful OLS candidates determines this choice. Baselines stay visible; the holdout cannot change this selection." : "Inspect candidate failures and row exclusions before proceeding.")]), U.badge("开发期选择已固定", chosen ? "success" : "warning")]),
       U.el("div", {className: "protocol-strip"}, [
-        U.el("div", {}, [U.el("strong", {}, "Training stays earlier"), U.el("p", {}, "Each validation block uses only information available by its first prediction origin.")]),
-        U.el("div", {}, [U.el("strong", {}, "Coefficients stay fixed"), U.el("p", {}, "Holdout forecasts update available lagged features, with frozen fitted coefficients.")]),
-        U.el("div", {}, [U.el("strong", {}, "No inverse conversion"), U.el("p", {}, "Metrics use the supplied target space. Transformation is a declaration.")])
+        U.el("div", {}, [U.el("strong", {}, "只用当时可获得的信息"), U.el("p", {}, "Each validation block uses only information available by its first prediction origin.")]),
+        U.el("div", {}, [U.el("strong", {}, "留出期固定系数"), U.el("p", {}, "Holdout forecasts update available lagged features, with frozen fitted coefficients.")]),
+        U.el("div", {}, [U.el("strong", {}, "不自动逆变换"), U.el("p", {}, "Metrics use the supplied target space. Transformation is a declaration.")])
       ])
     );
     $("candidate-table").replaceChildren(metricsTable("development"));
@@ -161,17 +161,17 @@
     const host = $("holdout-panel"); host.replaceChildren();
     if (state.result.stage === "holdout") {
       host.appendChild(U.el("div", {className: "panel"}, [
-        U.el("div", {className: "panel-heading"}, [U.el("div", {}, [U.el("h3", {}, "Holdout evidence · revealed"), U.el("p", {className: "muted compact"}, "The development choice remains fixed. These later observations test that choice; they do not select a new winner.")]), U.badge("Holdout revealed", "warning")]),
+        U.el("div", {className: "panel-heading"}, [U.el("div", {}, [U.el("h3", {}, "留出期结果"), U.el("p", {className: "muted compact"}, "The development choice remains fixed. These later observations test that choice; they do not select a new winner.")]), U.badge("已揭示留出期", "warning")]),
         metricsTable("holdout")
       ])); return;
     }
     const acceptance = U.el("input", {id: "reveal-acceptance", type: "checkbox", checked: state.revealAccepted, onchange: function (event) { state.revealAccepted = event.target.checked; update(); }});
     host.appendChild(U.el("div", {className: "holdout-lock"}, [
-      U.el("h3", {}, "The holdout is still set aside."),
-      U.el("p", {}, "Review development coverage, attempted candidates and time splits before opening later results. Once seen, that evidence is no longer unseen data for subsequent tuning."),
+      U.el("h3", {}, "留出期结果尚未查看"),
+      U.el("p", {}, "请先检查开发期覆盖、候选模型和时间切分。查看后，留出期不能再被视为后续调参的未见数据。"),
       state.revealedInSession ? U.el("div", {className: "extension-alert"}, "You already revealed a holdout earlier in this session. Editing and rerunning does not restore unseen evidence; interpret further tuning as exploratory.") : null,
-      U.el("label", {className: "check-label"}, [acceptance, U.el("span", {}, "I have reviewed the development evidence and understand the selected candidate is fixed before holdout results are shown.")]),
-      U.button("Reveal holdout results →", revealHoldout, {id: "reveal-holdout", className: "button button-primary", disabled: !state.revealAccepted})
+      U.el("label", {className: "check-label"}, [acceptance, U.el("span", {}, "我已检查开发期结果，并理解候选模型在查看留出期前已固定。")]),
+      U.button("查看留出期结果 →", revealHoldout, {id: "reveal-holdout", className: "button button-primary", disabled: !state.revealAccepted})
     ]));
   }
   async function revealHoldout() {
@@ -183,7 +183,7 @@
       state.result = result; state.revealedInSession = true;
       const selected = (result.candidates || []).find(function (candidate) { return candidate.id === result.selected_on_development && candidate.status === "ok" && candidate.holdout; });
       state.modelIds = selected ? [selected.id] : [];
-      renderResult(); U.message("Holdout results revealed. The development selection is unchanged.", false);
+      renderResult(); U.message("已显示留出期结果，开发期的模型选择保持不变。", false);
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }
   }
@@ -194,7 +194,7 @@
     const baselines = (state.result.candidates || []).filter(function (candidate) { return candidate.role === "baseline" && candidate.status === "ok" && candidate.holdout; });
     if (!baselines.some(function (candidate) { return candidate.id === state.baselineId; })) state.baselineId = baselines.length ? baselines[0].id : "";
     host.appendChild(U.el("div", {className: "panel transfer-panel"}, [
-      U.el("h3", {}, "Continue in forecast review"),
+      U.el("h3", {}, "继续比较预测结果"),
       U.el("p", {className: "muted compact"}, "Choose one to five candidates and one baseline with usable holdout predictions. All attempted models remain in the experiment tables above."),
       U.el("div", {className: "transfer-models"}, candidates.map(function (candidate) {
         return U.el("label", {className: "check-label"}, [
@@ -203,11 +203,11 @@
             state.modelIds = event.target.checked ? state.modelIds.concat(candidate.id) : state.modelIds.filter(function (id) { return id !== candidate.id; });
             U.clearMessages(); update();
           }}),
-          U.el("span", {}, [candidate.name, U.el("small", {}, candidate.id === state.result.selected_on_development ? "Selected on development" : U.text(candidate.features))])
+          U.el("span", {}, [candidate.name, U.el("small", {}, candidate.id === state.result.selected_on_development ? "开发期选中" : U.text(candidate.features))])
         ]);
       })),
-      U.field("Baseline for forecast review", U.select(baselines.map(function (candidate) { return {value: candidate.id, label: candidate.name}; }), state.baselineId, function (event) { state.baselineId = event.target.value; }, {id: "transfer-baseline"})),
-      U.el("div", {className: "action-bar"}, [U.el("div", {}, [U.el("strong", {}, "Inspect the generated forecasts."), U.el("p", {}, "Transfer keeps the evidence separate from your review judgement.")]), U.button("Open selected forecasts →", transfer, {id: "transfer-review", className: "button button-primary"})])
+      U.field("选择比较基线", U.select(baselines.map(function (candidate) { return {value: candidate.id, label: candidate.name}; }), state.baselineId, function (event) { state.baselineId = event.target.value; }, {id: "transfer-baseline"})),
+      U.el("div", {className: "action-bar"}, [U.el("div", {}, [U.el("strong", {}, "Inspect the generated forecasts."), U.el("p", {}, "Transfer keeps the evidence separate from your review judgement.")]), U.button("带入预测审阅 →", transfer, {id: "transfer-review", className: "button button-primary"})])
     ]));
   }
   async function transfer() {
@@ -230,8 +230,8 @@
     Object.entries(result.protocol || {}).forEach(function (pair) { protocol.append(U.el("dt", {}, pair[0].replaceAll("_", " ")), U.el("dd", {}, U.text(pair[1]))); });
     $("experiment-protocol").replaceChildren(protocol, U.el("p", {className: "extension-help"}, "A time split in software cannot establish that a person has never inspected these observations. Sources and release delays are supplied declarations."));
     U.pagedTable($("fold-table"), result.folds || [], [
-      {label: "Model", key: "model_id"}, {label: "Fold", key: "fold"}, {label: "Cutoff", key: "training_cutoff"}, {label: "Training periods", key: "train_periods"}, {label: "Validation periods", key: "validation_periods"},
-      {label: "Status", key: "status"}, {label: "Reason", key: "reason"}, {label: "Development metrics", render: function (row) { return U.cell(row.development || row.metrics); }}
+      {label: "模型", key: "model_id"}, {label: "Fold", key: "fold"}, {label: "Cutoff", key: "training_cutoff"}, {label: "Training periods", key: "train_periods"}, {label: "Validation periods", key: "validation_periods"},
+      {label: "状态", key: "status"}, {label: "原因", key: "reason"}, {label: "Development metrics", render: function (row) { return U.cell(row.development || row.metrics); }}
     ], {searchLabel: "Search fold details"});
     const fits = $("fit-details"); fits.replaceChildren();
     (result.candidates || []).forEach(function (candidate) {
@@ -242,11 +242,11 @@
     const originalRows = new Map((result.source_rows || []).map(function (row) { return [row.period, row]; }));
     const inputRows = (result.input_rows || []).map(function (row) { return Object.assign({}, row, {row: (originalRows.get(row.period) || {}).row, raw: (originalRows.get(row.period) || {}).raw}); });
     U.pagedTable($("experiment-input-rows"), inputRows, [
-      {label: "Original row", key: "row"}, {label: "Period", key: "period"}, {label: "Split", key: "split"}, {label: "Status", key: "status"}, {label: "Reasons", key: "reasons"},
+      {label: "Original row", key: "row"}, {label: "Period", key: "period"}, {label: "Split", key: "split"}, {label: "状态", key: "status"}, {label: "Reasons", key: "reasons"},
       {label: "Raw selected cells", key: "raw"}, {label: "Target", key: "target", numeric: true}, {label: "Raw features", key: "features"}, {label: "Lagged features", key: "lagged_features"}, {label: "Feature source months", key: "feature_source_periods"}
     ], {searchLabel: "Search original rows or reasons"});
     U.pagedTable($("experiment-predictions"), result.predictions || [], [
-      {label: "Model", key: "model_id"}, {label: "Period", key: "period"}, {label: "Split", key: "split"}, {label: "Actual", render: function (row) { return U.cell(row.actual === undefined ? row.target : row.actual, true); }},
+      {label: "模型", key: "model_id"}, {label: "Period", key: "period"}, {label: "Split", key: "split"}, {label: "实际值", render: function (row) { return U.cell(row.actual === undefined ? row.target : row.actual, true); }},
       {label: "Prediction", key: "prediction", numeric: true}, {label: "Error", render: function (row) { return U.cell(row.residual === undefined ? row.error : row.residual, true); }},
       {label: "Origin", key: "origin"}, {label: "Training cutoff", key: "training_cutoff"}
     ], {searchLabel: "Search prediction records"});
@@ -267,7 +267,7 @@
       const request = await U.api("/api/experiments/example");
       state.title = request.title; state.spec = request.spec; state.source_note = request.source_note || "";
       state.source = U.restoreSource("training", "月度历史数据", request);
-      invalidate(); syncInputs(); await sourceCard.inspect();
+      invalidate(); syncInputs(); await sourceCard.inspect(true);
       U.message("已载入虚构历史数据。确认日期和实际值列后，进入下一步检查特征与时间设置。", false);
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }

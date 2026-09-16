@@ -190,7 +190,7 @@
       {label: "Difference", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.difference, true); }},
       {label: "|Difference|", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.absolute_difference, true); }},
       {label: "Allowed", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.allowed_difference, true); }},
-      {label: "Status", render: function (row) { return statusCell(row.status); }},
+      {label: "状态", render: function (row) { return statusCell(row.status); }},
       {label: "Explanation", key: "reasons"},
       {label: "Original rows", render: function (row) { const refs = row.source_rows || {}; return U.el("td", {}, [U.el("div", {}, "Reference: " + U.text(refs.left)), U.el("div", {}, "Challenger: " + U.text(refs.right))]); }},
       {label: "Review", render: function (row) { return U.el("td", {}, U.button("Add / view note", function () { addNote(row); }, {"data-note-action": true, disabled: state.busy})); }}
@@ -203,7 +203,7 @@
       {label: "Financial group", render: function (row) { return dimensions(row.dimensions, false); }},
       {label: "Reference", key: "reference", numeric: true}, {label: "Challenger", key: "challenger", numeric: true}, {label: "Difference", key: "difference", numeric: true},
       {label: "|Difference|", key: "absolute_difference", numeric: true}, {label: "Allowed", key: "allowed_difference", numeric: true},
-      {label: "Status", render: function (row) { return statusCell(row.status); }},
+      {label: "状态", render: function (row) { return statusCell(row.status); }},
       {label: "Offsetting breaches", render: function (row) { return U.el("td", {}, row.offsetting_breaches ? U.badge("Yes · inspect rows", "warning") : "No"); }},
       {label: "Explanation", key: "reasons"},
       {label: "Rows, reference / challenger", render: function (row) { return U.cell(U.text(row.reference_rows) + " / " + U.text(row.challenger_rows)); }},
@@ -219,12 +219,12 @@
       {label: "Financial group", render: function (row) { return dimensions(row.dimensions, false); }},
       {label: "Calculated from rows", key: "calculated", numeric: true}, {label: "Reported", key: "reported", numeric: true},
       {label: "Difference", key: "difference", numeric: true}, {label: "|Difference|", key: "absolute_difference", numeric: true}, {label: "Allowed", key: "allowed_difference", numeric: true},
-      {label: "Status", render: function (row) { return statusCell(row.status); }}, {label: "Explanation", key: "reasons"}, {label: "Original total rows", key: "source_rows"}
+      {label: "状态", render: function (row) { return statusCell(row.status); }}, {label: "Explanation", key: "reasons"}, {label: "Original total rows", key: "source_rows"}
     ], {searchLabel: "Search totals by group or status"});
   }
   function renderInputRows() {
     U.pagedTable($("reconcile-input-rows"), state.result.input_rows || [], [
-      {label: "Source", key: "source_id"}, {label: "Original row", key: "row"}, {label: "Raw mapped values", key: "raw"}, {label: "Parsed values", key: "values"},
+      {label: "来源", key: "source_id"}, {label: "Original row", key: "row"}, {label: "Raw mapped values", key: "raw"}, {label: "Parsed values", key: "values"},
       {label: "Errors", key: "errors"}, {label: "Record key", key: "record_key"}, {label: "Group key", key: "group_key"}
     ], {searchLabel: "Search original values or errors"});
   }
@@ -262,7 +262,7 @@
           U.button("Discard this draft", function () { delete state.notes[note.record_key]; U.clearMessages(); renderNotes(); }, {className: "text-button danger-button"})
         ]));
       }
-      const decision = U.select([{value: "", label: "Choose a review decision"}, {value: "needs_evidence", label: "Needs more evidence"}, {value: "accepted_difference", label: "Accept this difference"}], note.decision, function (event) { note.decision = event.target.value; U.clearMessages(); }, {id: "reconcile-decision-" + index, disabled: stale});
+      const decision = U.select([{value: "", label: "Choose a review decision"}, {value: "needs_evidence", label: "需要更多证据"}, {value: "accepted_difference", label: "Accept this difference"}], note.decision, function (event) { note.decision = event.target.value; U.clearMessages(); }, {id: "reconcile-decision-" + index, disabled: stale});
       const comments = U.el("textarea", {id: "reconcile-text-" + index, value: note.text, rows: 3, maxlength: 4000, disabled: stale, placeholder: "Describe supporting evidence, the explanation or what is still missing.", oninput: function (event) { note.text = event.target.value; }});
       card.append(U.field("Decision", decision), U.field("Evidence and reasoning", comments, "Up to 4,000 characters. The computed comparison status stays unchanged."));
       if (!stale) card.appendChild(U.el("div", {className: "inline-actions"}, U.button("Remove note", function () { delete state.notes[note.record_key]; U.clearMessages(); renderNotes(); }, {className: "text-button danger-button"})));
@@ -282,7 +282,7 @@
     sourceValues.forEach(function (source) {
       const fields = U.el("dl", {className: "extension-kv"});
       Object.entries(source).forEach(function (pair) { fields.append(U.el("dt", {}, pair[0].replaceAll("_", " ")), U.el("dd", {}, U.text(pair[1]))); });
-      host.appendChild(U.el("details", {className: "extension-details"}, [U.el("summary", {}, source.name || source.id || source.file_name || "Source"), fields]));
+      host.appendChild(U.el("details", {className: "extension-details"}, [U.el("summary", {}, source.name || source.id || source.file_name || "来源"), fields]));
     });
     host.appendChild(U.el("p", {className: "extension-help"}, "Difference is challenger minus reference. The allowed magnitude is absolute tolerance + relative tolerance × |reference|. This checks additive values; it does not reproduce nonlinear margin aggregation or a pricing model."));
   }
@@ -316,7 +316,7 @@
       state.right_totals = U.restoreSource("right-totals", "待比较侧上报总额", request.right_totals);
       invalidate(); syncInputs();
       const keys = ["left", "right"].concat(state.leftTotalsEnabled ? ["left_totals"] : [], state.rightTotalsEnabled ? ["right_totals"] : []);
-      for (const key of keys) await cards[key].inspect();
+      for (const key of keys) await cards[key].inspect(true);
       U.message("已载入虚构文件。先确认 ID 和数值列，再进入下一步；检查示例总额需要你明确确认可加性。", false);
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }

@@ -60,7 +60,15 @@
     const meta = document.querySelector('meta[name="csrf-token"]');
     return {"Content-Type": "application/json", "X-Workbench-Token": meta ? meta.content : ""};
   }
+  function transport() {
+    const browserPage = document.querySelector('meta[name="frw-runtime"][content="browser"]');
+    const loopback = ["127.0.0.1", "localhost", "[::1]"].includes(location.hostname);
+    if ((browserPage || !loopback) && !window.FrwBrowser) throw new Error("浏览器计算组件未能加载。请刷新后重试；文件没有上传。");
+    return window.FrwBrowser || null;
+  }
   async function api(url, payload) {
+    const browser = transport();
+    if (browser) return browser.request(url, payload);
     const response = await fetch(url, {method: payload === undefined ? "GET" : "POST", credentials: "same-origin", headers: headers(), body: payload === undefined ? undefined : JSON.stringify(payload)});
     let data;
     try { data = await response.json(); } catch (_error) { throw new Error("The local application returned an unreadable response."); }
@@ -68,9 +76,14 @@
     return data;
   }
   async function download(url, payload, title, isCurrent) {
-    const response = await fetch(url, {method: "POST", credentials: "same-origin", headers: headers(), body: JSON.stringify(payload)});
-    if (!response.ok) { const data = await response.json(); throw new Error(data.error || "The review could not be downloaded."); }
-    const blob = await response.blob();
+    let blob;
+    const browser = transport();
+    if (browser) blob = await browser.download(url, payload);
+    else {
+      const response = await fetch(url, {method: "POST", credentials: "same-origin", headers: headers(), body: JSON.stringify(payload)});
+      if (!response.ok) { const data = await response.json(); throw new Error(data.error || "无法下载复核结果。"); }
+      blob = await response.blob();
+    }
     if (isCurrent && !isCurrent()) throw new Error("The inputs changed while preparing the download. Run the updated analysis first.");
     const href = URL.createObjectURL(blob);
     const name = String(title || "workbench-review").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 70) || "workbench-review";
@@ -135,7 +148,7 @@
       ]));
       if (opts.updated) opts.updated();
     }
-    async function inspect() {
+    async function inspect(propagateAbort = false) {
       if (!item.file || !Number.isInteger(item.header_row) || item.header_row < 1) { item.error = "表头行号须为正整数。"; render(); return; }
       item.epoch += 1; const epoch = item.epoch; item.loading = true; item.error = ""; changed(); render();
       try {
@@ -144,7 +157,7 @@
         item.sheets = data.sheets || []; item.headers = data.headers || []; item.preview = data.preview || [];
         item.row_count = data.row_count; item.error = data.error || ""; item.sheet = data.sheet || item.sheet;
         if (opts.inspected) opts.inspected(item);
-      } catch (error) { if (epoch === item.epoch) { item.error = error.message; item.headers = []; item.preview = []; } }
+      } catch (error) { if (epoch === item.epoch) { item.error = error.message; item.headers = []; item.preview = []; } if (propagateAbort === true && error.name === "AbortError") throw error; }
       finally { if (epoch === item.epoch) { item.loading = false; render(); } }
     }
     async function readFile(file) {
@@ -215,11 +228,11 @@
   }
   function pagedTable(host, rows, columnsSpec, options) {
     const opts = options || {}; let page = 0, query = "", pageSize = 25;
-    const search = el("input", {className: "search-input", type: "search", placeholder: opts.searchLabel || "Search these rows", "aria-label": opts.searchLabel || "Search these rows"});
+    const search = el("input", {className: "search-input", type: "search", placeholder: opts.searchLabel || "搜索记录", "aria-label": opts.searchLabel || "搜索记录"});
     const count = el("span");
     const output = el("div");
-    const previous = button("Previous", function () { page -= 1; render(); });
-    const next = button("Next", function () { page += 1; render(); });
+    const previous = button("上一页", function () { page -= 1; render(); });
+    const next = button("下一页", function () { page += 1; render(); });
     const pageLabel = el("span");
     search.addEventListener("input", function () { query = search.value.toLowerCase(); page = 0; render(); });
     host.replaceChildren(el("div", {className: "extension-table-controls"}, [search, count]), output,
@@ -236,6 +249,6 @@
     }
     render();
   }
-  window.WorkbenchUI = {el: el, button: button, field: field, select: select, text: text, number: number, cell: cell, table: table, stat: stat, badge: badge,
+  window.WorkbenchUI = {transport: transport, el: el, button: button, field: field, select: select, text: text, number: number, cell: cell, table: table, stat: stat, badge: badge,
     clearMessages: clearMessages, message: message, api: api, download: download, source: source, restoreSource: restoreSource, fileCard: fileCard, columns: columns, requireSource: requireSource, pagedTable: pagedTable, setupFlow: setupFlow};
 })();

@@ -1,11 +1,14 @@
 {
   "name": "forecast-review-browser-checks",
   "private": true,
-  "version": "0.2.0",
+  "version": "0.3.0",
   "scripts": {
-    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-extensions.cjs && node tests/browser-loaders.cjs"
+    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-extensions.cjs && node tests/browser-loaders.cjs",
+    "build:web": "python3 scripts/build_web.py",
+    "test:web": "node tests/browser-web.cjs"
   },
   "devDependencies": {
-    "playwright": "1.62.1"
+    "playwright": "1.62.1",
+    "pyodide": "314.0.6"
   }
 }
