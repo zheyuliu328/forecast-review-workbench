@@ -25,6 +25,8 @@ def test_coverage_trap_and_export_are_recomputable():
     assert b["metrics"]["mae"] == "1"
     assert baseline["metrics"]["mae"] == "3"
     files, _ = build_bundle(request, result["fingerprint"])
+    assert b"Own MAE (not comparable)" in files["report.html"]
+    assert b"Common MAE" in files["report.html"]
     rows = list(csv.DictReader(io.StringIO(files["evaluation-rows.csv"].decode("utf-8-sig"))))
     common = [row for row in rows if row["included_in_common_sample"] == "True"]
     assert len(common) == 7 and len(rows) == 12

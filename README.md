@@ -119,3 +119,7 @@ python -m build --wheel
 The [browser acceptance check](docs/VALIDATION.md) uses real CSV/Excel file selection, downloads and independently recomputes the evidence, and checks desktop/narrow layouts. Node is needed for public-site builds and development browser tests. Run `npm ci`, `npm run build:web`, then `npm run test:web`. Public builds copy only explicitly allowlisted assets, pin dependency hashes and include third-party licenses.
 
 MIT licensed.
+
+## Demonstrate a complete review
+
+The default task is forecast-file comparison; training and reconciliation remain under Other tasks. The five-step guide leads from files and mappings through explicit common-sample acceptance to results and export. The result and offline report compare own-sample diagnostics with accepted common-sample MAE. [Chinese walkthrough and English interview explanation](docs/WALKTHROUGH.md).

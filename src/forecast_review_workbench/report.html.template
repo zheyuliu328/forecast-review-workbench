@@ -16,6 +16,7 @@ th{background:#edf2f4;white-space:nowrap}article{margin:12px 0}small,footer{colo
 <div class="cards"><div class="card"><b>${expected}</b>Expected keys</div>
 <div class="card"><b>${common}</b>Common valid keys</div><div class="card"><b>${excluded}</b>Excluded keys</div></div>
 <p class="notice">Target: ${target} · Unit: ${unit} · Horizon: ${horizon} period(s) · Transformation: ${transformation}. Definitions are declarations; no conversion or model fitting is performed.</p>
+<h2>Why sample coverage matters</h2><p>Own-sample errors use different observations and cannot establish which model is better. Restricting to identical observations can reverse the apparent ranking. Common-sample metrics appear only after explicit acceptance; excluded records remain outside the conclusion.</p>${sample_comparison}
 <h2>Same-sample metrics</h2>${metrics_table}<p>Metrics shown to seven significant digits for reading; CSV/JSON retain the reported precision. MAE = mean absolute error. RMSE = square root of mean squared error. Bias = mean(prediction − actual). Baseline gain = (baseline error − candidate error) / baseline error × 100; positive means smaller error. A zero baseline denominator is undefined.</p>
 <h2>Definitions and conflicts</h2>${conflicts}<h2>Excluded expected keys</h2>${exclusions_table}
 <p>Showing ${shown_exclusions} of ${exclusion_count} excluded keys. Every expected key and reason is in the CSV/JSON files, including periods excluded by missing actual values or a missing baseline.</p>

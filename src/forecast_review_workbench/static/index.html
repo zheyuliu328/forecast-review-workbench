@@ -22,15 +22,15 @@
     </a>
     <div class="header-actions"><span class="local-badge"><span class="status-dot"></span> 本机处理</span><button id="example-button" class="button button-quiet" type="button">试用示例</button></div>
   </header>
-  <nav class="workbench-nav task-picker" aria-label="我想做什么"><a href="/" aria-current="page"><strong>比较已有预测</strong><small>我有实际值和预测结果</small></a><a href="/experiments"><strong>用历史数据试建模型</strong><small>我有月度历史和特征</small></a><a href="/reconcile"><strong>核对逐笔结果和总额</strong><small>我有两份金融结果表</small></a></nav>
+  <nav class="workbench-nav review-primary-nav" aria-label="任务导航"><a href="/" aria-current="page">比较已有预测</a><details><summary>其他任务</summary><a href="/experiments">用历史数据试建模型</a><a href="/reconcile">核对逐笔结果和总额</a></details></nav>
 
   <main id="main">
     <section class="intro first-use-intro"><div><h1>比较已有预测</h1><p class="lead">先选实际值和预测表，再确认比较范围。最后会得到同一批样本上的误差、缺失记录和可下载报告。</p></div><p class="local-explanation">文件只在本机处理 · 不修改原件<br>支持 CSV、Excel，无需账号</p></section>
 
-    <nav class="step-nav" aria-label="Review stages">
-      <button type="button" class="step active" id="step-inputs" data-stage="inputs" aria-current="step"><span class="step-number">01</span><span>准备文件<small>文件、范围和单位</small></span></button>
-      <button type="button" class="step" id="step-coverage" data-stage="coverage" disabled><span class="step-number">02</span><span>检查样本<small>查看缺失与共同范围</small></span></button>
-      <button type="button" class="step" id="step-review" data-stage="review" disabled><span class="step-number">03</span><span>结果与导出<small>比较误差并记录意见</small></span></button>
+    <ol class="workflow-guide" aria-label="完整流程"><li>选择文件</li><li>映射并检查数据</li><li>确认共同样本</li><li>比较结果</li><li>下载报告</li></ol><nav class="step-nav" aria-label="Review stages">
+      <button type="button" class="step active" id="step-inputs" data-stage="inputs" aria-current="step"><span class="step-number">1–2</span><span>准备文件<small>文件、范围和单位</small></span></button>
+      <button type="button" class="step" id="step-coverage" data-stage="coverage" disabled><span class="step-number">3</span><span>确认共同样本<small>查看缺失与共同范围</small></span></button>
+      <button type="button" class="step" id="step-review" data-stage="review" disabled><span class="step-number">4–5</span><span>结果与导出<small>比较误差并记录意见</small></span></button>
     </nav>
     <div id="notice" class="notice hidden" role="status" aria-live="polite"></div>
     <div id="error" class="notice notice-error hidden" role="alert"></div>
@@ -91,7 +91,7 @@
       <div class="section-heading notes-heading"><div><h2>记录复核意见（可选）</h2><p class="muted">意见与计算结果分别保留，工具不会自动批准模型。</p></div><span class="tag">人工判断</span></div>
       <div id="notes" class="notes-grid"></div>
       <div class="panel sources-panel"><details><summary><strong>来源、声明与适用范围</strong></summary><div id="source-metadata"></div></details></div>
-      <div class="action-bar export-bar"><div><strong>把结果与依据一起保存。</strong><p id="export-help">下载结果、来源、逐行诊断及意见。</p><small class="muted">下载包含来源数值，请按原文件的敏感程度保管。</small></div><button id="export-review" class="button button-primary" type="button">下载完整复核包 <span aria-hidden="true">↓</span></button></div>
+      <div class="action-bar export-bar"><div><strong>5 下载报告与依据</strong><p id="export-help">下载 ZIP，解压后打开 report.html；无需联网即可阅读。</p><small class="muted">下载包含来源数值，请按原文件的敏感程度保管。</small></div><button id="export-review" class="button button-primary" type="button">下载完整复核包 <span aria-hidden="true">↓</span></button></div>
     </section>
     <footer class="app-footer"><span>预测审阅</span><span>每份最多 10 MiB · 10,000 行 · 100 列</span><span>仅在本机处理</span></footer>
   </main>

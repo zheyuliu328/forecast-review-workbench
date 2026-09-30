@@ -114,7 +114,10 @@
       if (note.text.trim() || note.decision) note.stale = true;
     });
   }
+  let exportURL = null;
   function invalidate() {
+    if (exportURL) { URL.revokeObjectURL(exportURL); exportURL = null; }
+    document.getElementById("save-review-link")?.remove();
     state.revision += 1;
     state.dirty = true;
     state.resultRequest = null;
@@ -150,8 +153,8 @@
       target.replaceChildren();
       if (state.result && state.dirty) {
         target.appendChild(element("div", {className: "stale-banner"}, [
-          element("p", {}, [element("strong", {}, "Your inputs have changed. "), "The previous sample acceptance has expired. Existing notes belong to the previous run. Check coverage again before using or exporting results."]),
-          button("Return to inputs", "button button-small", function () { goStage("inputs"); })
+          element("p", {}, [element("strong", {}, "输入已修改。"), "之前的共同样本确认已失效，原意见属于旧结果。请重新检查样本后再查看或导出。"]),
+          button("返回输入", "button button-small", function () { goStage("inputs"); })
         ]));
       }
     });
@@ -354,6 +357,11 @@
     }
   }
 
+  function uniqueHeader(headers, matcher) {
+    const matches = headers.filter(function (name) { return matcher.test(name); });
+    return matches.length === 1 ? matches[0] : null;
+  }
+
   async function inspectSource(source, propagateAbort = false) {
     if (!source.file) return;
     source.epoch += 1;
@@ -372,10 +380,10 @@
       ["date", "value", "entity"].forEach(function (key) {
         if (source.mapping[key] && !source.headers.includes(source.mapping[key])) source.mapping[key] = null;
       });
-      if (!source.mapping.date) source.mapping.date = source.headers.find(function (name) { return /^(date|period|month|quarter|target_period|evaluation_period|target_date)$/i.test(name); }) || null;
+      if (!source.mapping.date) source.mapping.date = uniqueHeader(source.headers, /^(date|period|month|quarter|target_period|evaluation_period|target_date|日期|月份|期间|季度|目标日期)$/i) || null;
       if (!source.mapping.value) {
-        const matcher = source.role === "actual" ? /^(actual|observed|actual_value|target|value)$/i : /^(prediction|predicted|forecast|forecast_value|estimate|value)$/i;
-        source.mapping.value = source.headers.find(function (name) { return matcher.test(name); }) || null;
+        const matcher = source.role === "actual" ? /^(actual|observed|actual_value|target|value|实际值|实际|观测值|数值)$/i : /^(prediction|predicted|forecast|forecast_value|estimate|value|预测值|预测|估计值|数值)$/i;
+        source.mapping.value = uniqueHeader(source.headers, matcher) || null;
       }
     } catch (error) {
       if (epoch !== source.epoch) return;
@@ -413,21 +421,21 @@
 
   function validateForm() {
     if (!state.contract.target.trim() || !state.contract.unit.trim() || !state.contract.transformation.trim()) throw new Error("请填写比较目标、单位和输入值的变换说明。");
-    if (!Number.isInteger(Number(state.contract.horizon)) || Number(state.contract.horizon) < 1) throw new Error("The forecast horizon must be a positive whole number of periods.");
+    if (!Number.isInteger(Number(state.contract.horizon)) || Number(state.contract.horizon) < 1) throw new Error("预测提前期必须为正整数。");
     if (!state.scope.start.trim() || !state.scope.end.trim()) throw new Error("请填写原本预期的开始和结束期间。");
     allSources().forEach(function (source) {
-      if (!source.file) throw new Error("Choose a file for " + source.name + ".");
-      if (source.loading) throw new Error("Wait for " + source.name + " to finish loading.");
+      if (!source.file) throw new Error("请选择文件：" + source.name);
+      if (source.loading) throw new Error("请等待读取完成：" + source.name);
       if (source.inspectionError) throw new Error(source.name + ": " + source.inspectionError);
-      if (!source.mapping.date || !source.mapping.value) throw new Error("Choose the target-period and numeric value columns for " + source.name + ".");
+      if (!source.mapping.date || !source.mapping.value) throw new Error("请确认日期列与数值列：" + source.name);
       if (!source.contract.target.trim() || !source.contract.unit.trim() || !source.contract.transformation.trim()) throw new Error("请填写文件的含义声明：" + source.name + "；一致时可明确应用统一说明。");
-      if (!source.name.trim()) throw new Error("Give every candidate a name.");
+      if (!source.name.trim()) throw new Error("请给每份预测填写名称。");
     });
     const mapped = allSources().filter(function (source) { return Boolean(source.mapping.entity); }).length;
-    if (mapped && mapped !== allSources().length) throw new Error("An entity column is mapped in some files. Map it in every file so the same entities are compared.");
-    if (mapped && !state.scope.entities.length) throw new Error("Enter the exact entity IDs in the expected scope. They are not inferred from the uploaded rows.");
-    if (!mapped && state.scope.entities.length) throw new Error("Entity IDs are listed in the scope. Map an entity column in every file, or clear the list for a single series.");
-    state.segments.forEach(function (segment) { if (!segment.name.trim() || !segment.start.trim() || !segment.end.trim()) throw new Error("Give every period segment a name, start and end, or remove the unfinished segment."); });
+    if (mapped && mapped !== allSources().length) throw new Error("部分文件选择了实体列。请为每份文件都指定实体列，以比较相同实体。");
+    if (mapped && !state.scope.entities.length) throw new Error("请填写预期范围的完整实体 ID，不能从现有文件推断全部应有记录。");
+    if (!mapped && state.scope.entities.length) throw new Error("已填写实体清单。请为每份文件选择实体列；单一序列则清空清单。");
+    state.segments.forEach(function (segment) { if (!segment.name.trim() || !segment.start.trim() || !segment.end.trim()) throw new Error("请补全分段的名称、开始和结束期间，或移除未完成的分段。"); });
   }
 
   function validateSelectedFiles() {
@@ -653,23 +661,33 @@
         button("Review coverage", "text-button", function () { goStage("coverage"); })
       ]));
     } else {
+      const comparisonRows = (result.models || []).map(function (model) {
+        const available = model.available_metrics || {}, common = model.metrics || {};
+        return element('tr', {}, [model.name, String(available.n ?? '—'), number(available.mae), String(common.n ?? '—'), number(common.mae)].map(value=>element('td',{},value)));
+      });
+      content.appendChild(element('section', {className:'panel', id:'sample-comparison'}, [
+        element('h3', {}, '样本改变，排名也可能改变'),
+        element('p', {}, '左侧各用各的记录，只能诊断，不能据此评优。右侧统一使用已确认的 ' + result.summary.common + ' 条记录；完整范围 ' + result.summary.expected + ' 条，排除 ' + result.summary.excluded + ' 条。结论不覆盖被排除的记录。'),
+        element('div', {className:'table-wrap'}, table(['预测','各自样本数','各自 MAE（不可横比）','共同样本数','共同 MAE'], comparisonRows)),
+        element('p', {className:'muted'}, 'MAE 较低只代表当前共同样本上的平均绝对误差较小，不证明未来更好或训练没有信息泄漏。示例为刻意构造的排名反转：请对照左右两列，而非把它当成模型业绩。')
+      ]));
       content.appendChild(element("div", {className: "panel"}, [
         element("div", {className: "metric-intro"}, [
-          element("div", {}, [element("h3", {}, "Performance on the same observations"), element("p", {}, "Every row below uses exactly the same " + result.summary.common + " accepted observations. All values are in " + result.contract.unit + ".")]),
+          element("div", {}, [element("h3", {}, "4 比较相同样本上的误差"), element("p", {}, "Every row below uses exactly the same " + result.summary.common + " accepted observations. All values are in " + result.contract.unit + ".")]),
           element("span", {className: "tag tag-success"}, "已确认共同样本")
         ]),
         element("div", {className: "table-wrap"}, metricTable(result.models || [], "metrics", Boolean(state.baseline))),
         element("div", {className: "metric-definitions"}, [
-          element("div", {}, [element("strong", {}, "MAE"), "Typical absolute error. Lower means smaller errors on this sample."]),
-          element("div", {}, [element("strong", {}, "RMSE"), "Gives larger errors more weight. Not residual standard error."]),
-          element("div", {}, [element("strong", {}, "Bias"), "Prediction minus actual. Positive values indicate overprediction on average."])
+          element("div", {}, [element("strong", {}, "MAE"), "平均绝对误差；越低表示这批样本上误差越小。"]),
+          element("div", {}, [element("strong", {}, "RMSE"), "对大误差更敏感；不是回归残差标准误。"]),
+          element("div", {}, [element("strong", {}, "Bias"), "预测减实际的平均值；正值代表平均高估。"])
         ]),
         state.baseline ? element("p", {className: "baseline-note"}, "Baseline changes: positive percentages mean improvement; negative percentages mean deterioration. An undefined or zero-denominator comparison is shown as —.") : null
       ]));
       content.appendChild(renderChartPanel());
       if ((result.segments || []).length) {
         content.appendChild(element("div", {className: "panel"}, [
-          element("div", {className: "panel-heading"}, [element("div", {}, [element("h3", {}, "Does performance change across periods?"), element("p", {className: "muted compact"}, "Each segment uses only its portion of the accepted common sample.")])]),
+          element("div", {className: "panel-heading"}, [element("div", {}, [element("h3", {}, "不同期间的表现是否一致？"), element("p", {className: "muted compact"}, "每段仅使用已确认共同样本中属于该期间的记录。")])]),
           element("div", {className: "segment-results"}, result.segments.map(function (segment) {
             const modelRows = (result.models || []).map(function (model) { return Object.assign({}, model, {segment_metric: segment.metrics ? segment.metrics[model.id] : null}); });
             return element("div", {className: "segment-result"}, [
@@ -682,7 +700,7 @@
     }
     renderNotes(ready);
     renderMetadata();
-    $("export-help").textContent = ready ? "下载共同样本结果、来源索引、逐行诊断和你的意见。" : "可以下载样本覆盖报告，其中不包含已接受共同样本的指标结论。";
+    $("export-help").textContent = ready ? "下载 ZIP 后解压，打开 report.html 阅读；附共同样本结果、来源索引、逐行诊断和你的意见。" : "可以下载样本覆盖报告，其中不包含已接受共同样本的指标结论。";
     updateChrome();
   }
 
@@ -848,10 +866,12 @@
       if (revision !== state.revision) throw new Error("Inputs changed while the download was being prepared. Check the updated coverage before exporting.");
       const url = URL.createObjectURL(blob);
       const filename = (state.title.trim() || "forecast-review").replace(/[^a-zA-Z0-9_-]+/g, "-").slice(0, 70) || "forecast-review";
-      const link = element("a", {href: url, download: filename + ".zip", className: "hidden"}, "Download review");
-      document.body.appendChild(link); link.click(); link.remove();
-      window.setTimeout(function () { URL.revokeObjectURL(url); }, 60000);
-      showMessage("复核包已下载，包含本次样本选择和与本次结果对应的意见。", false);
+      if (exportURL) URL.revokeObjectURL(exportURL);
+      document.getElementById("save-review-link")?.remove();
+      exportURL = url;
+      const link = element("a", {href: url, download: filename + ".zip", id: "save-review-link", className: "button"}, "保存复核包 ZIP");
+      document.querySelector(".export-bar").appendChild(link); link.click();
+      showMessage("复核包已生成。若下载未开始，请点击“保存复核包 ZIP”；解压后打开 report.html。", false);
     } catch (error) { showMessage(error.message || "The local application could not prepare the download.", true); }
     finally { state.busy = false; $("export-review").textContent = "下载完整复核包 ↓"; updateChrome(); }
   }

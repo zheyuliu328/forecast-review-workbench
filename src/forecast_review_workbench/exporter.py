@@ -139,6 +139,19 @@ def _report(result, notes):
         ],
         metrics_rows,
     )
+    sample_comparison = _table(
+        ["Model", "Own n", "Own MAE (not comparable)", "Common n", "Common MAE"],
+        (
+            [
+                m["name"],
+                (m.get("available_metrics") or {}).get("n"),
+                metric_display((m.get("available_metrics") or {}).get("mae")),
+                (m.get("metrics") or {}).get("n"),
+                metric_display((m.get("metrics") or {}).get("mae")),
+            ]
+            for m in result["models"]
+        ),
+    )
     exclusions = [row for row in result["rows"] if not row["included"]]
     exclusions_table = _table(
         ["Period", "Entity", "Why excluded"],
@@ -211,6 +224,7 @@ def _report(result, notes):
         horizon=escape(contract["horizon"]),
         transformation=escape(contract["transformation"]),
         metrics_table=metrics_table,
+        sample_comparison=sample_comparison,
         conflicts=conflicts,
         exclusions_table=exclusions_table,
         shown_exclusions=min(100, len(exclusions)),
