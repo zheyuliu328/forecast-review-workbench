@@ -1,0 +1,1166 @@
+{
+  "schema_version": 1,
+  "fingerprint": "658e5a18c50bb7d879974ef7f7f4653551b0c254cf34fb5b4dbf59a63fba9cfa",
+  "title": "A lower error can hide missing periods",
+  "scope": {
+    "start": "2024-01",
+    "end": "2024-12",
+    "frequency": "monthly",
+    "entities": []
+  },
+  "contract": {
+    "target": "Monthly revenue",
+    "unit": "USD",
+    "transformation": "none",
+    "horizon": 1,
+    "frequency": "monthly"
+  },
+  "accepted_common_sample": true,
+  "comparison_ready": true,
+  "summary": {
+    "expected": 12,
+    "common": 7,
+    "excluded": 5,
+    "extra_rows": 0,
+    "blocking_issues": 5
+  },
+  "sources": [
+    {
+      "id": "actual",
+      "name": "Actual",
+      "role": "actual",
+      "file_name": "actual.csv",
+      "sha256": "ddcb3e30f304561b7ed73114c748a30c517f4bd00c58f2e7da680fe500a59513",
+      "mapping": {
+        "date": "Month",
+        "value": "Observed",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 12,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "model-a",
+      "name": "Candidate A",
+      "role": "candidate",
+      "file_name": "candidate-a.csv",
+      "sha256": "3f17c4baafef786a27d774e0b895d3ee6939465001252fe35fe8fc7b4975a194",
+      "mapping": {
+        "date": "period",
+        "value": "Forecast",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 9,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "model-b",
+      "name": "Candidate B",
+      "role": "candidate",
+      "file_name": "candidate-b.csv",
+      "sha256": "4b22e3fbf81e78ee9ea3e4a6d21af1f7c6e0fa27a1840dc16b1bc03f2cbd2f79",
+      "mapping": {
+        "date": "snapshot",
+        "value": "prediction",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 10,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "baseline",
+      "name": "Provided baseline",
+      "role": "baseline",
+      "file_name": "baseline.csv",
+      "sha256": "79a84a4afb244a4613ab47f576e1f05d4174520b6c262452c61eac327e465daf",
+      "mapping": {
+        "date": "Month",
+        "value": "Reference",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 12,
+      "blank_rows_ignored": []
+    }
+  ],
+  "models": [
+    {
+      "id": "model-a",
+      "name": "Candidate A",
+      "role": "candidate",
+      "coverage": {
+        "expected": 12,
+        "valid": 9,
+        "missing": 3,
+        "duplicate": 0,
+        "invalid": 0,
+        "outside_scope": 0
+      },
+      "available_metrics": {
+        "n": 9,
+        "mae": "1.555555555555555555555555555555555555556",
+        "rmse": "1.763834207376393727001077169092840283807",
+        "bias": "1.555555555555555555555555555555555555556"
+      },
+      "metrics": {
+        "n": 7,
+        "mae": "2",
+        "rmse": "2",
+        "bias": "2"
+      },
+      "vs_baseline": {
+        "mae_pct": "33.33333333333333333333333333333333333333",
+        "rmse_pct": "33.33333333333333333333333333333333333333",
+        "reason": null
+      }
+    },
+    {
+      "id": "model-b",
+      "name": "Candidate B",
+      "role": "candidate",
+      "coverage": {
+        "expected": 12,
+        "valid": 10,
+        "missing": 2,
+        "duplicate": 0,
+        "invalid": 0,
+        "outside_scope": 0
+      },
+      "available_metrics": {
+        "n": 10,
+        "mae": "4.3",
+        "rmse": "6.625707509390978239818881809923563360118",
+        "bias": "4.3"
+      },
+      "metrics": {
+        "n": 7,
+        "mae": "1",
+        "rmse": "1",
+        "bias": "1"
+      },
+      "vs_baseline": {
+        "mae_pct": "66.66666666666666666666666666666666666667",
+        "rmse_pct": "66.66666666666666666666666666666666666667",
+        "reason": null
+      }
+    },
+    {
+      "id": "baseline",
+      "name": "Provided baseline",
+      "role": "baseline",
+      "coverage": {
+        "expected": 12,
+        "valid": 12,
+        "missing": 0,
+        "duplicate": 0,
+        "invalid": 0,
+        "outside_scope": 0
+      },
+      "available_metrics": {
+        "n": 12,
+        "mae": "3",
+        "rmse": "3",
+        "bias": "3"
+      },
+      "metrics": {
+        "n": 7,
+        "mae": "3",
+        "rmse": "3",
+        "bias": "3"
+      },
+      "vs_baseline": {
+        "mae_pct": "0",
+        "rmse_pct": "0",
+        "reason": null
+      }
+    }
+  ],
+  "rows": [
+    {
+      "period": "2024-01",
+      "entity": "",
+      "actual": "100",
+      "predictions": {
+        "model-a": "102",
+        "model-b": "101",
+        "baseline": "103"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          2
+        ],
+        "model-a": [
+          2
+        ],
+        "model-b": [
+          2
+        ],
+        "baseline": [
+          2
+        ]
+      }
+    },
+    {
+      "period": "2024-02",
+      "entity": "",
+      "actual": "108",
+      "predictions": {
+        "model-a": "110",
+        "model-b": "109",
+        "baseline": "111"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          3
+        ],
+        "model-a": [
+          3
+        ],
+        "model-b": [
+          3
+        ],
+        "baseline": [
+          3
+        ]
+      }
+    },
+    {
+      "period": "2024-03",
+      "entity": "",
+      "actual": "111",
+      "predictions": {
+        "model-a": "113",
+        "model-b": "112",
+        "baseline": "114"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          4
+        ],
+        "model-a": [
+          4
+        ],
+        "model-b": [
+          4
+        ],
+        "baseline": [
+          4
+        ]
+      }
+    },
+    {
+      "period": "2024-04",
+      "entity": "",
+      "actual": "107",
+      "predictions": {
+        "model-a": "107",
+        "model-b": null,
+        "baseline": "110"
+      },
+      "residuals": {
+        "model-a": "0",
+        "model-b": null,
+        "baseline": "3"
+      },
+      "included": false,
+      "reasons": [
+        {
+          "source_id": "model-b",
+          "code": "missing",
+          "detail": "No source row matches this expected key; check extraction coverage and mapping."
+        }
+      ],
+      "source_rows": {
+        "actual": [
+          5
+        ],
+        "model-a": [
+          5
+        ],
+        "model-b": [],
+        "baseline": [
+          5
+        ]
+      }
+    },
+    {
+      "period": "2024-05",
+      "entity": "",
+      "actual": "120",
+      "predictions": {
+        "model-a": "120",
+        "model-b": null,
+        "baseline": "123"
+      },
+      "residuals": {
+        "model-a": "0",
+        "model-b": null,
+        "baseline": "3"
+      },
+      "included": false,
+      "reasons": [
+        {
+          "source_id": "model-b",
+          "code": "missing",
+          "detail": "No source row matches this expected key; check extraction coverage and mapping."
+        }
+      ],
+      "source_rows": {
+        "actual": [
+          6
+        ],
+        "model-a": [
+          6
+        ],
+        "model-b": [],
+        "baseline": [
+          6
+        ]
+      }
+    },
+    {
+      "period": "2024-06",
+      "entity": "",
+      "actual": "118",
+      "predictions": {
+        "model-a": "120",
+        "model-b": "119",
+        "baseline": "121"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          7
+        ],
+        "model-a": [
+          7
+        ],
+        "model-b": [
+          5
+        ],
+        "baseline": [
+          7
+        ]
+      }
+    },
+    {
+      "period": "2024-07",
+      "entity": "",
+      "actual": "132",
+      "predictions": {
+        "model-a": "134",
+        "model-b": "133",
+        "baseline": "135"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          8
+        ],
+        "model-a": [
+          8
+        ],
+        "model-b": [
+          6
+        ],
+        "baseline": [
+          8
+        ]
+      }
+    },
+    {
+      "period": "2024-08",
+      "entity": "",
+      "actual": "129",
+      "predictions": {
+        "model-a": "131",
+        "model-b": "130",
+        "baseline": "132"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          9
+        ],
+        "model-a": [
+          9
+        ],
+        "model-b": [
+          7
+        ],
+        "baseline": [
+          9
+        ]
+      }
+    },
+    {
+      "period": "2024-09",
+      "entity": "",
+      "actual": "146",
+      "predictions": {
+        "model-a": "148",
+        "model-b": "147",
+        "baseline": "149"
+      },
+      "residuals": {
+        "model-a": "2",
+        "model-b": "1",
+        "baseline": "3"
+      },
+      "included": true,
+      "reasons": [],
+      "source_rows": {
+        "actual": [
+          10
+        ],
+        "model-a": [
+          10
+        ],
+        "model-b": [
+          8
+        ],
+        "baseline": [
+          10
+        ]
+      }
+    },
+    {
+      "period": "2024-10",
+      "entity": "",
+      "actual": "158",
+      "predictions": {
+        "model-a": null,
+        "model-b": "170",
+        "baseline": "161"
+      },
+      "residuals": {
+        "model-a": null,
+        "model-b": "12",
+        "baseline": "3"
+      },
+      "included": false,
+      "reasons": [
+        {
+          "source_id": "model-a",
+          "code": "missing",
+          "detail": "No source row matches this expected key; check extraction coverage and mapping."
+        }
+      ],
+      "source_rows": {
+        "actual": [
+          11
+        ],
+        "model-a": [],
+        "model-b": [
+          9
+        ],
+        "baseline": [
+          11
+        ]
+      }
+    },
+    {
+      "period": "2024-11",
+      "entity": "",
+      "actual": "225",
+      "predictions": {
+        "model-a": null,
+        "model-b": "237",
+        "baseline": "228"
+      },
+      "residuals": {
+        "model-a": null,
+        "model-b": "12",
+        "baseline": "3"
+      },
+      "included": false,
+      "reasons": [
+        {
+          "source_id": "model-a",
+          "code": "missing",
+          "detail": "No source row matches this expected key; check extraction coverage and mapping."
+        }
+      ],
+      "source_rows": {
+        "actual": [
+          12
+        ],
+        "model-a": [],
+        "model-b": [
+          10
+        ],
+        "baseline": [
+          12
+        ]
+      }
+    },
+    {
+      "period": "2024-12",
+      "entity": "",
+      "actual": "260",
+      "predictions": {
+        "model-a": null,
+        "model-b": "272",
+        "baseline": "263"
+      },
+      "residuals": {
+        "model-a": null,
+        "model-b": "12",
+        "baseline": "3"
+      },
+      "included": false,
+      "reasons": [
+        {
+          "source_id": "model-a",
+          "code": "missing",
+          "detail": "No source row matches this expected key; check extraction coverage and mapping."
+        }
+      ],
+      "source_rows": {
+        "actual": [
+          13
+        ],
+        "model-a": [],
+        "model-b": [
+          11
+        ],
+        "baseline": [
+          13
+        ]
+      }
+    }
+  ],
+  "input_rows": [
+    {
+      "source_id": "actual",
+      "row": 2,
+      "raw_date": "2024-01",
+      "raw_value": "100",
+      "raw_entity": "",
+      "period": "2024-01",
+      "entity": "",
+      "value": "100",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 3,
+      "raw_date": "2024-02",
+      "raw_value": "108",
+      "raw_entity": "",
+      "period": "2024-02",
+      "entity": "",
+      "value": "108",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 4,
+      "raw_date": "2024-03",
+      "raw_value": "111",
+      "raw_entity": "",
+      "period": "2024-03",
+      "entity": "",
+      "value": "111",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 5,
+      "raw_date": "2024-04",
+      "raw_value": "107",
+      "raw_entity": "",
+      "period": "2024-04",
+      "entity": "",
+      "value": "107",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 6,
+      "raw_date": "2024-05",
+      "raw_value": "120",
+      "raw_entity": "",
+      "period": "2024-05",
+      "entity": "",
+      "value": "120",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 7,
+      "raw_date": "2024-06",
+      "raw_value": "118",
+      "raw_entity": "",
+      "period": "2024-06",
+      "entity": "",
+      "value": "118",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 8,
+      "raw_date": "2024-07",
+      "raw_value": "132",
+      "raw_entity": "",
+      "period": "2024-07",
+      "entity": "",
+      "value": "132",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 9,
+      "raw_date": "2024-08",
+      "raw_value": "129",
+      "raw_entity": "",
+      "period": "2024-08",
+      "entity": "",
+      "value": "129",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 10,
+      "raw_date": "2024-09",
+      "raw_value": "146",
+      "raw_entity": "",
+      "period": "2024-09",
+      "entity": "",
+      "value": "146",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 11,
+      "raw_date": "2024-10",
+      "raw_value": "158",
+      "raw_entity": "",
+      "period": "2024-10",
+      "entity": "",
+      "value": "158",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 12,
+      "raw_date": "2024-11",
+      "raw_value": "225",
+      "raw_entity": "",
+      "period": "2024-11",
+      "entity": "",
+      "value": "225",
+      "status": "valid"
+    },
+    {
+      "source_id": "actual",
+      "row": 13,
+      "raw_date": "2024-12",
+      "raw_value": "260",
+      "raw_entity": "",
+      "period": "2024-12",
+      "entity": "",
+      "value": "260",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 2,
+      "raw_date": "2024-01",
+      "raw_value": "102",
+      "raw_entity": "",
+      "period": "2024-01",
+      "entity": "",
+      "value": "102",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 3,
+      "raw_date": "2024-02",
+      "raw_value": "110",
+      "raw_entity": "",
+      "period": "2024-02",
+      "entity": "",
+      "value": "110",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 4,
+      "raw_date": "2024-03",
+      "raw_value": "113",
+      "raw_entity": "",
+      "period": "2024-03",
+      "entity": "",
+      "value": "113",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 5,
+      "raw_date": "2024-04",
+      "raw_value": "107",
+      "raw_entity": "",
+      "period": "2024-04",
+      "entity": "",
+      "value": "107",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 6,
+      "raw_date": "2024-05",
+      "raw_value": "120",
+      "raw_entity": "",
+      "period": "2024-05",
+      "entity": "",
+      "value": "120",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 7,
+      "raw_date": "2024-06",
+      "raw_value": "120",
+      "raw_entity": "",
+      "period": "2024-06",
+      "entity": "",
+      "value": "120",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 8,
+      "raw_date": "2024-07",
+      "raw_value": "134",
+      "raw_entity": "",
+      "period": "2024-07",
+      "entity": "",
+      "value": "134",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 9,
+      "raw_date": "2024-08",
+      "raw_value": "131",
+      "raw_entity": "",
+      "period": "2024-08",
+      "entity": "",
+      "value": "131",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-a",
+      "row": 10,
+      "raw_date": "2024-09",
+      "raw_value": "148",
+      "raw_entity": "",
+      "period": "2024-09",
+      "entity": "",
+      "value": "148",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 2,
+      "raw_date": "2024-01",
+      "raw_value": "101",
+      "raw_entity": "",
+      "period": "2024-01",
+      "entity": "",
+      "value": "101",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 3,
+      "raw_date": "2024-02",
+      "raw_value": "109",
+      "raw_entity": "",
+      "period": "2024-02",
+      "entity": "",
+      "value": "109",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 4,
+      "raw_date": "2024-03",
+      "raw_value": "112",
+      "raw_entity": "",
+      "period": "2024-03",
+      "entity": "",
+      "value": "112",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 5,
+      "raw_date": "2024-06",
+      "raw_value": "119",
+      "raw_entity": "",
+      "period": "2024-06",
+      "entity": "",
+      "value": "119",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 6,
+      "raw_date": "2024-07",
+      "raw_value": "133",
+      "raw_entity": "",
+      "period": "2024-07",
+      "entity": "",
+      "value": "133",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 7,
+      "raw_date": "2024-08",
+      "raw_value": "130",
+      "raw_entity": "",
+      "period": "2024-08",
+      "entity": "",
+      "value": "130",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 8,
+      "raw_date": "2024-09",
+      "raw_value": "147",
+      "raw_entity": "",
+      "period": "2024-09",
+      "entity": "",
+      "value": "147",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 9,
+      "raw_date": "2024-10",
+      "raw_value": "170",
+      "raw_entity": "",
+      "period": "2024-10",
+      "entity": "",
+      "value": "170",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 10,
+      "raw_date": "2024-11",
+      "raw_value": "237",
+      "raw_entity": "",
+      "period": "2024-11",
+      "entity": "",
+      "value": "237",
+      "status": "valid"
+    },
+    {
+      "source_id": "model-b",
+      "row": 11,
+      "raw_date": "2024-12",
+      "raw_value": "272",
+      "raw_entity": "",
+      "period": "2024-12",
+      "entity": "",
+      "value": "272",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 2,
+      "raw_date": "2024-01",
+      "raw_value": "103",
+      "raw_entity": "",
+      "period": "2024-01",
+      "entity": "",
+      "value": "103",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 3,
+      "raw_date": "2024-02",
+      "raw_value": "111",
+      "raw_entity": "",
+      "period": "2024-02",
+      "entity": "",
+      "value": "111",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 4,
+      "raw_date": "2024-03",
+      "raw_value": "114",
+      "raw_entity": "",
+      "period": "2024-03",
+      "entity": "",
+      "value": "114",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 5,
+      "raw_date": "2024-04",
+      "raw_value": "110",
+      "raw_entity": "",
+      "period": "2024-04",
+      "entity": "",
+      "value": "110",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 6,
+      "raw_date": "2024-05",
+      "raw_value": "123",
+      "raw_entity": "",
+      "period": "2024-05",
+      "entity": "",
+      "value": "123",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 7,
+      "raw_date": "2024-06",
+      "raw_value": "121",
+      "raw_entity": "",
+      "period": "2024-06",
+      "entity": "",
+      "value": "121",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 8,
+      "raw_date": "2024-07",
+      "raw_value": "135",
+      "raw_entity": "",
+      "period": "2024-07",
+      "entity": "",
+      "value": "135",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 9,
+      "raw_date": "2024-08",
+      "raw_value": "132",
+      "raw_entity": "",
+      "period": "2024-08",
+      "entity": "",
+      "value": "132",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 10,
+      "raw_date": "2024-09",
+      "raw_value": "149",
+      "raw_entity": "",
+      "period": "2024-09",
+      "entity": "",
+      "value": "149",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 11,
+      "raw_date": "2024-10",
+      "raw_value": "161",
+      "raw_entity": "",
+      "period": "2024-10",
+      "entity": "",
+      "value": "161",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 12,
+      "raw_date": "2024-11",
+      "raw_value": "228",
+      "raw_entity": "",
+      "period": "2024-11",
+      "entity": "",
+      "value": "228",
+      "status": "valid"
+    },
+    {
+      "source_id": "baseline",
+      "row": 13,
+      "raw_date": "2024-12",
+      "raw_value": "263",
+      "raw_entity": "",
+      "period": "2024-12",
+      "entity": "",
+      "value": "263",
+      "status": "valid"
+    }
+  ],
+  "issues": [
+    {
+      "source_id": "model-a",
+      "row": null,
+      "period": "2024-10",
+      "entity": "",
+      "code": "missing",
+      "detail": "No source row matches this expected key; check extraction coverage and mapping."
+    },
+    {
+      "source_id": "model-a",
+      "row": null,
+      "period": "2024-11",
+      "entity": "",
+      "code": "missing",
+      "detail": "No source row matches this expected key; check extraction coverage and mapping."
+    },
+    {
+      "source_id": "model-a",
+      "row": null,
+      "period": "2024-12",
+      "entity": "",
+      "code": "missing",
+      "detail": "No source row matches this expected key; check extraction coverage and mapping."
+    },
+    {
+      "source_id": "model-b",
+      "row": null,
+      "period": "2024-04",
+      "entity": "",
+      "code": "missing",
+      "detail": "No source row matches this expected key; check extraction coverage and mapping."
+    },
+    {
+      "source_id": "model-b",
+      "row": null,
+      "period": "2024-05",
+      "entity": "",
+      "code": "missing",
+      "detail": "No source row matches this expected key; check extraction coverage and mapping."
+    }
+  ],
+  "contract_errors": [],
+  "segments": [
+    {
+      "name": "Later half",
+      "start": "2024-07",
+      "end": "2024-12",
+      "n": 3,
+      "metrics": {
+        "model-a": {
+          "n": 3,
+          "mae": "2",
+          "rmse": "2",
+          "bias": "2"
+        },
+        "model-b": {
+          "n": 3,
+          "mae": "1",
+          "rmse": "1",
+          "bias": "1"
+        },
+        "baseline": {
+          "n": 3,
+          "mae": "3",
+          "rmse": "3",
+          "bias": "3"
+        }
+      }
+    }
+  ],
+  "warnings": [
+    "Supplied prediction files do not establish training independence, forecast-origin timing or model approval.",
+    "Available-sample metrics use each source's own actual intersection and are not comparable across models.",
+    "Common-sample metrics require explicit acceptance; missing or invalid values are never filled with zero.",
+    "Bias is prediction minus actual. Baseline percentages are (baseline minus candidate) / baseline × 100; positive means improvement.",
+    "Dates normalize only at the explicitly declared frequency; normalization can expose duplicate keys.",
+    "Calculations use bounded Decimal inputs and 600-digit working precision; metrics are reported to 40 significant digits.",
+    "Source notes and definitions are caller declarations, not independently verified provenance."
+  ]
+}

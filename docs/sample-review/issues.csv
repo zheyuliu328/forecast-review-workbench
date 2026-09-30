@@ -1,0 +1,6 @@
+﻿source_id,row,period,entity,code,detail
+model-a,,2024-10,,missing,No source row matches this expected key; check extraction coverage and mapping.
+model-a,,2024-11,,missing,No source row matches this expected key; check extraction coverage and mapping.
+model-a,,2024-12,,missing,No source row matches this expected key; check extraction coverage and mapping.
+model-b,,2024-04,,missing,No source row matches this expected key; check extraction coverage and mapping.
+model-b,,2024-05,,missing,No source row matches this expected key; check extraction coverage and mapping.

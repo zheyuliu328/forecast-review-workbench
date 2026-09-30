@@ -1,0 +1,15 @@
+{
+  "published_at": "2026-09-30",
+  "url": "https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site",
+  "access": "public",
+  "deployment_status": "succeeded",
+  "project_id": "appgprj_6aaa9988f594819186c04f6c14871488",
+  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_89d2dcbb013481919e21b96f944cd117",
+  "deployment_id": "appgdep_6abc885022f481918a5a17b3a7296a52",
+  "sites_source_sha": "67826d9e85f3210954c76a3b1ab8bfc724d735f3",
+  "github_runtime_sha": "67826d9e85f3210954c76a3b1ab8bfc724d735f3",
+  "runtime_ci": 36666329863,
+  "verification": "Deployment status rechecked during presentation wrap-up. Runtime and UI unchanged from the English release; new documentation and samples do not require a new site deployment.",
+  "external_human_trial": "pending",
+  "owner_explanation": "pending"
+}

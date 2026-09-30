@@ -2,13 +2,23 @@
 
 [Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) · [Tools and status](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/tools.html) · [Quick start](docs/QUICKSTART.md)
 
-A browser workbench with three tools: **train monthly regression candidates, review forecast files, and reconcile financial result rows with additive totals**. Bring CSV/XLSX files, map their columns, inspect failures and coverage, and download an offline evidence bundle.
+Compare existing forecast files on the same observations. Declare the full expected scope, inspect missing records, explicitly accept a common sample, and download an offline report that another reviewer can check.
 
-| Open from the navigation | What you bring | What you get |
-| --- | --- | --- |
-| **Training experiments** | Monthly actuals and one to five raw feature columns | All single/pair OLS candidates, two baselines, forward development folds, a fixed development selection and explicit holdout evaluation |
-| **Forecast review** | Actuals, one to five prediction files and an optional supplied baseline | Common-sample MAE/RMSE/bias, coverage gaps, row diagnostics and source-bound manual opinions |
-| **Financial reconciliation** | Reference/challenger result files and optional reported totals | Exact row differences, dimension-safe additive groups, raw-vs-reported total checks and retained manual opinions |
+## Complete a first review
+
+1. Open the website and select **Try an example**, or select actuals and prediction CSV/XLSX files.
+2. Check column mappings and declare target, unit, horizon and expected periods.
+3. Inspect excluded records and explicitly accept the common sample.
+4. Compare MAE, RMSE and bias on identical observations.
+5. Download the report bundle and open `report.html` offline.
+
+The invented example reverses a misleading ranking: A looks better on its own sample (MAE 1.5556 vs B 4.3), but B is better on the seven shared months (MAE 1 vs A 2). Five excluded months remain outside the conclusion. A smaller MAE does not prove future skill or leakage-free training.
+
+![Accepted common-sample comparison and own-sample diagnostic ranking](docs/images/comparison.png)
+
+[Readable example report](docs/sample-review/report.html) · [Complete example bundle](docs/sample-review.zip) · [Example result](docs/sample-result.json) · [Current release](docs/RELEASE_2026-09-30.md) · [Human acceptance tasks](docs/HUMAN_ACCEPTANCE.md)
+
+Training experiments and additive financial reconciliation are available under **Other tasks**. They are secondary workflows; forecast-file comparison is the default entry.
 
 The public website processes CSV and value-only Excel inside a browser Worker; selected files are not uploaded. It needs no account or API key. The first calculation downloads about 17 MB of self-hosted components. Each file is limited to 10 MiB, 10,000 data rows and 100 columns; combined requests are capped at 40 MiB and tasks stop after two minutes. The separately installed desktop application sends files only to its loopback Python process.
 
@@ -20,7 +30,7 @@ The original file-review workflow remains available. Version 0.2 adds executable
 
 ## Open the tool
 
-[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) and choose a task, or click **Try an example**. No installation is needed. For an offline desktop installation instead:
+[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) and compare forecast files, or click **Try an example**. No installation is needed. For an offline desktop installation instead:
 
 Python 3.10 or newer. From this checkout:
 
@@ -32,18 +42,6 @@ forecast-review
 ```
 
 The browser opens automatically. On macOS, `start.command` performs the first local setup and opens the installed tool; first installation can require internet access for Python packages. Subsequent use runs offline. After updating the source, reinstall with `python -m pip install .`.
-
-## Train candidates and review the holdout
-
-Select **Training experiments**. Choose a CSV or an Excel sheet/header, map a monthly date and target, and declare one to five raw features with their lags and release delays. Set the development end, forecast horizon and forward validation windows. Prepare development results before explicitly revealing the holdout.
-
-Every attempted candidate and failure remains visible. With five features, that means 15 OLS candidates and two baselines. Scaling uses each training window only; selection uses pooled development MAE. Holdout scores cannot change that selection. Missing feature observations remove the same affected target months for all candidates and baselines. Missing targets, malformed numbers and ambiguous monthly calendars stop the experiment with an explanation.
-
-Download the experiment ZIP, or explicitly transfer up to five successful models and one baseline into **Forecast review**. Transfer preserves the holdout's full expected range and does not accept its common sample for you. An alternative model transferred after reveal is marked as an exploratory comparison. All attempted candidates remain in the experiment evidence.
-
-The numerical kernel is reused byte-for-byte from the author's public [Model Risk Lab](https://github.com/zheyuliu328/model-risk-lab), with a source commit and checksum in [the provenance record](src/forecast_review_workbench/_vendor/provenance.json). [Protocol and API](docs/EXTENSION_CONTRACT.md) · [Producer method](https://github.com/zheyuliu328/model-risk-lab/blob/main/docs/FORECAST_METHOD.md).
-
-[View the actual training interface](docs/images/training.png).
 
 ## Review your existing forecast files
 
@@ -61,6 +59,18 @@ Changing inputs, mappings, definitions, source declarations or sample acceptance
 The optional **Try an example** uses newly invented files with 12 expected months: candidate A covers nine, candidate B covers ten, and only seven are shared. A appears better on its own easier sample; B has lower error on the common seven months. All five excluded months remain visible. These are deliberately constructed forecasts, not fitted model results.
 
 The tool does not depend on this fixture: the same file pickers and mappings accept external CSV/XLSX. [Example files](examples) can also be selected manually.
+
+## Train candidates and review the holdout
+
+Select **Training experiments**. Choose a CSV or an Excel sheet/header, map a monthly date and target, and declare one to five raw features with their lags and release delays. Set the development end, forecast horizon and forward validation windows. Prepare development results before explicitly revealing the holdout.
+
+Every attempted candidate and failure remains visible. With five features, that means 15 OLS candidates and two baselines. Scaling uses each training window only; selection uses pooled development MAE. Holdout scores cannot change that selection. Missing feature observations remove the same affected target months for all candidates and baselines. Missing targets, malformed numbers and ambiguous monthly calendars stop the experiment with an explanation.
+
+Download the experiment ZIP, or explicitly transfer up to five successful models and one baseline into **Forecast review**. Transfer preserves the holdout's full expected range and does not accept its common sample for you. An alternative model transferred after reveal is marked as an exploratory comparison. All attempted candidates remain in the experiment evidence.
+
+The numerical kernel is reused byte-for-byte from the author's public [Model Risk Lab](https://github.com/zheyuliu328/model-risk-lab), with a source commit and checksum in [the provenance record](src/forecast_review_workbench/_vendor/provenance.json). [Protocol and API](docs/EXTENSION_CONTRACT.md) · [Producer method](https://github.com/zheyuliu328/model-risk-lab/blob/main/docs/FORECAST_METHOD.md).
+
+[View the actual training interface](docs/images/training.png).
 
 ## Reconcile financial results
 
@@ -122,4 +132,4 @@ MIT licensed.
 
 ## Demonstrate a complete review
 
-The default task is forecast-file comparison; training and reconciliation remain under Other tasks. The five-step guide leads from files and mappings through explicit common-sample acceptance to results and export. The result and offline report compare own-sample diagnostics with accepted common-sample MAE. [Chinese walkthrough and English interview explanation](docs/WALKTHROUGH.md).
+The default task is forecast-file comparison; training and reconciliation remain under Other tasks. The five-step guide leads from files and mappings through explicit common-sample acceptance to results and export. The result and offline report compare own-sample diagnostics with accepted common-sample MAE. [English walkthrough, three-minute introduction and technical questions](docs/WALKTHROUGH.md).

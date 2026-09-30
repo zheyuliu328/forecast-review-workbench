@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "tool_version": "0.3.0",
+  "fingerprint": "658e5a18c50bb7d879974ef7f7f4653551b0c254cf34fb5b4dbf59a63fba9cfa",
+  "source_code_sha256": {
+    "engine.py": "11e3a066169964c3dcca874616835780a75453344f51a2349fd3a2c290bdf751",
+    "tableio.py": "41889922ce42388e526071b836fc4452cd2c50a1c592682814ec9c084f340953",
+    "exporter.py": "21657321ab6b570a963cb3ddc3f9d204f06b1df9365c217214d92463a14e8a21",
+    "report.html.template": "41e79ccb0a89caa59ada4b734fd8edb3c898854b956fd661240ae229b60f5883"
+  },
+  "inputs": [
+    {
+      "id": "actual",
+      "file_name": "actual.csv",
+      "sha256": "ddcb3e30f304561b7ed73114c748a30c517f4bd00c58f2e7da680fe500a59513"
+    },
+    {
+      "id": "model-a",
+      "file_name": "candidate-a.csv",
+      "sha256": "3f17c4baafef786a27d774e0b895d3ee6939465001252fe35fe8fc7b4975a194"
+    },
+    {
+      "id": "model-b",
+      "file_name": "candidate-b.csv",
+      "sha256": "4b22e3fbf81e78ee9ea3e4a6d21af1f7c6e0fa27a1840dc16b1bc03f2cbd2f79"
+    },
+    {
+      "id": "baseline",
+      "file_name": "baseline.csv",
+      "sha256": "79a84a4afb244a4613ab47f576e1f05d4174520b6c262452c61eac327e465daf"
+    }
+  ],
+  "files_sha256": {
+    "report.html": "921207f1e9c8d16c5d9f359ba1d4e5880868e28bf1868bd14b37a6824d70569b",
+    "results.json": "b683ddbaf11cfcfddec278c16df48e5ba8cf7db675b99ef224324d1074004b02",
+    "review-notes.json": "3baf87a6f3ebc706dc6a4fb2ca0ea84c6a6183f362e72459b14c2c85e906655f",
+    "evaluation-rows.csv": "d508295510b75d686d6de4811a799a6f9245b02ed94ad76f6899619daa0061e9",
+    "input-rows.csv": "b413a4924be7fe395c5a1b0b41cf7895604a66d22f4ab14d0288d9dfcb3441f8",
+    "issues.csv": "4b438956fc7cfbcd42c270428d7903c24324763546ffa58ac0337a1e26cc50b9",
+    "metrics.csv": "ae3c58bf0a3c9e80fcdc0e69902f172340c532636819ae1453c0b4791dadbdde",
+    "config.json": "902d83b98dd1b463844e70f79a9a1e4c7fb1a49bfce3928d2f2724fa53455d8c"
+  },
+  "scope": "Technical review of supplied forecasts; manual opinions are not automated approval."
+}

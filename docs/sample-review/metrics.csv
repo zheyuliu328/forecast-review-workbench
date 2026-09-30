@@ -1,0 +1,4 @@
+﻿model_id,name,role,n,mae,rmse,bias
+model-a,Candidate A,candidate,7,2,2,2
+model-b,Candidate B,candidate,7,1,1,1
+baseline,Provided baseline,baseline,7,3,3,3

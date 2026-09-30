@@ -1,0 +1,122 @@
+{
+  "scope": {
+    "start": "2024-01",
+    "end": "2024-12",
+    "frequency": "monthly",
+    "entities": []
+  },
+  "contract": {
+    "target": "Monthly revenue",
+    "unit": "USD",
+    "transformation": "none",
+    "horizon": 1,
+    "frequency": "monthly"
+  },
+  "accepted_common_sample": true,
+  "sources": [
+    {
+      "id": "actual",
+      "name": "Actual",
+      "role": "actual",
+      "file_name": "actual.csv",
+      "sha256": "ddcb3e30f304561b7ed73114c748a30c517f4bd00c58f2e7da680fe500a59513",
+      "mapping": {
+        "date": "Month",
+        "value": "Observed",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 12,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "model-a",
+      "name": "Candidate A",
+      "role": "candidate",
+      "file_name": "candidate-a.csv",
+      "sha256": "3f17c4baafef786a27d774e0b895d3ee6939465001252fe35fe8fc7b4975a194",
+      "mapping": {
+        "date": "period",
+        "value": "Forecast",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 9,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "model-b",
+      "name": "Candidate B",
+      "role": "candidate",
+      "file_name": "candidate-b.csv",
+      "sha256": "4b22e3fbf81e78ee9ea3e4a6d21af1f7c6e0fa27a1840dc16b1bc03f2cbd2f79",
+      "mapping": {
+        "date": "snapshot",
+        "value": "prediction",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 10,
+      "blank_rows_ignored": []
+    },
+    {
+      "id": "baseline",
+      "name": "Provided baseline",
+      "role": "baseline",
+      "file_name": "baseline.csv",
+      "sha256": "79a84a4afb244a4613ab47f576e1f05d4174520b6c262452c61eac327e465daf",
+      "mapping": {
+        "date": "Month",
+        "value": "Reference",
+        "entity": null
+      },
+      "contract": {
+        "target": "Monthly revenue",
+        "unit": "USD",
+        "horizon": 1,
+        "transformation": "none",
+        "frequency": "monthly"
+      },
+      "source_note": "Independently invented illustration; no fitted model or business data.",
+      "sheet": null,
+      "header_row": 1,
+      "rows": 12,
+      "blank_rows_ignored": []
+    }
+  ],
+  "segments": [
+    {
+      "name": "Later half",
+      "start": "2024-07",
+      "end": "2024-12"
+    }
+  ],
+  "fingerprint": "658e5a18c50bb7d879974ef7f7f4653551b0c254cf34fb5b4dbf59a63fba9cfa"
+}
