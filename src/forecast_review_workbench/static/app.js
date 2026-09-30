@@ -651,7 +651,7 @@
     const result = state.result;
     if (!result) return;
     const ready = result.comparison_ready && !state.dirty && !(result.contract_errors || []).length;
-    $("review-context").textContent = result.contract.target + " · " + result.contract.unit + " · " + (ready ? result.summary.common + " accepted common observations" : "Common-sample comparison not yet available") + ". Dates identify target periods; the declared horizon does not shift them.";
+    $("review-context").textContent = result.contract.target + " · " + result.contract.unit + " · " + (ready ? result.summary.common + " 条已确认共同记录" : "尚未形成共同样本比较") + "。日期对应被预测的期间，提前期声明不会移动日期。";
     const content = $("results-content");
     content.replaceChildren();
     if (!ready) {
@@ -669,11 +669,11 @@
         element('h3', {}, '样本改变，排名也可能改变'),
         element('p', {}, '左侧各用各的记录，只能诊断，不能据此评优。右侧统一使用已确认的 ' + result.summary.common + ' 条记录；完整范围 ' + result.summary.expected + ' 条，排除 ' + result.summary.excluded + ' 条。结论不覆盖被排除的记录。'),
         element('div', {className:'table-wrap'}, table(['预测','各自样本数','各自 MAE（不可横比）','共同样本数','共同 MAE'], comparisonRows)),
-        element('p', {className:'muted'}, 'MAE 较低只代表当前共同样本上的平均绝对误差较小，不证明未来更好或训练没有信息泄漏。示例为刻意构造的排名反转：请对照左右两列，而非把它当成模型业绩。')
+        element('p', {className:'muted'}, 'MAE 较低只代表当前共同样本上的平均绝对误差较小，不证明未来更好或训练没有信息泄漏。样本数相同也不代表记录相同；以明确确认的共同键为准。')
       ]));
       content.appendChild(element("div", {className: "panel"}, [
         element("div", {className: "metric-intro"}, [
-          element("div", {}, [element("h3", {}, "4 比较相同样本上的误差"), element("p", {}, "Every row below uses exactly the same " + result.summary.common + " accepted observations. All values are in " + result.contract.unit + ".")]),
+          element("div", {}, [element("h3", {}, "4 比较相同样本上的误差"), element("p", {}, "以下预测统一使用已确认的 " + result.summary.common + " 条记录，数值单位为 " + result.contract.unit + "。")]),
           element("span", {className: "tag tag-success"}, "已确认共同样本")
         ]),
         element("div", {className: "table-wrap"}, metricTable(result.models || [], "metrics", Boolean(state.baseline))),
@@ -682,7 +682,7 @@
           element("div", {}, [element("strong", {}, "RMSE"), "对大误差更敏感；不是回归残差标准误。"]),
           element("div", {}, [element("strong", {}, "Bias"), "预测减实际的平均值；正值代表平均高估。"])
         ]),
-        state.baseline ? element("p", {className: "baseline-note"}, "Baseline changes: positive percentages mean improvement; negative percentages mean deterioration. An undefined or zero-denominator comparison is shown as —.") : null
+        state.baseline ? element("p", {className: "baseline-note"}, "相对基线：正百分比表示误差降低，负数表示变差；零分母或未定义的比较显示为 —。") : null
       ]));
       content.appendChild(renderChartPanel());
       if ((result.segments || []).length) {
