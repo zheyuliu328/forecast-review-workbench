@@ -25,10 +25,10 @@ MAX_REQUEST_BYTES = 40 * 1024 * 1024
 
 def _payload(raw):
     if len(raw.encode("utf-8")) > MAX_REQUEST_BYTES:
-        raise ValueError("本次所选文件合计过大，请使用较小的数据摘录（请求上限 40 MiB）。")
+        raise ValueError("The selected files are too large in total. Use a smaller data extract (40 MiB request limit).")
     value = json.loads(raw)
     if not isinstance(value, dict):
-        raise ValueError("请求必须是一个对象。")
+        raise ValueError("The request must be an object.")
     return value
 
 
@@ -43,7 +43,7 @@ def dispatch(action, raw):
     elif action == "/api/inspect":
         file = payload.get("file")
         if not isinstance(file, dict) or "path" in file:
-            raise ValueError("请选择浏览器中的文件，不接受磁盘路径。")
+            raise ValueError("Select a file in the browser; disk paths are not accepted.")
         result = inspect_table(file, payload.get("sheet"), payload.get("header_row", 1))
     elif action == "/api/review":
         result = review(payload)
@@ -63,7 +63,7 @@ def dispatch(action, raw):
     elif action == "/api/reconcile":
         result = reconcile(payload)
     else:
-        raise ValueError("未支持的操作。")
+        raise ValueError("Unsupported operation.")
     return json.dumps(result, ensure_ascii=False, allow_nan=False)
 
 
@@ -80,7 +80,7 @@ def download(action, raw):
             payload.get("request"), payload.get("fingerprint"), payload.get("notes", [])
         )
     else:
-        raise ValueError("未支持的下载类型。")
+        raise ValueError("Unsupported download type.")
     runtime = Path("/app/browser-build.json").read_bytes()
     files["browser-build.json"] = runtime
     manifest = json.loads(files["manifest.json"])

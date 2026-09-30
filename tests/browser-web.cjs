@@ -51,7 +51,7 @@ const {chromium} = require("playwright");
       return page.evaluate(endpoint=>window.__calls.filter(x=>x.endpoint===endpoint).at(-1).result,endpoint);
     }
     async function openDetails(selector){const d=page.locator(selector).locator("xpath=ancestor::details[1]");if(await d.count()&&!await d.evaluate(n=>n.open))await d.locator("summary").first().click();}
-    async function screenshot(name){await page.screenshot({path:path.join(output,name+".png"),fullPage:true});await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+" mobile overflow");await page.screenshot({path:path.join(output,name+"-mobile.png"),fullPage:true});await page.setViewportSize({width:1440,height:1000});}
+    async function screenshot(name){assert.equal(await page.locator("html").getAttribute("lang"),"en");assert.doesNotMatch(await page.locator("body").innerText(),/\p{Script=Han}/u);await page.screenshot({path:path.join(output,name+".png"),fullPage:true});await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),name+" mobile overflow");await page.screenshot({path:path.join(output,name+"-mobile.png"),fullPage:true});await page.setViewportSize({width:1440,height:1000});}
     async function download(selector,name){const pending=page.waitForEvent("download");await page.locator(selector).click();const item=await pending;const destination=path.join(output,name+".zip");await item.saveAs(destination);assert.equal(await item.failure(),null);await ready(selector);return destination;}
     await page.goto(url);
     assert(await page.locator("#review-file-step").isVisible());
@@ -81,7 +81,7 @@ const {chromium} = require("playwright");
     await ready("#go-review");await page.locator("#go-review").click();
     assert.equal(await page.locator("#sample-comparison tbody tr").count(),2);
     assert.equal(await page.locator("#sample-comparison tbody tr").first().locator("td").count(),5);
-    assert.match(await page.locator("#sample-comparison").innerText(),/共同 MAE/);
+    assert.match(await page.locator("#sample-comparison").innerText(),/Common MAE/);
     await page.locator("#note-decision-model-a").selectOption("needs_evidence");
     await page.locator("#note-text-model-a").fill("Three shared periods support this comparison; obtain the missing fifth-month prediction before judging full-scope performance.");
     await screenshot("review");
@@ -131,10 +131,10 @@ const {chromium} = require("playwright");
     await page.route("**/browser.js",route=>route.abort());
     for(const route of ["/","/experiments/","/reconcile/"]){
       await page.goto(url+route);await page.locator("#example-button").click();
-      await page.locator("#error").filter({hasText:"文件没有上传"}).waitFor();
+      await page.locator("#error").filter({hasText:"Files were not uploaded"}).waitFor();
       const input=route==="/"?"#actual-file":route.includes("experiments")?"#training-file":"#left-file";
       await page.locator(input).setInputFiles(path.join(output,"actual.csv"));
-      await page.locator(".source-status.error").filter({hasText:"浏览器计算组件未能加载"}).first().waitFor();
+      await page.locator(".source-status.error").filter({hasText:"The browser runtime failed to load"}).first().waitFor();
     }
     assert.deepEqual(uploads,[]);assert.deepEqual(external,[]);assert.deepEqual(errors,[]);
     // Every ZIP's added runtime metadata and existing files must match its manifest.

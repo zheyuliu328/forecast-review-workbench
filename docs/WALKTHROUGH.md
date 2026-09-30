@@ -1,16 +1,16 @@
 # Understand and demonstrate Forecast Review Workbench
 
-## 中文：先问是否在比较同一批记录
+## Guided demonstration: compare the same observations
 
-这个工具回答：在目标、单位、预测期限一致的前提下，哪些记录可以共同比较，两份预测谁在这批记录上的误差更小？给工具一个预测文件，不能证明其训练没有泄漏。
+The tool identifies comparable records when targets, units and horizons agree, then compares forecast errors on those records. An imported prediction file cannot establish leakage-free training.
 
-1. 点“试用示例”，阅读覆盖情况。完整范围12个月，A有9个月，B有10个月，交集只有7个月。
-2. 查看各自样本：A的MAE约1.5556，B约4.3。不能由此宣布A更好，因为月份不同。
-3. 明确接受共同样本，进入结果页。相同7个月上A的MAE为2，B为1，排名反转。被排除的是2024-04、05、10、11、12；结论不适用于这5个月。
-4. 下载复核包，解压打开report.html；可阅读输入定义、指标、来源、排除原因。CSV/JSON用于独立复算。示例是人为构造的预测，不是训练业绩。
-5. 自己使用时，先选实际与预测文件，核对日期/数值列，再明确预期完整期间及目标/单位/期限。不要按文件现有月份自动缩窄范围，否则可能掩盖所有文件共同缺失的月份。中文常见列名可建议映射；多列同时匹配时需人工选择。
+1. Select **Try an example** and inspect coverage. There are 12 expected months: A covers 9 and B covers 10; only 7 are shared.
+2. Inspect each model's own sample. A has MAE about 1.5556 and B about 4.3. These are different months, so this is not a fair ranking.
+3. Explicitly accept the common sample and view results. On the same 7 months, A has MAE 2 and B has MAE 1. The ranking reverses. Excluded months are April, May, October, November and December 2024; the conclusion does not cover them.
+4. Download the review bundle and open report.html after extraction. Inspect definitions, metrics, source information and exclusion reasons. CSV/JSON support independent recomputation. The example uses invented forecasts, not training performance.
+5. For your own files, select actuals and predictions, check date/value mappings, and declare the full expected period, target, unit and horizon. Do not shrink the expected period to observed coverage: this can hide months absent from every file. Common column aliases are suggested only when unambiguous; multiple matches require a manual choice.
 
-可选训练任务限于月度OLS候选，预处理在各训练窗口拟合，开发期选模型，明确揭示留出期。预测比较与训练是不同任务，不要把读取任意预测文件当成验证其训练流程。
+Optional monthly OLS experiments fit preprocessing within each training window, select models on development data and explicitly reveal the holdout. Comparing imported forecasts and validating their training history are different tasks.
 
 ## English introduction — about three minutes at a measured pace
 

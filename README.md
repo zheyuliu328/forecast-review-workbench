@@ -1,6 +1,6 @@
 # Forecast Review Workbench
 
-[直接打开网页版](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) · [全部工具与状态](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/tools.html) · [中文使用指南](docs/QUICKSTART.zh-CN.md)
+[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) · [Tools and status](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/tools.html) · [Quick start](docs/QUICKSTART.md)
 
 A browser workbench with three tools: **train monthly regression candidates, review forecast files, and reconcile financial result rows with additive totals**. Bring CSV/XLSX files, map their columns, inspect failures and coverage, and download an offline evidence bundle.
 
@@ -20,7 +20,7 @@ The original file-review workflow remains available. Version 0.2 adds executable
 
 ## Open the tool
 
-[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) and choose a task, or click **试用示例**. No installation is needed. For an offline desktop installation instead:
+[Open the public website](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site) and choose a task, or click **Try an example**. No installation is needed. For an offline desktop installation instead:
 
 Python 3.10 or newer. From this checkout:
 
@@ -58,7 +58,7 @@ Changing inputs, mappings, definitions, source declarations or sample acceptance
 
 ## Try the coverage trap
 
-The optional **试用示例** uses newly invented files with 12 expected months: candidate A covers nine, candidate B covers ten, and only seven are shared. A appears better on its own easier sample; B has lower error on the common seven months. All five excluded months remain visible. These are deliberately constructed forecasts, not fitted model results.
+The optional **Try an example** uses newly invented files with 12 expected months: candidate A covers nine, candidate B covers ten, and only seven are shared. A appears better on its own easier sample; B has lower error on the common seven months. All five excluded months remain visible. These are deliberately constructed forecasts, not fitted model results.
 
 The tool does not depend on this fixture: the same file pickers and mappings accept external CSV/XLSX. [Example files](examples) can also be selected manually.
 

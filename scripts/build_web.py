@@ -95,7 +95,7 @@ def build():
             '<script src="/static/extension-common.js"',
             '<script src="/browser.js" defer></script>\n  <script src="/static/extension-common.js"',
         )
-        html = html.replace("本机处理", "浏览器内处理")
+        html = html.replace("Local processing", "Browser-only processing")
         html = html.replace("<head>", '<head><meta name="frw-runtime" content="browser">')
         html = html.replace(
             '<meta name="color-scheme" content="light">',
@@ -110,12 +110,12 @@ def build():
             '<main id="main">',
             '<main id="main"><div id="runtime-status" class="runtime-status" role="status" '
             'aria-live="polite" hidden><span></span>'
-            '<button id="runtime-cancel" class="button button-small" type="button">取消处理</button></div>',
+            '<button id="runtime-cancel" class="button button-small" type="button">Cancel processing</button></div>',
         )
         html = html.replace(
             "</footer>",
-            '<a href="/tools.html">全部工具与状态</a>'
-            '<a href="/THIRD_PARTY_NOTICES.txt">开源许可</a></footer>',
+            '<a href="/tools.html">All tools and statuses</a>'
+            '<a href="/THIRD_PARTY_NOTICES.txt">Open-source licences</a></footer>',
         )
         (OUTPUT / destination).write_text(html)
     for name in ("browser.js", "worker.mjs", "tools.html", "THIRD_PARTY_NOTICES.txt"):

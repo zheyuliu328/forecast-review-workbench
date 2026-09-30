@@ -5,17 +5,17 @@ let queue = Promise.resolve();
 const progress = message => self.postMessage({type: "progress", message});
 async function checkedAsset(path, expected) {
   const response = await fetch(new URL(path, self.location.origin));
-  if (!response.ok) throw new Error("计算组件未能下载，请检查网络后重试。");
+  if (!response.ok) throw new Error("The calculation runtime could not be downloaded. Check your connection and try again.");
   const bytes = new Uint8Array(await response.arrayBuffer());
   const digest = new Uint8Array(await crypto.subtle.digest("SHA-256", bytes));
   const actual = Array.from(digest, byte => byte.toString(16).padStart(2, "0")).join("");
-  if (actual !== expected) throw new Error("计算组件版本不一致，请刷新网页后重试。");
+  if (actual !== expected) throw new Error("Calculation runtime version mismatch. Refresh and try again.");
   return bytes;
 }
 async function initialize() {
-  progress("首次使用正在下载计算组件。文件仍留在此浏览器中…");
+  progress("Downloading the calculation runtime for the first run. Your files stay in this browser…");
   const response = await fetch("/browser-build.json", {cache:"no-cache"});
-  if (!response.ok) throw new Error("无法读取工具版本，请刷新后重试。");
+  if (!response.ok) throw new Error("Unable to read the tool version. Refresh and try again.");
   const build = await response.json();
   const py = await loadPyodide({indexURL:new URL("/runtime/", self.location.origin).href});
   // Native NumPy wheels require Pyodide's dynamic-library loader, not ZIP extraction.
@@ -37,7 +37,7 @@ self.onmessage = ({data}) => {
     try {
       runtime ||= initialize().catch(error => { runtime = null; throw error; });
       const py = await runtime;
-      progress(download ? "正在准备报告…" : "正在读取与计算…");
+      progress(download ? "Preparing report…" : "Reading and calculating…");
       const proxy = py.globals.get("browser_runtime");
       try {
         if (download) {
@@ -52,7 +52,7 @@ self.onmessage = ({data}) => {
       } finally { proxy.destroy(); }
     } catch (error) {
       const detail = String(error.message || error).trim().split("\n").at(-1).replace(/^(ValueError|OSError|RuntimeError|Error):\s*/, "");
-      self.postMessage({id, error:detail || "未能完成，请检查所选文件。"});
+      self.postMessage({id, error:detail || "Unable to complete the task. Check the selected files."});
     }
   });
 };

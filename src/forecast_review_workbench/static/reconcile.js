@@ -3,13 +3,13 @@
 (function () {
   const U = window.WorkbenchUI, $ = function (id) { return document.getElementById(id); };
   const DIMENSIONS = [
-    ["record_id", "记录 ID"], ["date", "日期"], ["measure", "指标"], ["risk_type", "风险类型（可选）"],
-    ["tenor", "期限（可选）"], ["currency", "币种"], ["unit", "单位"], ["value", "数值"]
+    ["record_id", "Record ID"], ["date", "Date"], ["measure", "Measure"], ["risk_type", "Risk type (optional)"],
+    ["tenor", "Tenor (optional)"], ["currency", "Currency"], ["unit", "Unit"], ["value", "Value"]
   ];
   const state = {
-    title: "金融结果对账", absolute_tolerance: "0.01", relative_tolerance: "0.0001", additive: false,
-    left: U.source("left", "参考表"), right: U.source("right", "待比较表"),
-    left_totals: U.source("left-totals", "参考侧上报总额"), right_totals: U.source("right-totals", "待比较侧上报总额"),
+    title: "Financial results reconciliation", absolute_tolerance: "0.01", relative_tolerance: "0.0001", additive: false,
+    left: U.source("left", "Reference file"), right: U.source("right", "Comparison file"),
+    left_totals: U.source("left-totals", "Reference reported totals"), right_totals: U.source("right-totals", "Comparison reported totals"),
     leftTotalsEnabled: false, rightTotalsEnabled: false,
     result: null, request: null, dirty: true, revision: 0, busy: false, notes: {}, view: "rows", editing: true
   };
@@ -30,7 +30,7 @@
     $("reconcile-fields").disabled = state.busy;
     $("example-button").disabled = state.busy || loading;
     $("reconcile-button").disabled = state.busy || loading;
-    $("reconcile-button").textContent = state.busy ? "正在对账…" : "开始对账 →";
+    $("reconcile-button").textContent = state.busy ? "Reconciling…" : "Run reconciliation →";
     $("reconcile-export").disabled = state.busy || state.dirty || !state.result;
     $("reconcile-results").classList.toggle("hidden", !state.result || state.dirty || state.editing);
     $("left-totals-source").classList.toggle("hidden", !state.leftTotalsEnabled);
@@ -45,7 +45,7 @@
   }
   function mapping(item, disabled, totals, meaning) {
     const grid = U.el("div", {className: "dimension-grid"}, [
-      U.el("span", {className: "dimension-heading"}, "含义"), U.el("span", {className: "dimension-heading"}, "选择列"), U.el("span", {className: "dimension-heading"}, "或填写固定值")
+      U.el("span", {className: "dimension-heading"}, "Definition"), U.el("span", {className: "dimension-heading"}, "Select a column"), U.el("span", {className: "dimension-heading"}, "Or enter a fixed value")
     ]);
     DIMENSIONS.filter(function (pair) {
       if (totals) return pair[0] !== "record_id";
@@ -55,10 +55,10 @@
       const key = pair[0], required = key === "record_id" || key === "value", optional = key === "risk_type" || key === "tenor";
       const defaultInput = !required ? U.el("input", {
         id: item.id + "-default-" + key, className: "dimension-default", value: item.defaults[key] || "", maxlength: 120,
-        disabled: disabled || Boolean(item.mapping[key]), placeholder: optional ? "可留空" : "未选列时须填写",
+        disabled: disabled || Boolean(item.mapping[key]), placeholder: optional ? "Optional" : "Required if no column is selected",
         "aria-label": item.name + " constant " + pair[1], oninput: function (event) { item.defaults[key] = event.target.value; invalidate(); }
-      }) : U.el("span", {className: "no-default"}, "须选择列");
-      const mappingSelect = U.select(U.columns(item, required ? "选择列" : optional ? "固定值／留空" : "填写固定值"), item.mapping[key], function (event) {
+      }) : U.el("span", {className: "no-default"}, "Column selection required");
+      const mappingSelect = U.select(U.columns(item, required ? "Select a column" : optional ? "Fixed value / blank" : "Enter a fixed value"), item.mapping[key], function (event) {
         item.mapping[key] = event.target.value || null;
         if (!required) defaultInput.disabled = Boolean(item.mapping[key]);
         invalidate();
@@ -75,7 +75,7 @@
     [["left", "R", false], ["right", "C", false], ["left_totals", "ΣR", true], ["right_totals", "ΣC", true]].forEach(function (entry) {
       const key = entry[0], item = state[key];
       cards[key] = U.fileCard($(item.id + "-source"), item, {
-        letter: entry[1], caption: entry[2] ? "独立提供的分组上报总额" : key === "left" ? "相对容差以此侧数值为基准" : "与参考侧逐笔比较的数值",
+        letter: entry[1], caption: entry[2] ? "Independently supplied reported group totals" : key === "left" ? "Relative tolerance uses this side as the reference" : "Values compared with the reference, row by row",
         changed: invalidate, updated: function () {
           if (!entry[2]) $(item.id + "-dimensions").replaceChildren(U.el("h3", {}, item.name), mapping(item, item.loading, false, true));
           update();
@@ -114,7 +114,7 @@
       if (!value || !Number.isFinite(Number(value)) || Number(value) < 0) throw new Error("Tolerances must be nonnegative finite numbers. Relative tolerance is a ratio.");
     });
     return {
-      schema_version: 1, title: state.title.trim() || "金融结果对账",
+      schema_version: 1, title: state.title.trim() || "Financial results reconciliation",
       left: sourcePayload(state.left, false), right: sourcePayload(state.right, false),
       left_totals: state.leftTotalsEnabled ? sourcePayload(state.left_totals, true) : null,
       right_totals: state.rightTotalsEnabled ? sourcePayload(state.right_totals, true) : null,
@@ -190,7 +190,7 @@
       {label: "Difference", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.difference, true); }},
       {label: "|Difference|", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.absolute_difference, true); }},
       {label: "Allowed", render: function (row) { return U.cell(row.status === "definition_conflict" ? null : row.allowed_difference, true); }},
-      {label: "状态", render: function (row) { return statusCell(row.status); }},
+      {label: "Status", render: function (row) { return statusCell(row.status); }},
       {label: "Explanation", key: "reasons"},
       {label: "Original rows", render: function (row) { const refs = row.source_rows || {}; return U.el("td", {}, [U.el("div", {}, "Reference: " + U.text(refs.left)), U.el("div", {}, "Challenger: " + U.text(refs.right))]); }},
       {label: "Review", render: function (row) { return U.el("td", {}, U.button("Add / view note", function () { addNote(row); }, {"data-note-action": true, disabled: state.busy})); }}
@@ -203,7 +203,7 @@
       {label: "Financial group", render: function (row) { return dimensions(row.dimensions, false); }},
       {label: "Reference", key: "reference", numeric: true}, {label: "Challenger", key: "challenger", numeric: true}, {label: "Difference", key: "difference", numeric: true},
       {label: "|Difference|", key: "absolute_difference", numeric: true}, {label: "Allowed", key: "allowed_difference", numeric: true},
-      {label: "状态", render: function (row) { return statusCell(row.status); }},
+      {label: "Status", render: function (row) { return statusCell(row.status); }},
       {label: "Offsetting breaches", render: function (row) { return U.el("td", {}, row.offsetting_breaches ? U.badge("Yes · inspect rows", "warning") : "No"); }},
       {label: "Explanation", key: "reasons"},
       {label: "Rows, reference / challenger", render: function (row) { return U.cell(U.text(row.reference_rows) + " / " + U.text(row.challenger_rows)); }},
@@ -219,12 +219,12 @@
       {label: "Financial group", render: function (row) { return dimensions(row.dimensions, false); }},
       {label: "Calculated from rows", key: "calculated", numeric: true}, {label: "Reported", key: "reported", numeric: true},
       {label: "Difference", key: "difference", numeric: true}, {label: "|Difference|", key: "absolute_difference", numeric: true}, {label: "Allowed", key: "allowed_difference", numeric: true},
-      {label: "状态", render: function (row) { return statusCell(row.status); }}, {label: "Explanation", key: "reasons"}, {label: "Original total rows", key: "source_rows"}
+      {label: "Status", render: function (row) { return statusCell(row.status); }}, {label: "Explanation", key: "reasons"}, {label: "Original total rows", key: "source_rows"}
     ], {searchLabel: "Search totals by group or status"});
   }
   function renderInputRows() {
     U.pagedTable($("reconcile-input-rows"), state.result.input_rows || [], [
-      {label: "来源", key: "source_id"}, {label: "Original row", key: "row"}, {label: "Raw mapped values", key: "raw"}, {label: "Parsed values", key: "values"},
+      {label: "Source", key: "source_id"}, {label: "Original row", key: "row"}, {label: "Raw mapped values", key: "raw"}, {label: "Parsed values", key: "values"},
       {label: "Errors", key: "errors"}, {label: "Record key", key: "record_key"}, {label: "Group key", key: "group_key"}
     ], {searchLabel: "Search original values or errors"});
   }
@@ -262,7 +262,7 @@
           U.button("Discard this draft", function () { delete state.notes[note.record_key]; U.clearMessages(); renderNotes(); }, {className: "text-button danger-button"})
         ]));
       }
-      const decision = U.select([{value: "", label: "Choose a review decision"}, {value: "needs_evidence", label: "需要更多证据"}, {value: "accepted_difference", label: "Accept this difference"}], note.decision, function (event) { note.decision = event.target.value; U.clearMessages(); }, {id: "reconcile-decision-" + index, disabled: stale});
+      const decision = U.select([{value: "", label: "Choose a review decision"}, {value: "needs_evidence", label: "More evidence needed"}, {value: "accepted_difference", label: "Accept this difference"}], note.decision, function (event) { note.decision = event.target.value; U.clearMessages(); }, {id: "reconcile-decision-" + index, disabled: stale});
       const comments = U.el("textarea", {id: "reconcile-text-" + index, value: note.text, rows: 3, maxlength: 4000, disabled: stale, placeholder: "Describe supporting evidence, the explanation or what is still missing.", oninput: function (event) { note.text = event.target.value; }});
       card.append(U.field("Decision", decision), U.field("Evidence and reasoning", comments, "Up to 4,000 characters. The computed comparison status stays unchanged."));
       if (!stale) card.appendChild(U.el("div", {className: "inline-actions"}, U.button("Remove note", function () { delete state.notes[note.record_key]; U.clearMessages(); renderNotes(); }, {className: "text-button danger-button"})));
@@ -282,7 +282,7 @@
     sourceValues.forEach(function (source) {
       const fields = U.el("dl", {className: "extension-kv"});
       Object.entries(source).forEach(function (pair) { fields.append(U.el("dt", {}, pair[0].replaceAll("_", " ")), U.el("dd", {}, U.text(pair[1]))); });
-      host.appendChild(U.el("details", {className: "extension-details"}, [U.el("summary", {}, source.name || source.id || source.file_name || "来源"), fields]));
+      host.appendChild(U.el("details", {className: "extension-details"}, [U.el("summary", {}, source.name || source.id || source.file_name || "Source"), fields]));
     });
     host.appendChild(U.el("p", {className: "extension-help"}, "Difference is challenger minus reference. The allowed magnitude is absolute tolerance + relative tolerance × |reference|. This checks additive values; it does not reproduce nonlinear margin aggregation or a pricing model."));
   }
@@ -310,14 +310,14 @@
       state.additive = false;
       $("aggregation-options").open = true;
       state.leftTotalsEnabled = Boolean(request.left_totals); state.rightTotalsEnabled = Boolean(request.right_totals);
-      state.left = U.restoreSource("left", "参考表", request.left);
-      state.right = U.restoreSource("right", "待比较表", request.right);
-      state.left_totals = U.restoreSource("left-totals", "参考侧上报总额", request.left_totals);
-      state.right_totals = U.restoreSource("right-totals", "待比较侧上报总额", request.right_totals);
+      state.left = U.restoreSource("left", "Reference file", request.left);
+      state.right = U.restoreSource("right", "Comparison file", request.right);
+      state.left_totals = U.restoreSource("left-totals", "Reference reported totals", request.left_totals);
+      state.right_totals = U.restoreSource("right-totals", "Comparison reported totals", request.right_totals);
       invalidate(); syncInputs();
       const keys = ["left", "right"].concat(state.leftTotalsEnabled ? ["left_totals"] : [], state.rightTotalsEnabled ? ["right_totals"] : []);
       for (const key of keys) await cards[key].inspect(true);
-      U.message("已载入虚构文件。先确认 ID 和数值列，再进入下一步；检查示例总额需要你明确确认可加性。", false);
+      U.message("Synthetic files loaded. Confirm the ID and value columns, then continue. Checking example totals requires your explicit confirmation of additivity.", false);
     } catch (error) { U.message(error.message, true); }
     finally { state.busy = false; update(); }
   }
@@ -336,10 +336,10 @@
   inputFlow = U.setupFlow({formId: "reconcile-form", validateFiles: function () {
     [state.left, state.right].forEach(function (source) {
       U.requireSource(source);
-      if (!source.mapping.record_id || !source.mapping.value) throw new Error("请为“" + source.name + "”确认记录 ID 列与数值列。");
+      if (!source.mapping.record_id || !source.mapping.value) throw new Error("For “" + source.name + "”: confirm the record ID and value columns.");
     });
   }, summary: function () {
-    return [state.left, state.right].map(function (source) { return source.file ? source.file.name : "未选文件"; }).join(" ↔ ") + "。请核对下列维度，未映射的必填项需声明固定值。";
+    return [state.left, state.right].map(function (source) { return source.file ? source.file.name : "No file selected"; }).join(" ↔ ") + ". Check the dimensions below. Declare a fixed value for each required field without a mapped column.";
   }});
   syncInputs();
 })();
