@@ -115,9 +115,14 @@
     });
   }
   let exportURL = null;
-  function invalidate() {
+  function clearExport() {
     if (exportURL) { URL.revokeObjectURL(exportURL); exportURL = null; }
     document.getElementById("save-review-link")?.remove();
+  }
+  $("notes").addEventListener("input", clearExport);
+  $("notes").addEventListener("change", clearExport);
+  function invalidate() {
+    clearExport();
     state.revision += 1;
     state.dirty = true;
     state.resultRequest = null;
@@ -451,6 +456,7 @@
 
   async function runReview(accept, navigate) {
     if (state.busy) return;
+    clearExport();
     clearMessages();
     try { validateForm(); }
     catch (error) { showMessage(error.message, true); return; }
