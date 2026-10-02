@@ -37,3 +37,15 @@ All fixtures are independently invented. Numerical checks, installed-package exe
 ## Public browser task
 
 Select **Try the hidden deterioration example**, explicitly accept the four common keys and open the results. Compare A's pooled gain of about 48.51% with the Small entity's -100% gain. Search for Small in the group table; this filters only the view. Download the review package and confirm group-metrics.csv still contains all six entity/model rows. The public release check verified these results and every exported manifest file digest.
+
+## Independently check this example's downloaded ZIP
+
+From the repository checkout, run:
+
+```sh
+python examples/entity-horizon/verify_export.py /path/to/downloaded-review.zip
+```
+
+This standard-library script imports no project engine. It recomputes residuals, aggregate/horizon/group MAE, RMSE and bias, and group baseline gains from evaluation-rows.csv using 100-digit Decimal arithmetic. A 1e-37 relative/absolute comparison tolerance accommodates the report's 40-significant-digit rounding. It also verifies file digests, then deliberately changes one prediction and updates that file's declared digest in memory: the inconsistent residual must still be detected. Originals and the ZIP are unchanged.
+
+This is a worked checker for the exact four-record, two-entity invented example above, not a generic validator for arbitrary datasets. A successful run verifies consistency of the supplied exported values; it does not authenticate data, reconstruct omitted original files, certify the expected universe or approve a model. `config.json` records mappings and declarations, but is not an executable `--review` request containing the original file bytes. Keep the original files for full intake replay.
