@@ -140,7 +140,7 @@ The [rolling-origin review](docs/ROLLING_ORIGIN.md) keeps origin, target and hor
 
 ### Entity and horizon diagnostics
 
-The native review and offline report now split the accepted common sample by entity and horizon, including coverage and supplied-baseline MAE/RMSE gains. An original counterexample shows pooled improvement alongside 100% worse error for a smaller entity. [Run the task and read its limits](docs/ENTITY_HORIZON_REVIEW.md). Browser controls and publication for this extension are not yet delivered.
+The native review and offline report now split the accepted common sample by entity and horizon, including coverage and supplied-baseline MAE/RMSE gains. An original counterexample shows pooled improvement alongside 100% worse error for a smaller entity. [Run the task and read its limits](docs/ENTITY_HORIZON_REVIEW.md). The public browser provides entity search, horizon filtering and pagination; filters change the view while exports retain every group.
 
 ### Native event-probability review
 

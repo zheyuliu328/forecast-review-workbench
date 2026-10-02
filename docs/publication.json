@@ -4,12 +4,12 @@
   "access": "public",
   "deployment_status": "succeeded",
   "project_id": "appgprj_6aaa9988f594819186c04f6c14871488",
-  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_5f6eab8e294881918cc5e9ce0eaf7c4c",
-  "deployment_id": "appgdep_6abfed2f690c819180a6ffe7efa8dc9e",
-  "sites_source_sha": "d72ef926bd91a5fb2fcd4137d218dcf47adf85e1",
-  "github_runtime_sha": "d72ef926bd91a5fb2fcd4137d218dcf47adf85e1",
-  "runtime_ci": 37042264709,
-  "verification": "Deployed successfully; public rolling-origin example, common-sample acceptance, per-horizon results, chart horizon change and ZIP export exercised. Downloaded ZIP results and every manifest digest verified. Documentation-only follow-up does not alter the deployed runtime.",
+  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_41b579ef689c8191abde12994b11bb72",
+  "deployment_id": "appgdep_6ac00f4b38b881919b7bda20ff8bd697",
+  "sites_source_sha": "6b98362a7b2c021ecbe0a268847851120d222fe3",
+  "github_runtime_sha": "6b98362a7b2c021ecbe0a268847851120d222fe3",
+  "runtime_ci": 37055501656,
+  "verification": "Version 5 deployed successfully. Public hidden-deterioration example, explicit four-key common-sample acceptance, pooled results, Small entity filter and ZIP export exercised. Small A gain -100% and B +50%; filtered export retained all six entity/model rows. Every exported manifest file digest verified. Native binary-event probability review is not a browser entry. Human acceptance remains pending.",
   "external_human_trial": "pending",
   "owner_explanation": "pending"
 }

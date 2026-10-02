@@ -1,6 +1,6 @@
 # Entity and horizon review
 
-The native CLI/API and offline reports now expose `group_results` for both request schemas. The public browser does not yet have group controls; its release is tracked separately. Input formats and existing aggregate metrics are unchanged.
+The native CLI/API and offline reports now expose `group_results` for both request schemas. The public browser also provides entity search, horizon filtering and pagination; version 5 was deployed and exercised on 2026-10-03. Input formats and existing aggregate metrics are unchanged.
 
 ## Complete an original task
 
@@ -33,3 +33,7 @@ Groups are slices of the fixed global intersection, never newly selected model-s
 Each forecast key has equal weight in the existing aggregate. There is no default average of entity gains, cross-entity normalization or significance test. Overlapping target dates, related entities and post-hoc group selection can invalidate simple independence assumptions. Origin labels do not prove creation time or training vintage. A group with two common keys is a tiny descriptive example, not evidence of reliable forecast skill.
 
 All fixtures are independently invented. Numerical checks, installed-package execution and automated/browser report review are software evidence, not external human adoption.
+
+## Public browser task
+
+Select **Try the hidden deterioration example**, explicitly accept the four common keys and open the results. Compare A's pooled gain of about 48.51% with the Small entity's -100% gain. Search for Small in the group table; this filters only the view. Download the review package and confirm group-metrics.csv still contains all six entity/model rows. The public release check verified these results and every exported manifest file digest.
