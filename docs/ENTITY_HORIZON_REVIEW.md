@@ -24,7 +24,7 @@ The same values repeat at both origins. A has pooled MAE 26 versus baseline 50.5
 - Open report.html: the group table previews at most 100 groups, retaining expected/common/excluded counts and baseline explanations.
 - Read group-metrics.csv for every entity, horizon and model. It retains reported precision; the HTML uses seven significant digits.
 - Read results.json for the same groups and evaluation-rows.csv for the exact common observations. Every original mapped row remains in the bundle.
-- Recalculate each group's MAE, RMSE and bias only on the already accepted global common keys. Baseline gain is `(baseline error - candidate error) / baseline error * 100`, separately for MAE and RMSE. This is not MASE or a training-period scaled error.
+- Recalculate each group's MAE, RMSE and bias only on the already accepted global common keys. Baseline gain is `(baseline error - candidate error) / baseline error * 100`, separately for MAE and RMSE. The ratio is computed from unrounded internal errors, then reported to 40 significant digits. Recomputing the ratio from already rounded MAE/RMSE strings may lose tiny differences. This is not MASE or a training-period scaled error.
 
 Groups are slices of the fixed global intersection, never newly selected model-specific samples. A missing baseline excludes that key for every candidate. Explicitly expected groups with no common rows remain visible. An absent baseline produces no relative gain; a zero baseline error produces an undefined gain and a reason, never infinity or a fabricated zero. Without accepted compatible definitions and common observations, group metrics remain absent.
 

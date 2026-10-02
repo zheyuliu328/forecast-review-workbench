@@ -164,3 +164,35 @@ def test_report_preview_is_bounded_but_csv_keeps_every_group_and_escapes_entitie
     assert "Showing 100 of 101 groups" in report
     assert "<script>alert(1)</script>" not in report
     assert "&lt;script&gt;alert(1)&lt;/script&gt;" in report
+
+
+def test_baseline_gain_uses_unrounded_metrics_in_both_schemas_and_groups():
+    import base64
+    import json
+
+    for schema in (1, 2):
+        for prediction, expected in [
+            ("1." + "0" * 48 + "1", Decimal("-1e-47")),
+            ("0." + "9" * 49, Decimal("1e-47")),
+            ("1", Decimal(0)),
+        ]:
+            request = group_request(schema)
+            for source in [request["actual"], *request["candidates"], request["baseline"]]:
+                rows = list(
+                    csv.reader(io.StringIO(base64.b64decode(source["file"]["content_base64"]).decode()))
+                )
+                for row in rows[1:]:
+                    row[2] = "0" if source["id"] == "actual" else prediction if source["id"] == "a" else "1"
+                source["file"] = _file(source["file"]["name"], rows[0], rows[1:])
+            result = review(request)
+            # Reported errors still round to 1, but final gains retain the independently
+            # known +/- 1e-49 error difference times 100, not a rounded intermediate.
+            assert result["models"][0]["metrics"]["mae"] == "1"
+            for field in ("mae_pct", "rmse_pct"):
+                assert Decimal(result["models"][0]["vs_baseline"][field]) == expected
+                for group in result["group_results"]:
+                    assert Decimal(group["vs_baseline"]["a"][field]) == expected
+            json.dumps(result, allow_nan=False)
+            files, _ = build_bundle(request, result["fingerprint"])
+            exported = list(csv.DictReader(io.StringIO(files["group-metrics.csv"].decode("utf-8-sig"))))
+            assert len(exported) == 6

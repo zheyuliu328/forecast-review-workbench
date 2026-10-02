@@ -120,7 +120,7 @@ def _shift_period(period, horizon, frequency):
         raise ValueError("Forecast target exceeds the supported calendar range.") from exc
 
 
-def _metrics(pairs):
+def _metrics(pairs, *, reported=True):
     if not pairs:
         return None
     with localcontext() as context:
@@ -130,7 +130,14 @@ def _metrics(pairs):
         mae = sum((error.copy_abs() for error in errors), Decimal(0)) / n
         rmse = (sum((error * error for error in errors), Decimal(0)) / n).sqrt()
         bias = sum(errors, Decimal(0)) / n
-        return {"n": len(errors), "mae": _reported(mae), "rmse": _reported(rmse), "bias": _reported(bias)}
+        metrics = {"n": len(errors), "mae": mae, "rmse": rmse, "bias": bias}
+        return _public_metrics(metrics) if reported else metrics
+
+
+def _public_metrics(metrics):
+    if metrics is None:
+        return None
+    return {key: value if key == "n" else _reported(value) for key, value in metrics.items()}
 
 
 def _baseline_comparison(metrics, baseline, has_baseline):
@@ -658,7 +665,9 @@ def review(payload):
         (identifier for identifier, _name, role, _source in definitions if role == "baseline"), None
     )
     shared_metrics = {
-        identifier: _metrics([(values["actual"][key], values[identifier][key]) for key in common])
+        identifier: _metrics(
+            [(values["actual"][key], values[identifier][key]) for key in common], reported=False
+        )
         if ready
         else None
         for identifier, *_rest in definitions[1:]
@@ -693,7 +702,7 @@ def review(payload):
                 )
                 if not contract_errors
                 else None,
-                "metrics": metrics,
+                "metrics": _public_metrics(metrics),
                 "vs_baseline": _baseline_comparison(
                     metrics, shared_metrics.get(baseline_id), baseline_id is not None
                 ),
@@ -745,7 +754,9 @@ def review(payload):
         selected = [key for key in keys if key in common_set]
         metrics = (
             {
-                identifier: _metrics([(values["actual"][key], values[identifier][key]) for key in selected])
+                identifier: _metrics(
+                    [(values["actual"][key], values[identifier][key]) for key in selected], reported=False
+                )
                 for identifier, *_rest in definitions[1:]
             }
             if ready
@@ -758,7 +769,9 @@ def review(payload):
                 "expected": len(keys),
                 "common": len(selected),
                 "excluded": len(keys) - len(selected),
-                "metrics": metrics,
+                "metrics": {key: _public_metrics(value) for key, value in metrics.items()}
+                if metrics is not None
+                else None,
                 "vs_baseline": {
                     identifier: _baseline_comparison(
                         metrics.get(identifier), metrics.get(baseline_id), baseline_id is not None
