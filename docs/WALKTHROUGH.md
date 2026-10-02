@@ -37,3 +37,11 @@ The main limitation is that software can check declared definitions and supplied
 ## Personal understanding gate — pending
 
 Reproduce the ranking reversal in your own words, explain why excluded months still matter, then give the English introduction and answer the five follow-ups. This personal assessment remains pending; generated materials are not proof of understanding.
+
+## Explain the rolling-origin extension
+
+A target month can have several forecasts issued at different origins. Comparing them under a target-only key either rejects legitimate records as duplicates or conflates different lead times. The tool identifies forecasts by origin, target and entity, while actuals remain unique by target and entity. It constructs expected keys from a declared origin range and horizons, then intersects valid keys across every candidate and baseline.
+
+The invented two-horizon example has four forecast keys but only three actual target periods. A has smaller MAE one period ahead; B has smaller MAE two periods ahead. The report leads with separate horizons, and the chart displays one horizon and entity at a time. Aggregates weight forecast keys equally and do not imply independent errors.
+
+Owner explanation remains pending: explain why March can appear twice in predictions but once in actuals; why origin labels cannot prove absence of leakage; and why the aggregate winner need not win at every horizon. Do not claim these points are personally mastered until the owner can answer them.
