@@ -1,0 +1,116 @@
+{
+  "schema_version": 2,
+  "title": "Pooled improvement hides a smaller entity getting worse",
+  "scope": {
+    "frequency": "monthly",
+    "entities": [
+      "Large",
+      "Small"
+    ],
+    "origin_start": "2024-01",
+    "origin_end": "2024-02"
+  },
+  "contract": {
+    "target": "Revenue",
+    "unit": "USD",
+    "transformation": "none",
+    "horizons": [
+      1
+    ]
+  },
+  "actual": {
+    "id": "actual",
+    "name": "actual",
+    "file": {
+      "name": "actual.csv",
+      "content_base64": "VGFyZ2V0LEVudGl0eSxWYWx1ZQ0KMjAyNC0wMixMYXJnZSwxMDAwDQoyMDI0LTAyLFNtYWxsLDEwDQoyMDI0LTAzLExhcmdlLDEwMDANCjIwMjQtMDMsU21hbGwsMTANCg=="
+    },
+    "mapping": {
+      "date": "Target",
+      "entity": "Entity",
+      "value": "Value"
+    },
+    "contract": {
+      "target": "Revenue",
+      "unit": "USD",
+      "frequency": "monthly",
+      "transformation": "none"
+    },
+    "source_note": "Original invented example; no fitted models."
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "name": "a",
+      "file": {
+        "name": "a.csv",
+        "content_base64": "VGFyZ2V0LEVudGl0eSxWYWx1ZSxPcmlnaW4NCjIwMjQtMDIsTGFyZ2UsMTA1MCwyMDI0LTAxDQoyMDI0LTAyLFNtYWxsLDEyLDIwMjQtMDENCjIwMjQtMDMsTGFyZ2UsMTA1MCwyMDI0LTAyDQoyMDI0LTAzLFNtYWxsLDEyLDIwMjQtMDINCg=="
+      },
+      "mapping": {
+        "date": "Target",
+        "entity": "Entity",
+        "value": "Value",
+        "origin": "Origin"
+      },
+      "contract": {
+        "target": "Revenue",
+        "unit": "USD",
+        "frequency": "monthly",
+        "transformation": "none",
+        "horizons": [
+          1
+        ]
+      },
+      "source_note": "Original invented example; no fitted models."
+    },
+    {
+      "id": "b",
+      "name": "b",
+      "file": {
+        "name": "b.csv",
+        "content_base64": "VGFyZ2V0LEVudGl0eSxWYWx1ZSxPcmlnaW4NCjIwMjQtMDIsTGFyZ2UsMTA3NSwyMDI0LTAxDQoyMDI0LTAyLFNtYWxsLDEwLjUsMjAyNC0wMQ0KMjAyNC0wMyxMYXJnZSwxMDc1LDIwMjQtMDINCjIwMjQtMDMsU21hbGwsMTAuNSwyMDI0LTAyDQo="
+      },
+      "mapping": {
+        "date": "Target",
+        "entity": "Entity",
+        "value": "Value",
+        "origin": "Origin"
+      },
+      "contract": {
+        "target": "Revenue",
+        "unit": "USD",
+        "frequency": "monthly",
+        "transformation": "none",
+        "horizons": [
+          1
+        ]
+      },
+      "source_note": "Original invented example; no fitted models."
+    }
+  ],
+  "baseline": {
+    "id": "baseline",
+    "name": "baseline",
+    "file": {
+      "name": "baseline.csv",
+      "content_base64": "VGFyZ2V0LEVudGl0eSxWYWx1ZSxPcmlnaW4NCjIwMjQtMDIsTGFyZ2UsMTEwMCwyMDI0LTAxDQoyMDI0LTAyLFNtYWxsLDExLDIwMjQtMDENCjIwMjQtMDMsTGFyZ2UsMTEwMCwyMDI0LTAyDQoyMDI0LTAzLFNtYWxsLDExLDIwMjQtMDINCg=="
+    },
+    "mapping": {
+      "date": "Target",
+      "entity": "Entity",
+      "value": "Value",
+      "origin": "Origin"
+    },
+    "contract": {
+      "target": "Revenue",
+      "unit": "USD",
+      "frequency": "monthly",
+      "transformation": "none",
+      "horizons": [
+        1
+      ]
+    },
+    "source_note": "Original invented example; no fitted models."
+  },
+  "accept_common_sample": true
+}

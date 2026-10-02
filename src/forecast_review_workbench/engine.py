@@ -735,6 +735,40 @@ def review(payload):
                     else None,
                 }
             )
+    # Partition the already-fixed global sample, never reselect it per model/group.
+    grouped_keys = {}
+    for key in expected:
+        identity = (key[1], horizon_for(key) if rolling else contract["horizon"])
+        grouped_keys.setdefault(identity, []).append(key)
+    group_results = []
+    for (entity, horizon), keys in sorted(grouped_keys.items()):
+        selected = [key for key in keys if key in common_set]
+        metrics = (
+            {
+                identifier: _metrics([(values["actual"][key], values[identifier][key]) for key in selected])
+                for identifier, *_rest in definitions[1:]
+            }
+            if ready
+            else None
+        )
+        group_results.append(
+            {
+                "entity": entity,
+                "horizon": horizon,
+                "expected": len(keys),
+                "common": len(selected),
+                "excluded": len(keys) - len(selected),
+                "metrics": metrics,
+                "vs_baseline": {
+                    identifier: _baseline_comparison(
+                        metrics.get(identifier), metrics.get(baseline_id), baseline_id is not None
+                    )
+                    for identifier, *_rest in definitions[1:]
+                }
+                if metrics is not None
+                else None,
+            }
+        )
     analytical = {
         "schema_version": payload["schema_version"],
         "sources": sources,
@@ -782,7 +816,11 @@ def review(payload):
         "issues": issues,
         "contract_errors": contract_errors,
         "segments": segment_results,
+        "group_results": group_results,
         "warnings": [
+            "Entity/horizon groups partition the accepted global common sample; "
+            "pooled errors can conceal group deterioration and differences in scale. "
+            "No equal-entity average, automatic winner or significance claim is inferred.",
             "Supplied prediction files do not establish training independence, "
             "forecast-origin timing or model approval.",
             "Available-sample metrics use each source's own actual intersection "

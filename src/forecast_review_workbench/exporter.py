@@ -21,6 +21,14 @@ from .engine import review
 DECISIONS = {"retain": "Retain", "needs_evidence": "Needs more evidence", "do_not_adopt": "Do not adopt"}
 
 
+def _group_baseline_note(result, group, model_id):
+    if not any(m["role"] == "baseline" for m in result["models"]):
+        return "No baseline supplied."
+    if group["vs_baseline"] is None:
+        return "Common-sample comparison is not ready."
+    return (group["vs_baseline"].get(model_id) or {}).get("reason") or ""
+
+
 def _json(value):
     return (json.dumps(value, indent=2, ensure_ascii=False, allow_nan=False) + "\n").encode()
 
@@ -218,6 +226,50 @@ def _report(result, notes):
             "Origin labels do not prove when a file was created "
             "or which training information was available.</p>"
         )
+    metric_files += '<li><a href="group-metrics.csv">All entity and horizon metrics</a></li>'
+    group_rows = []
+    for group in result["group_results"][:100]:
+        for model in result["models"]:
+            metric = (group["metrics"] or {}).get(model["id"]) or {}
+            gain = (group["vs_baseline"] or {}).get(model["id"]) or {}
+            group_rows.append(
+                [
+                    group["entity"] or "Single series",
+                    group["horizon"],
+                    model["name"],
+                    group["expected"],
+                    group["common"],
+                    group["excluded"],
+                    *[metric_display(metric.get(k)) for k in ("mae", "rmse", "bias")],
+                    *[metric_display(gain.get(k)) for k in ("mae_pct", "rmse_pct")],
+                    _group_baseline_note(result, group, model["id"]),
+                ]
+            )
+    group_section = (
+        "<h2>Entity and horizon diagnostics</h2><p>These groups partition the same global common sample. "
+        "Pooled improvement can hide deterioration in a smaller entity. "
+        "Baseline gains compare identical keys "
+        "within each group; no equal-entity average, significance test or automatic winner is inferred.</p>"
+        + _table(
+            [
+                "Entity",
+                "Horizon",
+                "Model",
+                "Expected",
+                "Common",
+                "Excluded",
+                "MAE",
+                "RMSE",
+                "Bias",
+                "MAE gain %",
+                "RMSE gain %",
+                "Baseline note",
+            ],
+            group_rows,
+        )
+        + f"<p>Showing {min(100, len(result['group_results']))} of {len(result['group_results'])} groups. "
+        "Complete groups, including empty common samples, remain in group-metrics.csv and results.json.</p>"
+    )
     notes_html = (
         "".join(
             f"<article><h3>{escape(note['model_name'])} · {escape(DECISIONS[note['decision']])}</h3>"
@@ -264,6 +316,7 @@ def _report(result, notes):
         unit=escape(contract["unit"]),
         horizon=escape(contract.get("horizon", contract.get("horizons"))),
         horizon_section=horizon_section,
+        group_section=group_section,
         transformation=escape(contract["transformation"]),
         metrics_table=metrics_table,
         sample_comparison=sample_comparison,
@@ -378,6 +431,38 @@ def build_bundle(request, fingerprint, notes=None):
             ),
             numeric_columns=(0, 2, 3, 4, 5, 6, 7),
         )
+    files["group-metrics.csv"] = _csv(
+        [
+            "entity",
+            "horizon",
+            "model_id",
+            "expected",
+            "common",
+            "excluded",
+            "mae",
+            "rmse",
+            "bias",
+            "mae_gain_pct",
+            "rmse_gain_pct",
+            "baseline_reason",
+        ],
+        (
+            [
+                g["entity"],
+                g["horizon"],
+                m["id"],
+                g["expected"],
+                g["common"],
+                g["excluded"],
+                *[((g["metrics"] or {}).get(m["id"]) or {}).get(k) for k in ("mae", "rmse", "bias")],
+                *[((g["vs_baseline"] or {}).get(m["id"]) or {}).get(k) for k in ("mae_pct", "rmse_pct")],
+                _group_baseline_note(result, g, m["id"]),
+            ]
+            for g in result["group_results"]
+            for m in models
+        ),
+        numeric_columns=(1, 3, 4, 5, 6, 7, 8, 9, 10),
+    )
     code_hashes = {
         name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
         for name in ("engine.py", "tableio.py", "exporter.py", "report.html.template")

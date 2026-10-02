@@ -137,3 +137,7 @@ The default task is forecast-file comparison; training and reconciliation remain
 ## Compare forecasts from different origins
 
 The [rolling-origin review](docs/ROLLING_ORIGIN.md) keeps origin, target and horizon explicit, reports common-sample errors separately by horizon, and retains every excluded key. An original example shows one candidate leading at horizon 1 and another at horizon 2. Schema 1 remains supported. Use **Try the rolling-origin example** in the public browser, or follow the CLI instructions. Both paths export origin-preserving rows and per-horizon metrics.
+
+### Entity and horizon diagnostics
+
+The native review and offline report now split the accepted common sample by entity and horizon, including coverage and supplied-baseline MAE/RMSE gains. An original counterexample shows pooled improvement alongside 100% worse error for a smaller entity. [Run the task and read its limits](docs/ENTITY_HORIZON_REVIEW.md). Browser controls and publication for this extension are not yet delivered.
