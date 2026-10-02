@@ -6,7 +6,7 @@ import io
 import json
 import sys
 import zipfile
-from decimal import Decimal
+from decimal import Decimal, localcontext
 from pathlib import Path
 
 
@@ -25,6 +25,27 @@ def verify(zip_path, output, browser=False):
         ]
         assert residuals == [Decimal(-2), Decimal(3), Decimal(-1)]
         assert sum(abs(value) for value in residuals) / len(residuals) == Decimal(2)
+        group_rows = list(csv.DictReader(io.StringIO(bundle.read("group-metrics.csv").decode("utf-8-sig"))))
+        assert len(group_rows) == len(result["group_results"]) * len(result["models"])
+        for group in result["group_results"]:
+            selected = [
+                row
+                for row in records
+                if row["included_in_common_sample"] == "True" and row["entity"] == group["entity"]
+            ]
+            assert len(selected) == group["common"]
+            for model in result["models"]:
+                errors = [Decimal(row["residual:" + model["id"]]) for row in selected]
+                metric = group["metrics"][model["id"]]
+                with localcontext() as context:
+                    context.prec = 40
+                    assert Decimal(metric["mae"]) == sum(abs(value) for value in errors) / len(errors)
+                exported = next(
+                    row
+                    for row in group_rows
+                    if row["entity"] == group["entity"] and row["model_id"] == model["id"]
+                )
+                assert exported["mae"] == metric["mae"]
         notes = json.loads(bundle.read("review-notes.json"))["notes"]
         assert len(notes) == 1
         assert notes[0]["fingerprint"] == result["fingerprint"]
@@ -38,6 +59,7 @@ def verify(zip_path, output, browser=False):
             "input-rows.csv",
             "issues.csv",
             "metrics.csv",
+            "group-metrics.csv",
             "config.json",
             "manifest.json",
         }
