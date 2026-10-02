@@ -1,0 +1,91 @@
+{
+  "schema_version": 2,
+  "scope": {
+    "frequency": "monthly",
+    "origin_start": "2024-01",
+    "origin_end": "2024-02",
+    "entities": []
+  },
+  "contract": {
+    "target": "Revenue",
+    "unit": "USD",
+    "transformation": "none",
+    "horizons": [
+      1,
+      2
+    ]
+  },
+  "actual": {
+    "id": "actual",
+    "name": "actual",
+    "file": {
+      "path": "actual.csv"
+    },
+    "mapping": {
+      "date": "Target",
+      "value": "Value",
+      "entity": null
+    },
+    "contract": {
+      "target": "Revenue",
+      "unit": "USD",
+      "transformation": "none",
+      "frequency": "monthly"
+    },
+    "source_note": "Original invented fixture"
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "name": "a",
+      "file": {
+        "path": "a.csv"
+      },
+      "mapping": {
+        "date": "Target",
+        "value": "Value",
+        "entity": null,
+        "origin": "Origin",
+        "horizon": "Horizon"
+      },
+      "contract": {
+        "target": "Revenue",
+        "unit": "USD",
+        "transformation": "none",
+        "frequency": "monthly",
+        "horizons": [
+          1,
+          2
+        ]
+      },
+      "source_note": "Original invented fixture"
+    },
+    {
+      "id": "b",
+      "name": "b",
+      "file": {
+        "path": "b.csv"
+      },
+      "mapping": {
+        "date": "Target",
+        "value": "Value",
+        "entity": null,
+        "origin": "Origin",
+        "horizon": "Horizon"
+      },
+      "contract": {
+        "target": "Revenue",
+        "unit": "USD",
+        "transformation": "none",
+        "frequency": "monthly",
+        "horizons": [
+          1,
+          2
+        ]
+      },
+      "source_note": "Original invented fixture"
+    }
+  ],
+  "accept_common_sample": true,
+  "title": "Rolling-origin comparison: horizon-dependent ranking"
+}

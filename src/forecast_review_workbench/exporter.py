@@ -99,6 +99,7 @@ def _table(headers, rows):
 
 def _report(result, notes):
     escape = lambda value: html.escape(str(value), quote=True)  # noqa: E731
+    rolling = result["schema_version"] == 2
     summary = result["summary"]
     contract = result["contract"]
     state = (
@@ -154,9 +155,10 @@ def _report(result, notes):
     )
     exclusions = [row for row in result["rows"] if not row["included"]]
     exclusions_table = _table(
-        ["Period", "Entity", "Why excluded"],
+        (["Forecast origin", "Horizon"] if rolling else []) + ["Period", "Entity", "Why excluded"],
         (
-            [
+            ([row["origin"], row["horizon"]] if rolling else [])
+            + [
                 row["period"],
                 row["entity"],
                 "; ".join(f"{reason['source_id']}: {reason['detail']}" for reason in row["reasons"]),
@@ -177,6 +179,45 @@ def _report(result, notes):
             ("manifest.json", "Input and output fingerprints"),
         ]
     )
+    horizon_section = ""
+    if rolling:
+        metric_files += '<li><a href="horizon-metrics.csv">Per-horizon metrics</a></li>'
+        horizon_rows = []
+        for horizon in result["horizon_results"]:
+            for model in result["models"]:
+                metric = (horizon.get("metrics") or {}).get(model["id"]) or {}
+                horizon_rows.append(
+                    [
+                        horizon["horizon"],
+                        model["name"],
+                        horizon["expected"],
+                        horizon["common"],
+                        horizon["excluded"],
+                        *[metric_display(metric.get(k)) for k in ("mae", "rmse", "bias")],
+                    ]
+                )
+        horizon_section = (
+            "<h2>Per-horizon comparison</h2><p>Forecast origin scope: "
+            + escape(result["scope"]["origin_start"])
+            + " to "
+            + escape(result["scope"]["origin_end"])
+            + "; frequency: "
+            + escape(result["scope"]["frequency"])
+            + ". Expected forecast keys: "
+            + str(summary["expected"])
+            + "; unique target/entity actual keys: "
+            + str(summary["unique_actual_keys"])
+            + ". "
+            + escape(result["weighting"])
+            + "</p>"
+            + _table(
+                ["Horizon", "Model", "Expected", "Common", "Excluded", "MAE", "RMSE", "Bias"], horizon_rows
+            )
+            + "<p>Aggregate metrics below weight each forecast key equally. Compare horizons separately; "
+            "a model can lead at one horizon and trail at another. "
+            "Origin labels do not prove when a file was created "
+            "or which training information was available.</p>"
+        )
     notes_html = (
         "".join(
             f"<article><h3>{escape(note['model_name'])} · {escape(DECISIONS[note['decision']])}</h3>"
@@ -221,7 +262,8 @@ def _report(result, notes):
         excluded=summary["excluded"],
         target=escape(contract["target"]),
         unit=escape(contract["unit"]),
-        horizon=escape(contract["horizon"]),
+        horizon=escape(contract.get("horizon", contract.get("horizons"))),
+        horizon_section=horizon_section,
         transformation=escape(contract["transformation"]),
         metrics_table=metrics_table,
         sample_comparison=sample_comparison,
@@ -244,6 +286,7 @@ def build_bundle(request, fingerprint, notes=None):
     if fingerprint != result["fingerprint"]:
         raise ValueError("Inputs or settings changed after review. Run the review again before exporting.")
     checked_notes = _notes([] if notes is None else notes, result)
+    rolling = result["schema_version"] == 2
     models = result["models"]
     ids = [item["id"] for item in models]
     headers = ["period", "entity", "included_in_common_sample", "actual"]
@@ -260,6 +303,11 @@ def build_bundle(request, fingerprint, notes=None):
             json.dumps(row["source_rows"], ensure_ascii=False),
         ]
         evaluation_rows.append(values)
+    if rolling:
+        # Append identity columns so existing numeric column offsets remain unchanged.
+        headers += ["origin", "horizon"]
+        for values, row in zip(evaluation_rows, result["rows"]):
+            values += [row["origin"], row["horizon"]]
     input_headers = [
         "source_id",
         "row",
@@ -272,6 +320,9 @@ def build_bundle(request, fingerprint, notes=None):
         "status",
     ]
     issue_headers = ["source_id", "row", "period", "entity", "code", "detail"]
+    if rolling:
+        input_headers += ["raw_origin", "raw_horizon", "origin", "horizon"]
+        issue_headers += ["origin", "horizon"]
     files = {
         "report.html": _report(result, checked_notes),
         "results.json": _json(result),
@@ -300,6 +351,7 @@ def build_bundle(request, fingerprint, notes=None):
         ),
         "config.json": _json(
             {
+                "schema_version": result["schema_version"],
                 "scope": result["scope"],
                 "contract": result["contract"],
                 "accepted_common_sample": result["accepted_common_sample"],
@@ -309,6 +361,23 @@ def build_bundle(request, fingerprint, notes=None):
             }
         ),
     }
+    if rolling:
+        files["horizon-metrics.csv"] = _csv(
+            ["horizon", "model_id", "expected", "common", "excluded", "mae", "rmse", "bias"],
+            (
+                [
+                    h["horizon"],
+                    m["id"],
+                    h["expected"],
+                    h["common"],
+                    h["excluded"],
+                    *[((h.get("metrics") or {}).get(m["id"]) or {}).get(k) for k in ("mae", "rmse", "bias")],
+                ]
+                for h in result["horizon_results"]
+                for m in models
+            ),
+            numeric_columns=(0, 2, 3, 4, 5, 6, 7),
+        )
     code_hashes = {
         name: hashlib.sha256(Path(__file__).with_name(name).read_bytes()).hexdigest()
         for name in ("engine.py", "tableio.py", "exporter.py", "report.html.template")

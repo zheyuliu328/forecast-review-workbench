@@ -133,3 +133,7 @@ MIT licensed.
 ## Demonstrate a complete review
 
 The default task is forecast-file comparison; training and reconciliation remain under Other tasks. The five-step guide leads from files and mappings through explicit common-sample acceptance to results and export. The result and offline report compare own-sample diagnostics with accepted common-sample MAE. [English walkthrough, three-minute introduction and technical questions](docs/WALKTHROUGH.md).
+
+## Compare forecasts from different origins
+
+The native [rolling-origin review](docs/ROLLING_ORIGIN.md) keeps origin, target and horizon explicit, reports common-sample errors separately by horizon, and retains every excluded key. An original example shows one candidate leading at horizon 1 and another at horizon 2. Schema 1 remains supported. Browser controls and public deployment for this new mode are pending; the native CLI and report are available in source.

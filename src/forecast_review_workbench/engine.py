@@ -100,6 +100,26 @@ def _period_range(start, end, frequency, maximum=5000):
     return periods
 
 
+def _period_index(period, frequency):
+    if frequency == "daily":
+        return date.fromisoformat(period).toordinal()
+    scale = 12 if frequency == "monthly" else 4
+    return int(period[:4]) * scale + int(period[5:] if frequency == "monthly" else period[-1]) - 1
+
+
+def _shift_period(period, horizon, frequency):
+    index = _period_index(period, frequency) + horizon
+    try:
+        if frequency == "daily":
+            return date.fromordinal(index).isoformat()
+        scale = 12 if frequency == "monthly" else 4
+        year, offset = divmod(index, scale)
+        date(year, 1, 1)
+        return f"{year:04d}-{offset + 1:02d}" if scale == 12 else f"{year:04d}-Q{offset + 1}"
+    except (ValueError, OverflowError) as exc:
+        raise ValueError("Forecast target exceeds the supported calendar range.") from exc
+
+
 def _metrics(pairs):
     if not pairs:
         return None
@@ -137,9 +157,10 @@ def _request(payload):
     if (
         not isinstance(payload, dict)
         or type(payload.get("schema_version")) is not int
-        or payload["schema_version"] != 1
+        or payload["schema_version"] not in (1, 2)
     ):
-        raise ValueError("Use review schema_version 1.")
+        raise ValueError("Use review schema_version 1 or 2.")
+    rolling = payload["schema_version"] == 2
     scope, contract = payload.get("scope"), payload.get("contract")
     if not isinstance(scope, dict) or not isinstance(contract, dict):
         raise ValueError(
@@ -151,9 +172,21 @@ def _request(payload):
     common_contract = {
         field: _text(contract.get(field), field) for field in ("target", "unit", "transformation")
     }
-    if type(contract.get("horizon")) is not int or contract["horizon"] < 1:
-        raise ValueError("Forecast horizon must be a positive integer in the declared frequency.")
-    common_contract["horizon"] = contract["horizon"]
+    if rolling:
+        horizons = contract.get("horizons")
+        if (
+            not isinstance(horizons, list)
+            or not horizons
+            or len(horizons) > 5000
+            or any(type(h) is not int or not 1 <= h <= 5000 for h in horizons)
+            or len(set(horizons)) != len(horizons)
+        ):
+            raise ValueError("Horizons must be distinct positive integers from 1 to 5,000.")
+        common_contract["horizons"] = sorted(horizons)
+    else:
+        if type(contract.get("horizon")) is not int or contract["horizon"] < 1:
+            raise ValueError("Forecast horizon must be a positive integer in the declared frequency.")
+        common_contract["horizon"] = contract["horizon"]
     common_contract["frequency"] = frequency
     actual, candidates, baseline = payload.get("actual"), payload.get("candidates"), payload.get("baseline")
     if not isinstance(actual, dict) or not isinstance(candidates, list) or not 1 <= len(candidates) <= 5:
@@ -184,10 +217,21 @@ def _request(payload):
         entity = mapping.get("entity")
         if entity is not None and (not isinstance(entity, str) or not entity.strip()):
             raise ValueError(f"{identifier}: choose an entity column or null for one series.")
-        if len(set(value for value in (mapping["date"], mapping["value"], entity) if value is not None)) != (
-            3 if entity is not None else 2
-        ):
-            raise ValueError(f"{identifier}: date, value and entity must map distinct columns.")
+        columns = [mapping["date"], mapping["value"], entity]
+        if rolling and _role != "actual":
+            if not isinstance(mapping.get("origin"), str) or not mapping["origin"].strip():
+                raise ValueError(f"{identifier}: choose an origin column.")
+            horizon_column = mapping.get("horizon")
+            if horizon_column is not None and (
+                not isinstance(horizon_column, str) or not horizon_column.strip()
+            ):
+                raise ValueError(f"{identifier}: choose a horizon column or null to derive it.")
+            columns.extend([mapping["origin"], horizon_column])
+        elif mapping.get("origin") is not None or mapping.get("horizon") is not None:
+            raise ValueError(f"{identifier}: origin/horizon mappings apply only to schema 2 predictions.")
+        selected = [column for column in columns if column is not None]
+        if len(set(selected)) != len(selected):
+            raise ValueError(f"{identifier}: mapped columns must be distinct.")
         mappings.append(entity is not None)
     if any(mappings) and not all(mappings):
         raise ValueError("If any source maps entities, every source must map entities.")
@@ -204,8 +248,15 @@ def _request(payload):
             "a single series must use an empty entity list."
         )
     entity_keys = entities if entities else [""]
-    periods = _period_range(scope.get("start"), scope.get("end"), frequency, max(1, 5000 // len(entity_keys)))
-    if len(periods) * len(entity_keys) > 5000:
+    start_field, end_field = ("origin_start", "origin_end") if rolling else ("start", "end")
+    horizon_count = len(common_contract["horizons"]) if rolling else 1
+    periods = _period_range(
+        scope.get(start_field),
+        scope.get(end_field),
+        frequency,
+        max(1, 5000 // (len(entity_keys) * horizon_count)),
+    )
+    if len(periods) * len(entity_keys) * horizon_count > 5000:
         raise ValueError("The expected universe exceeds 5,000 period/entity keys.")
     accepted = payload.get("accept_common_sample", False)
     if type(accepted) is not bool:
@@ -222,12 +273,27 @@ def _request(payload):
         normalized_segments.append({"name": name, "start": bounds[0], "end": bounds[-1]})
     if len({segment["name"] for segment in normalized_segments}) != len(normalized_segments):
         raise ValueError("Segment names must be distinct.")
-    normalized_scope = {"start": periods[0], "end": periods[-1], "frequency": frequency, "entities": entities}
+    normalized_scope = {
+        start_field: periods[0],
+        end_field: periods[-1],
+        "frequency": frequency,
+        "entities": entities,
+    }
+    expected = (
+        [
+            (_shift_period(origin, horizon, frequency), entity, origin)
+            for origin in periods
+            for horizon in common_contract["horizons"]
+            for entity in entity_keys
+        ]
+        if rolling
+        else [(period, entity) for period in periods for entity in entity_keys]
+    )
     return (
         definitions,
         common_contract,
         normalized_scope,
-        [(period, entity) for period in periods for entity in entity_keys],
+        expected,
         normalized_segments,
         accepted,
     )
@@ -236,7 +302,19 @@ def _request(payload):
 def review(payload):
     """Return complete coverage first; aggregate comparable metrics only after acceptance."""
     definitions, contract, scope, expected, segments, accepted = _request(payload)
+    rolling = payload["schema_version"] == 2
     universe = set(expected)
+    actual_universe = {key[:2] for key in expected}
+
+    def source_key(identifier, key):
+        return key[:2] if identifier == "actual" else key
+
+    def row_key(row):
+        return (row["period"], row["entity"], row["origin"]) if rolling else (row["period"], row["entity"])
+
+    def horizon_for(key):
+        return _period_index(key[0], scope["frequency"]) - _period_index(key[2], scope["frequency"])
+
     sources, input_rows, issues, contract_errors, groups_by_source = [], [], [], [], {}
     public_fields = (
         "source_id",
@@ -250,7 +328,10 @@ def review(payload):
         "status",
     )
 
-    def issue(identifier, row, period, entity, code, detail):
+    if rolling:
+        public_fields += ("raw_origin", "raw_horizon", "origin", "horizon")
+
+    def issue(identifier, row, period, entity, code, detail, origin=None, horizon=None):
         record = {
             "source_id": identifier,
             "row": row,
@@ -259,6 +340,8 @@ def review(payload):
             "code": code,
             "detail": detail,
         }
+        if rolling:
+            record.update(origin=origin, horizon=horizon)
         issues.append(record)
         return record
 
@@ -267,10 +350,15 @@ def review(payload):
         if not isinstance(declared, dict):
             raise ValueError(f"{name}: supply the source's declared contract.")
         normalized_contract = {}
-        for field in FIELDS:
+        fields = tuple(
+            field for field in contract if not (rolling and role == "actual" and field == "horizons")
+        )
+        for field in fields:
             received = declared.get(field)
             if isinstance(received, str):
                 received = received.strip()
+            elif field == "horizons" and isinstance(received, list) and all(type(h) is int for h in received):
+                received = sorted(received)
             elif received is not None and type(received) is not int:
                 received = repr(received)
             normalized_contract[field] = received
@@ -290,7 +378,10 @@ def review(payload):
             table = read_table(source.get("file"), source.get("sheet"), source.get("header_row", 1))
         except ValueError as exc:
             raise ValueError(f"{name}: {exc}") from exc
-        mapping = {key: source["mapping"].get(key) for key in ("date", "value", "entity")}
+        mapping_fields = ("date", "value", "entity") + (
+            ("origin", "horizon") if rolling and role != "actual" else ()
+        )
+        mapping = {key: source["mapping"].get(key) for key in mapping_fields}
         if any(column not in table["headers"] for column in mapping.values() if column is not None):
             raise ValueError(f"{name}: a mapped column is absent; inspect the selected sheet/header again.")
         sources.append(
@@ -384,10 +475,61 @@ def review(payload):
                     entry["value"] = _exact(_number(value_cell["text"]))
                 except ValueError as exc:
                     entry["errors"].append(("invalid_numeric", str(exc)))
+            if rolling:
+                entry.update(raw_origin=None, raw_horizon=None, origin=None, horizon=None)
+                if role != "actual":
+                    origin_cell = cells[mapping["origin"]]
+                    entry["raw_origin"] = origin_cell["text"]
+                    try:
+                        if origin_cell["kind"] not in {"text", "date"}:
+                            raise ValueError(
+                                "Origin must be ISO text or a frozen Excel date, "
+                                "not a formula or numeric serial."
+                            )
+                        entry["origin"] = _period(
+                            origin_cell["text"], scope["frequency"], origin_cell["kind"] == "date"
+                        )
+                        if entry["period"] is not None:
+                            entry["horizon"] = _period_index(
+                                entry["period"], scope["frequency"]
+                            ) - _period_index(entry["origin"], scope["frequency"])
+                            if entry["horizon"] <= 0:
+                                entry["errors"].append(
+                                    ("invalid_horizon", "Target must be strictly after the forecast origin.")
+                                )
+                            elif entry["horizon"] not in contract["horizons"]:
+                                entry["errors"].append(
+                                    (
+                                        "unselected_horizon",
+                                        "Derived horizon is outside the explicitly selected horizons.",
+                                    )
+                                )
+                    except ValueError as exc:
+                        entry["errors"].append(("invalid_origin", str(exc)))
+                    if mapping.get("horizon") is not None:
+                        horizon_cell = cells[mapping["horizon"]]
+                        entry["raw_horizon"] = horizon_cell["text"]
+                        try:
+                            if horizon_cell["kind"] not in {"text", "number"}:
+                                raise ValueError("Mapped horizon must be a frozen positive integer.")
+                            declared_horizon = _number(horizon_cell["text"])
+                            if (
+                                declared_horizon <= 0
+                                or declared_horizon != declared_horizon.to_integral_value()
+                            ):
+                                raise ValueError("Mapped horizon must be a positive integer.")
+                            if entry["horizon"] is not None and declared_horizon != entry["horizon"]:
+                                entry["errors"].append(
+                                    ("horizon_mismatch", "Mapped horizon differs from target minus origin.")
+                                )
+                        except ValueError as exc:
+                            entry["errors"].append(("invalid_horizon", str(exc)))
             key = (entry["period"], entry["entity"])
+            if rolling and role != "actual":
+                key += (entry["origin"],)
             if None not in key:
                 groups[key].append(entry)
-                if key not in universe:
+                if key not in (actual_universe if role == "actual" else universe):
                     entry["errors"].append(
                         (
                             "outside_scope",
@@ -411,7 +553,16 @@ def review(payload):
                     )
         for entry in entries:
             for code, detail in entry["errors"]:
-                issue(identifier, entry["row"], entry["period"], entry["entity"], code, detail)
+                issue(
+                    identifier,
+                    entry["row"],
+                    entry["period"],
+                    entry["entity"],
+                    code,
+                    detail,
+                    entry.get("origin"),
+                    entry.get("horizon"),
+                )
             input_rows.append({field: entry[field] for field in public_fields})
         groups_by_source[identifier] = groups
 
@@ -419,15 +570,18 @@ def review(payload):
     for identifier, _name, _role, _source in definitions:
         state, parsed = {}, {}
         for key in expected:
-            members = groups_by_source[identifier].get(key, [])
+            members = groups_by_source[identifier].get(source_key(identifier, key), [])
             if not members:
                 state[key] = "missing"
                 issue(
                     identifier,
                     None,
-                    *key,
+                    key[0],
+                    key[1],
                     "missing",
                     "No source row matches this expected key; check extraction coverage and mapping.",
+                    key[2] if rolling else None,
+                    horizon_for(key) if rolling else None,
                 )
             elif len(members) > 1:
                 state[key] = "duplicate"
@@ -446,7 +600,11 @@ def review(payload):
     ready = accepted and bool(common) and not contract_errors
     issues_by_key = defaultdict(list)
     for item in issues:
-        issues_by_key[(item["period"], item["entity"])].append(item)
+        issues_by_key[
+            (item["period"], item["entity"], item.get("origin"))
+            if rolling
+            else (item["period"], item["entity"])
+        ].append(item)
     rows = []
     for key in expected:
         actual_value = values["actual"].get(key)
@@ -462,6 +620,7 @@ def review(payload):
                 )
         rows.append(
             {
+                **({"origin": key[2], "horizon": horizon_for(key)} if rolling else {}),
                 "period": key[0],
                 "entity": key[1],
                 "actual": _exact(actual_value) if actual_value is not None else None,
@@ -473,10 +632,24 @@ def review(payload):
                 "included": key in common_set,
                 "reasons": [
                     {field: item[field] for field in ("source_id", "code", "detail")}
-                    for item in issues_by_key[key]
+                    for item in (
+                        issues_by_key[key]
+                        + (
+                            [
+                                item
+                                for item in issues_by_key[(key[0], key[1], None)]
+                                if item["source_id"] == "actual"
+                            ]
+                            if rolling
+                            else []
+                        )
+                    )
                 ],
                 "source_rows": {
-                    identifier: [row["row"] for row in groups_by_source[identifier].get(key, [])]
+                    identifier: [
+                        row["row"]
+                        for row in groups_by_source[identifier].get(source_key(identifier, key), [])
+                    ]
                     for identifier, *_rest in definitions
                 },
             }
@@ -503,7 +676,8 @@ def review(payload):
                 row["source_id"] == identifier
                 and row["period"] is not None
                 and row["entity"] is not None
-                and (row["period"], row["entity"]) not in universe
+                and (not rolling or row["origin"] is not None)
+                and row_key(row) not in universe
                 for row in input_rows
             ),
         }
@@ -540,8 +714,29 @@ def review(payload):
                 else None,
             }
         )
+    horizon_results = []
+    if rolling:
+        for horizon in contract["horizons"]:
+            selected = [key for key in expected if horizon_for(key) == horizon]
+            selected_common = [key for key in selected if key in common_set]
+            horizon_results.append(
+                {
+                    "horizon": horizon,
+                    "expected": len(selected),
+                    "common": len(selected_common),
+                    "excluded": len(selected) - len(selected_common),
+                    "metrics": {
+                        identifier: _metrics(
+                            [(values["actual"][key], values[identifier][key]) for key in selected_common]
+                        )
+                        for identifier, *_rest in definitions[1:]
+                    }
+                    if ready
+                    else None,
+                }
+            )
     analytical = {
-        "schema_version": 1,
+        "schema_version": payload["schema_version"],
         "sources": sources,
         "scope": scope,
         "contract": contract,
@@ -554,14 +749,26 @@ def review(payload):
         ).encode()
     ).hexdigest()
     return {
-        "schema_version": 1,
+        "schema_version": payload["schema_version"],
         "fingerprint": fingerprint,
         "title": _text(payload.get("title", "Forecast review"), "Title", 300),
         "scope": scope,
         "contract": contract,
         "accepted_common_sample": accepted,
         "comparison_ready": ready,
+        **(
+            {
+                "horizon_results": horizon_results,
+                "weighting": (
+                    "Each forecast key has equal weight; "
+                    "overlapping targets are not independent observations."
+                ),
+            }
+            if rolling
+            else {}
+        ),
         "summary": {
+            **({"unique_actual_keys": len(actual_universe)} if rolling else {}),
             "expected": len(expected),
             "common": len(common),
             "excluded": len(expected) - len(common),
