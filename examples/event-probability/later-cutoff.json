@@ -1,0 +1,63 @@
+{
+  "task": "binary_event_review",
+  "schema_version": 1,
+  "event_definition": "Invented event: count exceeds a fixed threshold within two observation steps.",
+  "evaluation_as_of": "2025-01-04",
+  "expected_keys": [
+    {
+      "origin": "2025-01-01",
+      "entity": ""
+    },
+    {
+      "origin": "2025-01-02",
+      "entity": ""
+    },
+    {
+      "origin": "2025-01-03",
+      "entity": ""
+    }
+  ],
+  "labels": {
+    "id": "labels",
+    "event_definition": "Invented event: count exceeds a fixed threshold within two observation steps.",
+    "source_note": "Original invented test; no model fit.",
+    "file": {
+      "path": "labels.csv"
+    },
+    "mapping": {
+      "origin": "Origin",
+      "entity": null,
+      "label": "Label",
+      "available": "Available"
+    }
+  },
+  "candidates": [
+    {
+      "id": "a",
+      "event_definition": "Invented event: count exceeds a fixed threshold within two observation steps.",
+      "source_note": "Original invented test; no model fit.",
+      "file": {
+        "path": "a.csv"
+      },
+      "mapping": {
+        "origin": "Origin",
+        "entity": null,
+        "probability": "Probability"
+      }
+    }
+  ],
+  "baseline": {
+    "id": "baseline",
+    "event_definition": "Invented event: count exceeds a fixed threshold within two observation steps.",
+    "source_note": "Original invented test; no model fit.",
+    "file": {
+      "path": "baseline.csv"
+    },
+    "mapping": {
+      "origin": "Origin",
+      "entity": null,
+      "probability": "Probability"
+    }
+  },
+  "accept_common_sample": true
+}

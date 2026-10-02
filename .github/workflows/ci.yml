@@ -30,6 +30,7 @@ jobs:
           "$RUNNER_TEMP/frw-wheel/bin/python" -m pip install dist/*.whl
           "$RUNNER_TEMP/frw-wheel/bin/python" tools/check_installed_workflows.py
           cd "$RUNNER_TEMP"
+          "$RUNNER_TEMP/frw-wheel/bin/python" -m forecast_review_workbench.probabilities "$GITHUB_WORKSPACE/examples/event-probability/request.json" --output "$RUNNER_TEMP/frw-probability"
           "$RUNNER_TEMP/frw-wheel/bin/forecast-review" --review "$GITHUB_WORKSPACE/examples/rolling-origin/request.json" --output "$RUNNER_TEMP/frw-origin"
           "$RUNNER_TEMP/frw-wheel/bin/python" -c 'import json; from pathlib import Path; d=json.loads(Path("frw-origin/results.json").read_text()); assert d["schema_version"]==2 and d["summary"]["common"]==4 and d["summary"]["unique_actual_keys"]==3; assert d["horizon_results"][0]["metrics"]["a"]["mae"]=="1"; assert d["horizon_results"][1]["metrics"]["b"]["mae"]=="1"'
           "$RUNNER_TEMP/frw-wheel/bin/forecast-review" --example --output "$RUNNER_TEMP/frw-evidence"
