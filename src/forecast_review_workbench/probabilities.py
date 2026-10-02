@@ -261,6 +261,38 @@ def render(result):
     def esc(value):
         return html.escape(str(value))
 
+    def table(headers, rows):
+        return (
+            '<div class="scroll"><table><tr>'
+            + "".join("<th>" + esc(h) + "</th>" for h in headers)
+            + "</tr>"
+            + "".join("<tr>" + "".join("<td>" + esc(v) + "</td>" for v in row) + "</tr>" for row in rows)
+            + "</table></div>"
+        )
+
+    sources = "<h2>Sources</h2>" + table(
+        ["ID / role", "File / sheet / header row", "Original SHA-256", "Source declaration"],
+        [
+            [
+                s["id"] + " / " + s["role"],
+                f"{s['file_name']} / {s['sheet'] or 'CSV'} / {s['header_row']}",
+                s["sha256"],
+                s["source_note"],
+            ]
+            for s in result["sources"]
+        ],
+    )
+    failed_rows = [row for row in result["input_rows"] if row["status"] in ("invalid", "duplicate")]
+    failures = (
+        "<h2>Input rows needing correction</h2><p>"
+        + str(len(failed_rows))
+        + " invalid or duplicate rows. First 100 shown; row numbers refer to the original files. "
+        "Pending, missing and out-of-scope rows are separate sample states, not necessarily errors.</p>"
+        + table(
+            ["Source", "File row", "Status", "Reason"],
+            [[r["source"], r["row"], r["status"], r.get("reason", "")] for r in failed_rows[:100]],
+        )
+    )
     exclusions = [row for row in result["evaluation_rows"] if not row["included"]]
     exclusion_table = (
         "<h2>Excluded expected keys</h2><p>First 100 exclusions; all keys remain in results.json.</p>"
@@ -298,7 +330,7 @@ def render(result):
 <title>Binary event probability review</title>
 <style>body{font:16px/1.6 system-ui;margin:30px auto;max-width:1100px;padding:20px;color:#243343}
 table{border-collapse:collapse;width:100%}
-th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd}
+th,td{text-align:left;padding:10px;border-bottom:1px solid #ddd;overflow-wrap:anywhere}
 .scroll{overflow:auto}
 pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
 <h1>Binary event probability review</h1>
@@ -331,7 +363,19 @@ and resolve contract errors; no metrics are shown.</p>
         + rows
         + "</table></div>"
         + conflicts
+        + "<h2>Calculation</h2><p>For each included key, y is the binary label and p is the "
+        "probability assigned to y = 1. Brier = sum((p - y)^2) / n. Log loss = "
+        "-sum(ln(q)) / n, where q = p when y = 1 and q = 1 - p when y = 0. "
+        "Logarithms are natural; Brier is dimensionless and log loss is in nats per event. "
+        "Every included key has equal weight; all scored sources use exactly the same keys.</p>"
+        "<p>Only labels declared available on or before the cutoff can enter the sample. "
+        "The expected key must have exactly one valid row in every source. "
+        "Scores require accepted common-sample membership and matching event definitions. "
+        "No probability clipping or endpoint removal is performed. "
+        "Arithmetic uses 600 decimal digits before final 40-significant-digit reporting.</p>"
+        + sources
         + exclusion_table
+        + failures
         + "<h2>Limits</h2><ul>"
         + "".join("<li>" + esc(x) + "</li>" for x in result["limits"])
         + "</ul><details><summary>Complete inputs, row diagnostics and results</summary><pre>"

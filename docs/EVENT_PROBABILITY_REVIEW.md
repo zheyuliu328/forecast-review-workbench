@@ -15,7 +15,7 @@ The first request declares three expected origin keys, with evaluation cutoff Ja
 
 At the January 4 cutoff, the third label becomes observable. A assigned probability zero to an event that occurred. All three common keys remain included: Brier becomes 0.375, log loss is explicitly infinite with one impossible event. This is represented as JSON null with `log_loss_status: infinite`, not a missing observation. Probabilities are never clipped and failed endpoints are never dropped to improve the average. The two cutoffs have different samples; score changes do not isolate model improvement or deterioration.
 
-Open report.html offline. Keep results.json with its complete mapped rows, exclusion states, source hashes and declared contract. request.json retains the exact input bytes as base64 so the run can be repeated without original file paths. Existing output directories are refused.
+Open report.html offline. It explains the equally weighted scoring formulas and units, identifies each source's role, filename, sheet, header row and original SHA-256, and lists the first 100 invalid or duplicate input rows with original row numbers and reasons. Pending or missing observations are shown separately from input errors. Keep results.json with its complete mapped rows, exclusion states, source hashes and declared contract. request.json retains the exact input bytes as base64 so the run can be repeated without original file paths. Existing output directories are refused.
 
 ## Input contract
 

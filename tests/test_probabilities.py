@@ -143,7 +143,16 @@ def test_report_escapes_and_unsupported_fields_fail():
     q["event_definition"] = "<script>unsafe</script>"
     for s in [q["labels"], *q["candidates"], q["baseline"]]:
         s["event_definition"] = q["event_definition"]
-    assert "<script>" not in render(review_probabilities(q))
+    q["candidates"][0]["source_note"] = "<script>source note</script>"
+    q["candidates"][0]["file"] = _file("bad.csv", ["Origin", "Probability"], [["2025-01-01", "invalid"]])
+    result = review_probabilities(q)
+    report = render(result)
+    assert "<script>" not in report
+    assert "&lt;script&gt;source note&lt;/script&gt;" in report
+    assert result["sources"][1]["sha256"] in report
+    assert "a / candidate" in report and "bad.csv / CSV / 1" in report
+    assert "<td>a</td><td>2</td><td>invalid</td>" in report
+    assert "Brier = sum((p - y)^2) / n" in report and "nats per event" in report
     q["fit_model"] = True
     with pytest.raises(ValueError, match="unsupported"):
         review_probabilities(q)
