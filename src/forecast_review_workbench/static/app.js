@@ -14,7 +14,7 @@
     result: null, resultRequest: null, dirty: true, revision: 0, busy: false,
     stage: "inputs", notes: {}, chartMode: "trend", chartEntity: "",
     diagnosticTab: "expected", diagnosticSearch: "", diagnosticFilter: "all", diagnosticPage: 1,
-    sourceCounter: 1
+    groupQuery: "", groupHorizon: "0", groupPage: 1, sourceCounter: 1
   };
   let inputFlow;
 
@@ -142,6 +142,7 @@
     $("run-review").textContent = state.busy ? "Checking files…" : "Check comparable sample →";
     $("example-button").disabled = state.busy;
     $("origin-example-button").disabled = state.busy;
+    $("group-example-button").disabled = state.busy;
     $("step-coverage").disabled = !state.result;
     $("step-review").disabled = !state.result;
     $("go-review").disabled = !state.result || state.dirty || state.busy || !state.result.comparison_ready;
@@ -355,7 +356,7 @@
     source.epoch += 1;
     const epoch = source.epoch;
     source.loading = true; source.file = null; source.headers = []; source.preview = []; source.sheet = null; source.sheets = [];
-    source.mapping = {date: null, value: null, entity: null};
+    source.mapping = Object.assign({date: null, value: null, entity: null}, source.mapping);
     source.inspectionError = "";
     invalidate(); renderSources();
     try {
@@ -401,6 +402,7 @@
         const matcher = source.role === "actual" ? /^(actual|observed|actual_value|target|value|\u5b9e\u9645\u503c|\u5b9e\u9645|\u89c2\u6d4b\u503c|\u6570\u503c)$/i : /^(prediction|predicted|forecast|forecast_value|estimate|value|\u9884\u6d4b\u503c|\u9884\u6d4b|\u4f30\u8ba1\u503c|\u6570\u503c)$/i;
         source.mapping.value = uniqueHeader(source.headers.filter(h => h !== source.mapping.date), matcher) || null;
       }
+      if (!source.mapping.entity && state.scope.entities.length) source.mapping.entity = uniqueHeader(source.headers, /^(entity|entity_id|series_id|unique_id)$/i) || null;
       if (state.schemaVersion === 2 && source.role !== "actual") {
         if (!source.mapping.origin) source.mapping.origin = uniqueHeader(source.headers, /^(origin|cutoff|forecast_origin|origin_date)$/i) || null;
         if (!source.mapping.horizon) source.mapping.horizon = uniqueHeader(source.headers, /^(horizon|lead|forecast_horizon)$/i) || null;
@@ -726,6 +728,7 @@
         ]),
         state.baseline ? element("p", {className: "baseline-note"}, "Relative to baseline: positive percentages indicate lower error; negative percentages indicate deterioration. A zero denominator or undefined comparison is shown as —.") : null
       ]));
+      content.appendChild(renderGroupPanel());
       content.appendChild(renderChartPanel());
       if ((result.segments || []).length) {
         content.appendChild(element("div", {className: "panel"}, [
@@ -744,6 +747,39 @@
     renderMetadata();
     $("export-help").textContent = ready ? "Extract the ZIP and open report.html. It includes common-sample results, source references, row diagnostics, and your review notes." : "You can download a coverage report. It does not include metrics for an accepted common sample.";
     updateChrome();
+  }
+
+  function renderGroupPanel() {
+    const result = state.result, groups = result.group_results || [];
+    const panel = element("section", {className:"panel", id:"group-results"}, [
+      element("h3", {}, "Check each entity and horizon"),
+      element("p", {}, "Pooled improvement can hide deterioration in a smaller entity. These groups use the same accepted global common sample. Filtering changes only this view; exports retain every group."),
+      element("p", {className:"muted"}, "Baseline gains are percentages: positive means lower error, negative means deterioration. A zero baseline error is undefined. Small groups and overlapping targets do not establish reliable future skill.")
+    ]);
+    const view = element("div", {id:"group-view"});
+    const hs = [...new Set(groups.map(g => String(g.horizon)))];
+    if (!hs.includes(state.groupHorizon)) state.groupHorizon = "0";
+    const query = element("input", {id:"group-query", type:"search", value:state.groupQuery, placeholder:"For example, Small", oninput:event=>{state.groupQuery=event.target.value;state.groupPage=1;draw();}});
+    const horizon = select([{value:"0",label:"All horizons"},...hs.map(h=>({value:h,label:"Horizon " + h}))],state.groupHorizon,event=>{state.groupHorizon=event.target.value;state.groupPage=1;draw();},{id:"group-horizon"});
+    panel.appendChild(element("div", {className:"form-grid"}, [element("label", {className:"field"}, ["Filter entities",query]), element("label", {className:"field"}, ["Group forecast horizon",horizon])]));
+    panel.appendChild(view);
+    function draw() {
+      const filtered = groups.filter(g=>(g.entity || "Single series").toLowerCase().includes(state.groupQuery.toLowerCase()) && (state.groupHorizon === "0" || String(g.horizon) === state.groupHorizon));
+      const size=10, pages=Math.max(1,Math.ceil(filtered.length/size));
+      state.groupPage=Math.min(state.groupPage,pages);
+      view.replaceChildren(element("p", {id:"group-count",role:"status"}, filtered.length + " of " + groups.length + " groups · page " + state.groupPage + " of " + pages + ". Global common sample: " + result.summary.common + " keys."));
+      const rows=[];
+      for (const g of filtered.slice((state.groupPage-1)*size,state.groupPage*size)) {
+        for (const m of result.models) {
+          const metric=(g.metrics || {})[m.id] || {}, gain=(g.vs_baseline || {})[m.id];
+          rows.push(element("tr", {}, [g.entity || "Single series",String(g.horizon),m.name,String(g.expected),String(g.common),String(g.excluded),number(metric.mae),number(metric.rmse),number(metric.bias),number(gain?.mae_pct),number(gain?.rmse_pct),gain?.reason || (gain ? "" : "No baseline supplied.")].map(v=>element("td",{},v))));
+        }
+      }
+      view.appendChild(element("div", {className:"table-wrap"}, table(["Entity","Horizon","Model","Expected","Common","Excluded","MAE","RMSE","Bias","MAE gain %","RMSE gain %","Baseline note"],rows)));
+      if (!filtered.length) view.appendChild(element("p",{},"No groups match these filters. Clear the entity filter or select all horizons."));
+      view.appendChild(element("div", {className:"pagination"}, [button("Previous groups","button",()=>{state.groupPage--;draw();},{id:"group-prev",disabled:state.groupPage<=1}),button("Next groups","button",()=>{state.groupPage++;draw();},{id:"group-next",disabled:state.groupPage>=pages})]));
+    }
+    draw(); return panel;
   }
 
   function svgElement(tag, attributes, children) {
@@ -973,6 +1009,7 @@
       state.baseline = request.baseline ? restore(request.baseline, "baseline", "baseline", "Baseline") : null;
       state.segments = (request.segments || []).map(function (segment) { return Object.assign({}, segment); });
       state.chartEntity = state.scope.entities[0] || "";
+      state.groupQuery = ""; state.groupHorizon = "0"; state.groupPage = 1;
       invalidate(); state.stage = "inputs"; syncForm();
       // Keep imports within the local server's bounded request capacity.
       for (const source of allSources()) await inspectSource(source, true);
@@ -984,9 +1021,9 @@
     if (state.busy) return;
     clearMessages(); state.busy = true; updateChrome();
     try {
-      const request = await api(rolling === true ? "/api/origin-example" : "/api/example");
+      const request = await api(rolling === "groups" ? "/api/group-example" : rolling === true ? "/api/origin-example" : "/api/example");
       await applyForecastRequest(request);
-      if (state.result && !state.dirty) showMessage(rolling === true ? "Invented rolling-origin example loaded. Four forecasts reference three actual target periods. Accept the common sample to compare each horizon." : "Synthetic example loaded. Forecasts have different missing months. Review the gaps before accepting the common sample. Return to Prepare files to use your own data.", false);
+      if (state.result && !state.dirty) showMessage(rolling === "groups" ? "Invented entity example loaded. Accept the common sample, then compare the pooled gain with Small in the group table." : rolling === true ? "Invented rolling-origin example loaded. Four forecasts reference three actual target periods. Accept the common sample to compare each horizon." : "Synthetic example loaded. Forecasts have different missing months. Review the gaps before accepting the common sample. Return to Prepare files to use your own data.", false);
     } catch (error) { showMessage(error.message, true); }
     finally { state.busy = false; updateChrome(); }
   }
@@ -1042,6 +1079,7 @@
     $("add-baseline").addEventListener("click", function () { state.baseline = makeSource("baseline", "Baseline", "baseline"); invalidate(); renderSources(); });
     $("add-segment").addEventListener("click", function () { state.segments.push({name: "", start: "", end: ""}); invalidate(); renderSegments(); });
     $("example-button").addEventListener("click", () => loadExample(false));
+    $("group-example-button").addEventListener("click", () => loadExample("groups"));
     $("origin-example-button").addEventListener("click", () => loadExample(true));
     $("go-review").addEventListener("click", function () { goStage("review"); });
     $("back-coverage").addEventListener("click", function () { goStage("coverage"); });

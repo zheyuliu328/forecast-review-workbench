@@ -169,6 +169,66 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     await action("/api/review",()=>page.locator("#example-button").click());
     assert.equal(await page.locator("#review-mode").inputValue(),"1");
 
+    // Pooled gains conceal Small deteriorating. Display filters never change the accepted sample.
+    await page.locator("#step-inputs").click();await page.locator("#setup-files").click();
+    const groupPending=await action("/api/review",()=>page.locator("#group-example-button").click());
+    assert(groupPending.group_results.every(g=>g.metrics===null));
+    await ready("#accept-common-sample");
+    const groupResult=await action("/api/review",()=>page.locator("#accept-common-sample").check());
+    await ready("#go-review");await page.locator("#go-review").click();
+    assert.equal(groupResult.models[0].metrics.mae,"26");
+    assert.equal(groupResult.group_results[1].vs_baseline.a.mae_pct,"-100");
+    const callsBefore=await page.evaluate(()=>window.__calls.length);
+    await page.locator("#group-query").fill("Small");
+    assert.equal(await page.locator("#group-view tbody tr").count(),3);
+    assert.match(await page.locator("#group-view").innerText(),/-100/);
+    await page.locator("#group-horizon").selectOption("1");
+    assert.equal(await page.evaluate(()=>window.__calls.length),callsBefore);
+    await screenshot("entity-deterioration");
+    const groupZip=await download("#export-review","entity-deterioration");
+    execFileSync(python,["-c",`import csv,hashlib,io,json,sys,zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+ r=json.loads(z.read('results.json'));assert r['fingerprint']==sys.argv[2]
+ rows=list(csv.DictReader(io.StringIO(z.read('group-metrics.csv').decode('utf-8-sig'))))
+ assert len(rows)==6 and {x['entity'] for x in rows}=={'Large','Small'}
+ assert next(x for x in rows if x['entity']=='Small' and x['model_id']=='a')['mae_gain_pct']=='-100'
+ for name,digest in json.loads(z.read('manifest.json'))['files_sha256'].items(): assert hashlib.sha256(z.read(name)).hexdigest()==digest`,groupZip,groupResult.fingerprint]);
+    await page.locator("#group-query").fill("unknown entity");
+    assert.match(await page.locator("#group-view").innerText(),/No groups match/);
+    await page.locator("#group-query").fill("");
+    assert.equal(await page.locator("#group-view tbody tr").count(),6);
+    // Explicitly add expected groups without observations: pagination must retain zero-common groups.
+    await page.locator("#step-inputs").click();
+    if (await page.locator("#setup-next").isVisible()) await page.locator("#setup-next").click();
+    await openDetails("#entities");
+    await page.locator("#entities").fill(["Large","Small",...Array.from({length:10},(_,i)=>"Missing-"+i)].join("\n"));
+    assert(await page.locator("#export-review").isDisabled());
+    const enlarged=await action("/api/review",()=>page.locator("#run-review").click());
+    assert.equal(enlarged.group_results.length,12);assert.equal(enlarged.summary.common,4);
+    await ready("#accept-common-sample");await action("/api/review",()=>page.locator("#accept-common-sample").check());
+    await ready("#go-review");await page.locator("#go-review").click();
+    assert.equal(await page.locator("#group-view tbody tr").count(),30);
+    await page.locator("#group-next").click();
+    assert.equal(await page.locator("#group-view tbody tr").count(),6);
+    assert.match(await page.locator("#group-count").innerText(),/page 2 of 2/);
+    assert.match(await page.locator("#group-view").innerText(),/not ready/);
+    await page.locator("#group-prev").click();
+    assert.match(await page.locator("#group-count").innerText(),/page 1 of 2/);
+
+    await page.locator("#step-inputs").click();await page.locator("#setup-files").click();
+    fs.writeFileSync(path.join(output,"group-zero-baseline.csv"),"Origin,Target,Entity,Value\n2024-01,2024-02,Large,1000\n2024-01,2024-02,Small,10\n2024-02,2024-03,Large,1000\n2024-02,2024-03,Small,10\n");
+    await upload("baseline","group-zero-baseline.csv","Target","Value");
+    assert.equal(await page.locator("#baseline-entity").inputValue(),"Entity");
+    assert.equal(await page.locator("#baseline-origin").inputValue(),"Origin");
+    await page.locator("#setup-next").click();
+    await action("/api/review",()=>page.locator("#run-review").click());await ready("#accept-common-sample");
+    const zeroGroup=await action("/api/review",()=>page.locator("#accept-common-sample").check());
+    await ready("#go-review");await page.locator("#go-review").click();
+    await page.locator("#group-query").fill("Small");
+    assert.equal(zeroGroup.group_results.find(g=>g.entity==="Small").vs_baseline.a.mae_pct,null);
+    assert.match(await page.locator("#group-view").innerText(),/Baseline MAE is zero/);
+    assert.doesNotMatch(await page.locator("#group-view").innerText(),/Infinity|NaN/);
+
     // Cancel during the first inspection of a multi-file example. No later source may restart work.
     for(const route of ["/","/reconcile/"]){
       await page.goto(url+route);await page.evaluate(()=>{window.__cancelFirstInspect=true;});

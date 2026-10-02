@@ -15,7 +15,7 @@ from urllib.parse import urlsplit
 
 from . import __version__
 from .engine import review
-from .example import example_request, origin_example_request
+from .example import example_request, group_example_request, origin_example_request
 from .experiments import experiment_example, experiment_result, reveal_experiment, transfer_experiment
 from .exporter import build_bundle, bundle_zip, write_bundle
 from .reconciliation import reconcile, reconciliation_example
@@ -138,6 +138,9 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         if not self._local_request():
             return
         path = urlsplit(self.path).path
+        if path == "/api/group-example":
+            self._send(200, group_example_request())
+            return
         if path == "/api/origin-example":
             self._send(200, origin_example_request())
             return

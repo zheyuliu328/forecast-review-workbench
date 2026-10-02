@@ -120,3 +120,15 @@ def test_origin_example_roundtrip_through_local_api(local_tool):
     assert result["summary"]["common"] == 4 and result["summary"]["unique_actual_keys"] == 3
     assert result["horizon_results"][0]["metrics"]["a"]["mae"] == "1"
     assert result["horizon_results"][1]["metrics"]["b"]["mae"] == "1"
+
+
+def test_group_example_roundtrip_through_local_api(local_tool):
+    status, _, raw = request(local_tool, "/api/group-example")
+    assert status == 200
+    payload = json.loads(raw)
+    assert not payload["accept_common_sample"]
+    payload["accept_common_sample"] = True
+    status, _, raw = request(local_tool, "/api/review", "POST", payload, browser_headers(local_tool))
+    assert status == 200
+    result = json.loads(raw)
+    assert result["group_results"][1]["vs_baseline"]["a"]["mae_pct"] == "-100"

@@ -113,3 +113,49 @@ def origin_example_request():
         "candidates": candidates,
         "accept_common_sample": False,
     }
+
+
+def group_example_request():
+    """Pooled gains hide an invented smaller entity's deterioration."""
+    declaration = {"target": "Revenue", "unit": "USD", "transformation": "none", "frequency": "monthly"}
+
+    def source(identifier, values):
+        actual = identifier == "actual"
+        headers = ["Target", "Entity", "Value"] + ([] if actual else ["Origin"])
+        rows = [
+            [target, entity, values[entity]] + ([] if actual else [origin])
+            for origin, target in [("2024-01", "2024-02"), ("2024-02", "2024-03")]
+            for entity in ["Large", "Small"]
+        ]
+        return {
+            "id": identifier,
+            "name": identifier,
+            "file": _file(identifier + ".csv", headers, rows),
+            "mapping": {
+                "date": "Target",
+                "entity": "Entity",
+                "value": "Value",
+                **({} if actual else {"origin": "Origin"}),
+            },
+            "contract": {**declaration, **({} if actual else {"horizons": [1]})},
+            "source_note": "Original invented example; no fitted models.",
+        }
+
+    return {
+        "schema_version": 2,
+        "title": "Pooled improvement hides a smaller entity getting worse",
+        "scope": {
+            "frequency": "monthly",
+            "entities": ["Large", "Small"],
+            "origin_start": "2024-01",
+            "origin_end": "2024-02",
+        },
+        "contract": {"target": "Revenue", "unit": "USD", "transformation": "none", "horizons": [1]},
+        "actual": source("actual", {"Large": 1000, "Small": 10}),
+        "candidates": [
+            source("a", {"Large": 1050, "Small": 12}),
+            source("b", {"Large": 1075, "Small": 10.5}),
+        ],
+        "baseline": source("baseline", {"Large": 1100, "Small": 11}),
+        "accept_common_sample": False,
+    }
