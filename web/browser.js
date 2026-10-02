@@ -2,7 +2,7 @@
 (() => {
   let worker = null, serial = 0;
   const pending = new Map();
-  const actions = new Set(["/api/example", "/api/experiments/example", "/api/reconcile/example", "/api/inspect", "/api/review", "/api/experiments/prepare", "/api/experiments/reveal", "/api/experiments/transfer", "/api/reconcile"]);
+  const actions = new Set(["/api/origin-example", "/api/example", "/api/experiments/example", "/api/reconcile/example", "/api/inspect", "/api/review", "/api/experiments/prepare", "/api/experiments/reveal", "/api/experiments/transfer", "/api/reconcile"]);
   const exports = new Set(["/api/export", "/api/experiments/export", "/api/reconcile/export"]);
   function notify(active, message = "") {
     const host = document.getElementById("runtime-status");

@@ -7,7 +7,7 @@
   const PAGE_SIZE = 25;
   const MAX_BYTES = 10 * 1024 * 1024;
   const state = {
-    title: "Forecast review",
+    title: "Forecast review", schemaVersion: 1, horizonsText: "1, 2", chartHorizon: 1,
     scope: {start: "", end: "", frequency: "monthly", entities: []},
     contract: {target: "", unit: "", horizon: 1, transformation: "none"},
     actual: null, candidates: [], baseline: null, segments: [],
@@ -72,10 +72,16 @@
     return source ? source.name : id;
   }
   function allSources() { return [state.actual].concat(state.candidates, state.baseline ? [state.baseline] : []).filter(Boolean); }
-  function sharedContract() { return Object.assign({}, state.contract, {frequency: state.scope.frequency}); }
+  function horizons(value) { return String(value).split(",").map(function(v) { return /^\s*[1-9][0-9]*\s*$/.test(v) ? Number(v.trim()) : NaN; }); }
+  function sharedContract(role) {
+    const c = Object.assign({}, state.contract, {frequency: state.scope.frequency});
+    if (state.schemaVersion === 2) { delete c.horizon; if (role === "actual") delete c.horizons; else c.horizons = horizons(state.horizonsText); }
+    else delete c.horizons;
+    return c;
+  }
   function makeSource(id, name, role) {
     return {id: id, name: name, role: role, file: null, sheet: null, header_row: 1,
-      mapping: {date: null, value: null, entity: null}, contract: sharedContract(), source_note: "",
+      mapping: {date: null, value: null, entity: null}, contract: sharedContract(role), source_note: "",
       headers: [], sheets: [], preview: [], row_count: null, inspectionError: "", loading: false, epoch: 0, declarationOpen: false};
   }
   state.actual = makeSource("actual", "Actual", "actual");
@@ -135,6 +141,7 @@
     $("run-review").disabled = state.busy || allSources().some(function (source) { return source.loading; });
     $("run-review").textContent = state.busy ? "Checking files…" : "Check comparable sample →";
     $("example-button").disabled = state.busy;
+    $("origin-example-button").disabled = state.busy;
     $("step-coverage").disabled = !state.result;
     $("step-review").disabled = !state.result;
     $("go-review").disabled = !state.result || state.dirty || state.busy || !state.result.comparison_ready;
@@ -187,14 +194,14 @@
   }
 
   function contractMatches(source) {
-    const shared = sharedContract();
+    const shared = sharedContract(source.role);
     return Object.keys(shared).every(function (key) { return String(source.contract[key]).trim() === String(shared[key]).trim(); });
   }
   function sourceBadge(source) {
     if (source.loading) return element("span", {className: "tag"}, "Reading…");
     if (!source.file) return element("span", {className: "tag"}, "Awaiting selection");
     if (source.inspectionError) return element("span", {className: "tag tag-warning"}, "Check required");
-    if (!source.mapping.date || !source.mapping.value) return element("span", {className: "tag tag-warning"}, "Confirm fields");
+    if (!source.mapping.date || !source.mapping.value || (state.schemaVersion === 2 && source.role !== "actual" && !source.mapping.origin)) return element("span", {className: "tag tag-warning"}, "Confirm fields");
     return element("span", {className: "tag tag-success"}, "Selected fields · " + (source.row_count === null ? "ready" : source.row_count + " rows"));
   }
   function definitionBadge(source) {
@@ -272,6 +279,10 @@
       field(source.role === "actual" ? "Actual value column" : "Forecast value column", select(mappingChoices, source.mapping.value, function (event) { source.mapping.value = event.target.value || null; invalidate(); }, {id: source.id + "-value", disabled: !source.headers.length || source.loading})),
       field("Entity ID (optional)", select([{value: "", label: "Single series; no entity ID needed"}].concat(mappingChoices.slice(1)), source.mapping.entity, function (event) { source.mapping.entity = event.target.value || null; invalidate(); }, {id: source.id + "-entity", disabled: !source.headers.length || source.loading}))
     ];
+    if (state.schemaVersion === 2 && source.role !== "actual") {
+      mappings.push(field("Forecast origin date", select(mappingChoices, source.mapping.origin, function(event) { source.mapping.origin = event.target.value || null; invalidate(); }, {id: source.id + "-origin", disabled: source.loading}), "The period when the forecast was made; labels do not prove actual availability."));
+      mappings.push(field("Horizon column (optional)", select([{value:"",label:"Derive from origin and target"}].concat(mappingChoices.slice(1)), source.mapping.horizon, function(event) { source.mapping.horizon = event.target.value || null; invalidate(); }, {id:source.id + "-horizon", disabled:source.loading})));
+    }
     if (source.headers.length) {
       body.appendChild(element("p", {className: "mapping-suggestion"}, "Fields were suggested from column names. Check them against the preview; suggestions do not verify their meaning."));
       body.appendChild(element("div", {className: "mapping-grid"}, mappings));
@@ -294,10 +305,10 @@
       element("span", {id: "source-definition-badge-" + source.id}, definitionBadge(source))
     ]));
     const declarationFields = [];
-    [["target", "Target"], ["unit", "Unit"], ["horizon", "Forecast horizon"], ["transformation", "Value transformation"]].forEach(function (pair) {
+    [["target", "Target"], ["unit", "Unit"]].concat(state.schemaVersion === 1 ? [["horizon", "Forecast horizon"]] : source.role === "actual" ? [] : [["horizons", "Forecast horizons (comma-separated)"]]).concat([["transformation", "Value transformation"]]).forEach(function (pair) {
       const key = pair[0];
       declarationFields.push(field(pair[1], inputForSource(source, "contract-" + key, source.contract[key], function (event) {
-        source.contract[key] = key === "horizon" ? Number(event.target.value) : event.target.value; invalidate();
+        source.contract[key] = key === "horizon" ? Number(event.target.value) : key === "horizons" ? horizons(event.target.value) : event.target.value; invalidate();
       }, key === "horizon" ? {type: "number", min: "1", step: "1", required: true} : {maxlength: "120", required: true})));
     });
     declarationFields.push(field("Frequency", select(["monthly", "quarterly", "daily"], source.contract.frequency, function (event) {
@@ -310,7 +321,7 @@
     declaration.appendChild(element("div", {className: "source-contract-content"}, [
       element("div", {className: "contract-actions"}, [
         element("p", {}, "Describe the file’s actual meaning; declarations must not conceal differences."),
-        button("This file uses the review definition", "text-button", function () { source.contract = sharedContract(); invalidate(); renderSources(); })
+        button("This file uses the review definition", "text-button", function () { source.contract = sharedContract(source.role); invalidate(); renderSources(); })
       ]),
       element("div", {className: "form-grid"}, declarationFields), provenance
     ]));
@@ -382,13 +393,17 @@
       source.row_count = inspection.row_count === undefined ? null : inspection.row_count;
       source.inspectionError = inspection.error || "";
       if (inspection.sheet) source.sheet = inspection.sheet;
-      ["date", "value", "entity"].forEach(function (key) {
+      ["date", "value", "entity", "origin", "horizon"].forEach(function (key) {
         if (source.mapping[key] && !source.headers.includes(source.mapping[key])) source.mapping[key] = null;
       });
-      if (!source.mapping.date) source.mapping.date = uniqueHeader(source.headers, /^(date|period|month|quarter|target_period|evaluation_period|target_date|\u65e5\u671f|\u6708\u4efd|\u671f\u95f4|\u5b63\u5ea6|\u76ee\u6807\u65e5\u671f)$/i) || null;
+      if (!source.mapping.date) source.mapping.date = uniqueHeader(source.headers, /^(date|period|month|quarter|target|target_period|evaluation_period|target_date|\u65e5\u671f|\u6708\u4efd|\u671f\u95f4|\u5b63\u5ea6|\u76ee\u6807\u65e5\u671f)$/i) || null;
       if (!source.mapping.value) {
         const matcher = source.role === "actual" ? /^(actual|observed|actual_value|target|value|\u5b9e\u9645\u503c|\u5b9e\u9645|\u89c2\u6d4b\u503c|\u6570\u503c)$/i : /^(prediction|predicted|forecast|forecast_value|estimate|value|\u9884\u6d4b\u503c|\u9884\u6d4b|\u4f30\u8ba1\u503c|\u6570\u503c)$/i;
-        source.mapping.value = uniqueHeader(source.headers, matcher) || null;
+        source.mapping.value = uniqueHeader(source.headers.filter(h => h !== source.mapping.date), matcher) || null;
+      }
+      if (state.schemaVersion === 2 && source.role !== "actual") {
+        if (!source.mapping.origin) source.mapping.origin = uniqueHeader(source.headers, /^(origin|cutoff|forecast_origin|origin_date)$/i) || null;
+        if (!source.mapping.horizon) source.mapping.horizon = uniqueHeader(source.headers, /^(horizon|lead|forecast_horizon)$/i) || null;
       }
     } catch (error) {
       if (epoch !== source.epoch) return;
@@ -408,15 +423,20 @@
         frequency: source.contract.frequency},
       source_note: source.source_note
     };
+    if (state.schemaVersion === 2) {
+      delete result.contract.horizon;
+      if (source.role !== "actual") result.contract.horizons = source.contract.horizons;
+      else { delete result.mapping.origin; delete result.mapping.horizon; }
+    } else { delete result.mapping.origin; delete result.mapping.horizon; }
     if (source.role !== "actual") { result.id = source.id; result.name = source.name.trim(); }
     return result;
   }
 
   function buildRequest(accept) {
     return {
-      schema_version: 1, title: state.title.trim() || "Forecast review",
-      scope: {start: state.scope.start.trim(), end: state.scope.end.trim(), frequency: state.scope.frequency, entities: state.scope.entities.slice()},
-      contract: {target: state.contract.target.trim(), unit: state.contract.unit.trim(), horizon: Number(state.contract.horizon), transformation: state.contract.transformation.trim()},
+      schema_version: state.schemaVersion, title: state.title.trim() || "Forecast review",
+      scope: Object.assign({frequency: state.scope.frequency, entities: state.scope.entities.slice()}, state.schemaVersion === 2 ? {origin_start:state.scope.start.trim(),origin_end:state.scope.end.trim()} : {start:state.scope.start.trim(),end:state.scope.end.trim()}),
+      contract: Object.assign({target:state.contract.target.trim(),unit:state.contract.unit.trim(),transformation:state.contract.transformation.trim()}, state.schemaVersion === 2 ? {horizons:horizons(state.horizonsText)} : {horizon:Number(state.contract.horizon)}),
       actual: sourcePayload(state.actual), candidates: state.candidates.map(sourcePayload),
       baseline: state.baseline ? sourcePayload(state.baseline) : null,
       accept_common_sample: Boolean(accept),
@@ -426,13 +446,18 @@
 
   function validateForm() {
     if (!state.contract.target.trim() || !state.contract.unit.trim() || !state.contract.transformation.trim()) throw new Error("Enter the comparison target, unit, and input transformation.");
-    if (!Number.isInteger(Number(state.contract.horizon)) || Number(state.contract.horizon) < 1) throw new Error("The forecast horizon must be a positive integer.");
+    if (state.schemaVersion === 1 && (!Number.isInteger(Number(state.contract.horizon)) || Number(state.contract.horizon) < 1)) throw new Error("The forecast horizon must be a positive integer.");
+    if (state.schemaVersion === 2) {
+      const hs = horizons(state.horizonsText);
+      if (!hs.length || hs.some(h => !Number.isSafeInteger(h) || h < 1 || h > 5000) || new Set(hs).size !== hs.length) throw new Error("Enter distinct positive integer horizons separated by commas (maximum 5,000).");
+    }
     if (!state.scope.start.trim() || !state.scope.end.trim()) throw new Error("Enter the originally expected start and end periods.");
     allSources().forEach(function (source) {
       if (!source.file) throw new Error("Select a file: " + source.name);
       if (source.loading) throw new Error("Wait for loading to complete: " + source.name);
       if (source.inspectionError) throw new Error(source.name + ": " + source.inspectionError);
       if (!source.mapping.date || !source.mapping.value) throw new Error("Confirm the date and value columns: " + source.name);
+      if (state.schemaVersion === 2 && source.role !== "actual" && !source.mapping.origin) throw new Error("Choose the forecast origin column: " + source.name);
       if (!source.contract.target.trim() || !source.contract.unit.trim() || !source.contract.transformation.trim()) throw new Error("Complete the file definition: " + source.name + "; if consistent, you can explicitly apply a shared definition.");
       if (!source.name.trim()) throw new Error("Give each forecast a name.");
     });
@@ -448,6 +473,7 @@
       if (!source.file) throw new Error("Select the file for “" + source.name + "”.");
       if (source.loading) throw new Error("Please wait for “" + source.name + "” to finish loading.");
       if (source.inspectionError) throw new Error(source.name + ": " + source.inspectionError);
+      if (state.schemaVersion === 2 && source.role !== "actual" && !source.mapping.origin) throw new Error("Choose the forecast origin column: " + source.name);
       if (!source.mapping.date || !source.mapping.value) throw new Error("For “" + source.name + "”: confirm the date and value columns.");
       if (!source.name.trim()) throw new Error("Give each forecast a name.");
     });
@@ -473,7 +499,7 @@
       if (!entities.includes(state.chartEntity)) state.chartEntity = entities[0] || "";
       renderCoverage(); renderReview();
       if (navigate !== false) state.stage = "coverage";
-      if (result.comparison_ready && accept) showMessage("The common sample is accepted. Every comparison metric now uses the same " + result.summary.common + " observations.", false);
+      if (result.comparison_ready && accept) showMessage("The common sample is accepted. Every comparison metric now uses the same " + result.summary.common + (result.schema_version === 2 ? " forecast keys." : " observations."), false);
       else if (!accept) showMessage("Coverage checked. Review the exclusions before accepting the common sample.", false);
     } catch (error) { showMessage(error.message, true); }
     finally {
@@ -518,9 +544,9 @@
     const result = state.result;
     if (!result) return;
     const summary = result.summary;
-    $("coverage-context").textContent = result.scope.start + " to " + result.scope.end + " · " + result.scope.frequency + " · " + (result.scope.entities && result.scope.entities.length ? result.scope.entities.length + " explicitly selected entities" : "one series");
+    $("coverage-context").textContent = (result.schema_version === 2 ? "Forecast origins " + result.scope.origin_start + " to " + result.scope.origin_end : result.scope.start + " to " + result.scope.end) + " · " + result.scope.frequency + " · " + (result.scope.entities && result.scope.entities.length ? result.scope.entities.length + " explicitly selected entities" : "one series");
     $("coverage-summary").replaceChildren(
-      stat("Expected records", summary.expected, "Full period and entity scope", false),
+      stat("Expected records", summary.expected, result.schema_version === 2 ? "Origin × horizon × entity scope" : "Full period and entity scope", false),
       stat("Common sample", summary.common, "Valid actuals and all forecasts", true),
       stat("Excluded records", summary.excluded, "Missing or invalid in at least one file", false),
       stat("Records outside scope", summary.extra_rows, "Retained but excluded from comparison", false)
@@ -615,7 +641,7 @@
         .concat((result.models || []).map(function (model) { return {label: model.name, numeric: true}; })).concat(["Exclusion reasons / source rows"]);
       body = pageRows.map(function (row) {
         const cells = [
-          element("td", {className: "row-period"}, [row.period, row.entity ? element("div", {className: "row-entity"}, row.entity) : null]),
+          element("td", {className: "row-period"}, [(result.schema_version === 2 ? row.origin + " → " + row.period + " · h=" + row.horizon : row.period), row.entity ? element("div", {className: "row-entity"}, row.entity) : null]),
           element("td", {}, element("span", {className: "tag " + (row.included ? "tag-success" : "tag-warning")}, row.included ? "Common sample" : "Excluded")),
           metricCell(row.actual)
         ];
@@ -632,15 +658,15 @@
         return element("tr", {}, cells);
       });
     } else if (state.diagnosticTab === "input") {
-      headers = ["Source", "Original row", "Original date", "Original entity", "Original value", "Normalized period", "Status"];
+      headers = ["Source", "Original row", "Original date", "Original entity", "Original value", "Normalized period", "Status"].concat(result.schema_version === 2 ? ["Original origin", "Origin", "Original horizon", "Horizon"] : []);
       body = pageRows.map(function (row) {
-        return element("tr", {}, [sourceLabel(row.source_id), row.row, row.raw_date, row.raw_entity, row.raw_value, row.period, row.status].map(function (value) {
+        return element("tr", {}, [sourceLabel(row.source_id), row.row, row.raw_date, row.raw_entity, row.raw_value, row.period, row.status].concat(result.schema_version === 2 ? [row.raw_origin,row.origin,row.raw_horizon,row.horizon] : []).map(function (value) {
           return element("td", {}, textValue(value));
         }));
       });
     } else {
       headers = ["Source", "Original row", "Period / entity", "Issue", "Explanation"];
-      body = pageRows.map(function (row) { return element("tr", {}, [sourceLabel(row.source_id), row.row, row.period ? row.period + (row.entity ? " · " + row.entity : "") : null, row.code, row.detail].map(function (value) { return element("td", {}, textValue(value)); })); });
+      body = pageRows.map(function (row) { return element("tr", {}, [sourceLabel(row.source_id), row.row, row.period ? row.period + (row.entity ? " · " + row.entity : "") : null, row.code, (result.schema_version === 2 ? "Origin: " + textValue(row.origin) + "; horizon: " + textValue(row.horizon) + ". " : "") + row.detail].map(function (value) { return element("td", {}, textValue(value)); })); });
     }
     $("diagnostic-data").replaceChildren(rows.length ? table(headers, body, {className: "diagnostic-table"}) : element("div", {className: "empty-state"}, "No rows match this view."));
     $("diagnostic-pagination").replaceChildren(
@@ -667,6 +693,16 @@
         button("Review coverage", "text-button", function () { goStage("coverage"); })
       ]));
     } else {
+      if (result.schema_version === 2) {
+        content.appendChild(element("section", {className:"panel",id:"horizon-results"}, [
+          element("h3", {}, "Compare each forecast horizon"),
+          element("p", {}, result.weighting + " " + result.summary.unique_actual_keys + " unique target/entity actual keys support " + result.summary.expected + " expected forecasts. Origin labels do not prove training independence or availability."),
+          ...result.horizon_results.map(function(h) {
+            const models = result.models.map(m => Object.assign({},m,{horizon_metric:(h.metrics || {})[m.id]}));
+            return element("div", {className:"table-wrap"}, [element("h4",{},"Horizon " + h.horizon + " · " + h.common + " common / " + h.expected + " expected; " + h.excluded + " excluded"),metricTable(models,"horizon_metric",false)]);
+          })
+        ]));
+      }
       const comparisonRows = (result.models || []).map(function (model) {
         const available = model.available_metrics || {}, common = model.metrics || {};
         return element('tr', {}, [model.name, String(available.n ?? '—'), number(available.mae), String(common.n ?? '—'), number(common.mae)].map(value=>element('td',{},value)));
@@ -732,7 +768,11 @@
       ])
     ]);
     const entity = entities.includes(state.chartEntity) ? state.chartEntity : entities[0];
-    const expectedRows = (result.rows || []).filter(function (row) { return row.entity === entity; });
+    if (result.schema_version === 2) {
+      if (!result.contract.horizons.includes(state.chartHorizon)) state.chartHorizon = result.contract.horizons[0];
+      controls.appendChild(select(result.contract.horizons.map(h => ({value:String(h),label:"Horizon " + h})),String(state.chartHorizon),function(event) {state.chartHorizon=Number(event.target.value);replaceChart();},{"aria-label":"Forecast horizon shown in chart"}));
+    }
+    const expectedRows = (result.rows || []).filter(function (row) { return row.entity === entity && (result.schema_version !== 2 || row.horizon === state.chartHorizon); });
     const commonRows = expectedRows.filter(function (row) { return row.included; });
     if (!commonRows.length) { panel.appendChild(element("div", {className: "empty-state"}, "No accepted common observations for this entity.")); return panel; }
     const models = result.models || [];
@@ -791,7 +831,7 @@
       ]);
     })));
     panel.appendChild(svg);
-    panel.appendChild(element("p", {className: "chart-note"}, "Showing " + commonRows.length + " accepted observations" + (entity ? " for " + entity : "") + ". Each series uses the same dates. Lines break at periods excluded from the common sample. Exact values remain in the row diagnostics."));
+    panel.appendChild(element("p", {className: "chart-note"}, "Showing " + commonRows.length + (result.schema_version === 2 ? " accepted forecast keys at horizon " + state.chartHorizon : " accepted observations") + (entity ? " for " + entity : "") + ". Each series uses the same dates. Lines break at periods excluded from the common sample. Exact values remain in the row diagnostics."));
     return panel;
   }
   function replaceChart() { const existing = $("chart-panel"); if (existing && state.result && state.result.comparison_ready && !state.dirty) existing.replaceWith(renderChartPanel()); }
@@ -835,8 +875,8 @@
       target.appendChild(element("div", {className: "source-metadata"}, [
         element("h4", {}, source.name || sourceLabel(source.id)),
         element("p", {}, source.file_name + " · " + (source.sheet || "CSV / single sheet") + " · header row " + source.header_row + " · " + source.rows + " nonempty rows"),
-        element("p", {}, "Mapped columns: date = " + textValue(mapping.date) + "; value = " + textValue(mapping.value) + "; entity = " + (mapping.entity || "single series")),
-        element("p", {}, "Declared: " + c.target + " · " + c.unit + " · horizon " + c.horizon + " · " + c.frequency + " · transformation " + c.transformation),
+        element("p", {}, "Mapped columns: date = " + textValue(mapping.date) + "; value = " + textValue(mapping.value) + "; entity = " + (mapping.entity || "single series") + (state.schemaVersion === 2 && source.role !== "actual" ? "; origin = " + textValue(mapping.origin) + "; horizon = " + (mapping.horizon || "derived") : "")),
+        element("p", {}, "Declared: " + c.target + " · " + c.unit + " · horizon " + (c.horizons || c.horizon || "not applicable to actuals") + " · " + c.frequency + " · transformation " + c.transformation),
         source.source_note ? element("p", {}, "Source note: " + source.source_note) : null,
         element("p", {}, [element("strong", {}, "Source SHA-256: "), element("code", {}, source.sha256)])
       ]));
@@ -895,6 +935,12 @@
   function syncForm() {
     $("review-title").value = state.title;
     ["target", "unit", "horizon", "transformation"].forEach(function (key) { $(key).value = state.contract[key]; });
+    $("review-mode").value = String(state.schemaVersion);
+    $("horizons").value = state.horizonsText;
+    $("single-horizon-field").hidden = state.schemaVersion === 2;
+    $("multi-horizon-field").hidden = state.schemaVersion !== 2;
+    $("scope-start-label").textContent = state.schemaVersion === 2 ? "First forecast origin" : "Start period";
+    $("scope-end-label").textContent = state.schemaVersion === 2 ? "Last forecast origin" : "End period";
     $("frequency").value = state.scope.frequency;
     $("scope-start").value = state.scope.start; $("scope-end").value = state.scope.end;
     $("entities").value = state.scope.entities.join("\n");
@@ -910,8 +956,12 @@
       if (!request || !request.actual || !request.scope || !request.contract || !Array.isArray(request.candidates) || request.candidates.length < 1 || request.candidates.length > 5) {
         throw new Error("The transferred forecast review is incomplete. Return to Training experiments and transfer it again.");
       }
+      if (![1,2].includes(request.schema_version)) throw new Error("Choose review schema version 1 or 2.");
+      state.schemaVersion = request.schema_version;
+      state.horizonsText = (request.contract.horizons || [1,2]).join(", ");
       state.title = request.title || "Invented forecast example";
       state.scope = Object.assign({entities: []}, request.scope);
+      if (state.schemaVersion === 2) { state.scope.start = request.scope.origin_start; state.scope.end = request.scope.origin_end; }
       state.contract = Object.assign({}, request.contract);
       function restore(entry, role, defaultId, defaultName) {
         const source = makeSource(entry.id || defaultId, entry.name || defaultName, role);
@@ -930,13 +980,13 @@
       await runReview(false, true);
   }
 
-  async function loadExample() {
+  async function loadExample(rolling) {
     if (state.busy) return;
     clearMessages(); state.busy = true; updateChrome();
     try {
-      const request = await api("/api/example");
+      const request = await api(rolling === true ? "/api/origin-example" : "/api/example");
       await applyForecastRequest(request);
-      if (state.result && !state.dirty) showMessage("Synthetic example loaded. Forecasts have different missing months. Review the gaps before accepting the common sample. Return to Prepare files to use your own data.", false);
+      if (state.result && !state.dirty) showMessage(rolling === true ? "Invented rolling-origin example loaded. Four forecasts reference three actual target periods. Accept the common sample to compare each horizon." : "Synthetic example loaded. Forecasts have different missing months. Review the gaps before accepting the common sample. Return to Prepare files to use your own data.", false);
     } catch (error) { showMessage(error.message, true); }
     finally { state.busy = false; updateChrome(); }
   }
@@ -964,11 +1014,24 @@
     $("review-form").addEventListener("submit", function (event) { event.preventDefault(); if (inputFlow.current() === "files") inputFlow.next(); else runReview(false, true); });
     $("review-title").addEventListener("input", function (event) { state.title = event.target.value; });
     ["target", "unit", "transformation"].forEach(function (key) { $(key).addEventListener("input", function (event) { state.contract[key] = event.target.value; invalidate(); }); });
+    $("review-mode").addEventListener("change", function(event) {
+      state.schemaVersion = Number(event.target.value);
+      if (state.schemaVersion === 1 && !Number.isInteger(state.contract.horizon)) state.contract.horizon = 1;
+      allSources().forEach(function(source) {
+        if (state.schemaVersion === 1) { delete source.mapping.origin; delete source.mapping.horizon; }
+        else if (source.role !== "actual") {
+          source.mapping.origin = uniqueHeader(source.headers,/^(origin|cutoff|forecast_origin|origin_date)$/i) || null;
+          source.mapping.horizon = uniqueHeader(source.headers,/^(horizon|lead|forecast_horizon)$/i) || null;
+        }
+      });
+      invalidate(); syncForm(); showMessage("Comparison mode changed. Check the origin fields and confirm each file's definitions before comparing.",false);
+    });
+    $("horizons").addEventListener("input",function(event) {state.horizonsText=event.target.value;invalidate();});
     $("horizon").addEventListener("input", function (event) { state.contract.horizon = Number(event.target.value); invalidate(); });
     $("frequency").addEventListener("change", function (event) { state.scope.frequency = event.target.value; updatePeriodHelp(); invalidate(); });
     [["scope-start", "start"], ["scope-end", "end"]].forEach(function (item) { $(item[0]).addEventListener("input", function (event) { state.scope[item[1]] = event.target.value; invalidate(); }); });
     $("entities").addEventListener("input", function (event) { state.scope.entities = event.target.value.split(/\r?\n/).filter(function (line) { return line.trim() !== ""; }); invalidate(); });
-    $("copy-definition").addEventListener("click", function () { allSources().forEach(function (source) { source.contract = sharedContract(); }); invalidate(); renderSources(); showMessage("Applied to each file following your confirmation. You can still edit individual declarations below.", false); });
+    $("copy-definition").addEventListener("click", function () { allSources().forEach(function (source) { source.contract = sharedContract(source.role); }); invalidate(); renderSources(); showMessage("Applied to each file following your confirmation. You can still edit individual declarations below.", false); });
     $("add-candidate").addEventListener("click", function () {
       if (state.candidates.length >= 5) return;
       let id;
@@ -978,7 +1041,8 @@
     });
     $("add-baseline").addEventListener("click", function () { state.baseline = makeSource("baseline", "Baseline", "baseline"); invalidate(); renderSources(); });
     $("add-segment").addEventListener("click", function () { state.segments.push({name: "", start: "", end: ""}); invalidate(); renderSegments(); });
-    $("example-button").addEventListener("click", loadExample);
+    $("example-button").addEventListener("click", () => loadExample(false));
+    $("origin-example-button").addEventListener("click", () => loadExample(true));
     $("go-review").addEventListener("click", function () { goStage("review"); });
     $("back-coverage").addEventListener("click", function () { goStage("coverage"); });
     $("export-review").addEventListener("click", exportReview);

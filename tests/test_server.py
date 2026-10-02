@@ -106,3 +106,17 @@ def test_input_file_cannot_name_a_server_path(local_tool):
     assert status == 400
     payload = {"file": {"name": "arbitrary.csv", "content_base64": base64.b64encode(b"x,y\n1,2\n").decode()}}
     assert request(local_tool, "/api/inspect", "POST", payload, headers)[0] == 200
+
+
+def test_origin_example_roundtrip_through_local_api(local_tool):
+    status, _, raw = request(local_tool, "/api/origin-example")
+    assert status == 200
+    payload = json.loads(raw)
+    assert payload["schema_version"] == 2
+    payload["accept_common_sample"] = True
+    status, _, raw = request(local_tool, "/api/review", "POST", payload, browser_headers(local_tool))
+    assert status == 200
+    result = json.loads(raw)
+    assert result["summary"]["common"] == 4 and result["summary"]["unique_actual_keys"] == 3
+    assert result["horizon_results"][0]["metrics"]["a"]["mae"] == "1"
+    assert result["horizon_results"][1]["metrics"]["b"]["mae"] == "1"

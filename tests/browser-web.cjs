@@ -120,6 +120,55 @@ const {chromium} = require("playwright");
     await ready("#reconcile-export");await screenshot("reconciliation");await download("#reconcile-export","reconciliation");
     fs.writeFileSync(path.join(output,"reconciliation-result.json"),JSON.stringify(reconciliation));
 
+    // Rolling origins: same target, different lead times must not collapse or share a chart line.
+    await page.goto(url+"/");
+    const originPending = await action("/api/review",()=>page.locator("#origin-example-button").click());
+    assert.doesNotMatch(await page.locator("#coverage-context").innerText(),/undefined/);
+    assert.equal(originPending.schema_version,2);assert.equal(originPending.summary.common,4);
+    assert.equal(originPending.summary.unique_actual_keys,3);assert.equal(originPending.input_rows.length,11);
+    assert(originPending.horizon_results.every(h=>h.metrics===null));
+    await ready("#accept-common-sample");
+    const originResult=await action("/api/review",()=>page.locator("#accept-common-sample").check());
+    assert.equal(originResult.horizon_results[0].metrics.a.mae,"1");
+    assert.equal(originResult.horizon_results[1].metrics.b.mae,"1");
+    await ready("#go-review");await page.locator("#go-review").click();
+    assert.match(await page.locator("#horizon-results").innerText(),/Horizon 1/);
+    assert.match(await page.locator("#horizon-results").innerText(),/Horizon 2/);
+    assert.equal(await page.locator("#chart-panel circle").count(),6);
+    await page.getByLabel("Forecast horizon shown in chart").selectOption("2");
+    assert.equal(await page.locator("#chart-panel circle").count(),6);
+    assert.match(await page.locator(".chart-note").innerText(),/horizon 2/);
+    await screenshot("rolling-origin");
+    const originZip=await download("#export-review","rolling-origin");
+    execFileSync(python,["-c",`import csv,io,json,sys,zipfile
+with zipfile.ZipFile(sys.argv[1]) as z:
+ r=json.loads(z.read('results.json'));assert r['schema_version']==2 and r['summary']['common']==4
+ assert b'Per-horizon' in z.read('report.html')
+ rows=list(csv.DictReader(io.StringIO(z.read('evaluation-rows.csv').decode('utf-8-sig'))))
+ assert len(rows)==4 and rows[2]['residual:a']=='-1' and rows[2]['origin']=='2024-02'
+ assert len(list(csv.DictReader(io.StringIO(z.read('horizon-metrics.csv').decode('utf-8-sig')))))==4`,originZip]);
+    await page.locator("#step-inputs").click();await page.locator("#setup-files").click();
+    fs.writeFileSync(path.join(output,"origin-bad.csv"),"Origin,Target,Horizon,Value\n2024-01,2024-02,2,101\n");
+    await upload("a","origin-bad.csv","Target","Value");
+    assert.equal(await page.locator("#a-origin").inputValue(),"Origin");
+    assert.equal(await page.locator("#a-horizon").inputValue(),"Horizon");
+    await page.locator("#setup-next").click();
+    const wrongOrigin=await action("/api/review",()=>page.locator("#run-review").click());
+    assert.equal(wrongOrigin.summary.common,0);assert(wrongOrigin.issues.some(i=>i.code==='horizon_mismatch'));
+    assert(wrongOrigin.models.every(m=>m.metrics===null));
+    await page.locator("#step-inputs").click();await page.locator("#setup-files").click();
+    fs.copyFileSync(path.resolve("examples/rolling-origin/a.csv"),path.join(output,"origin-fixed.csv"));
+    await upload("a","origin-fixed.csv","Target","Value");await page.locator("#setup-next").click();
+    const recovered=await action("/api/review",()=>page.locator("#run-review").click());
+    assert.equal(recovered.summary.common,4);assert(!recovered.comparison_ready);
+    // Switching to schema 1 clears origin mappings and requires a fresh comparison.
+    await page.locator("#step-inputs").click();await page.locator("#setup-files").click();
+    await page.locator("#review-mode").selectOption("1");
+    assert.equal(await page.locator("#a-origin").count(),0);
+    assert(await page.locator("#export-review").isDisabled());
+    await action("/api/review",()=>page.locator("#example-button").click());
+    assert.equal(await page.locator("#review-mode").inputValue(),"1");
+
     // Cancel during the first inspection of a multi-file example. No later source may restart work.
     for(const route of ["/","/reconcile/"]){
       await page.goto(url+route);await page.evaluate(()=>{window.__cancelFirstInspect=true;});

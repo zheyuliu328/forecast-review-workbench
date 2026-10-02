@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from forecast_review_workbench.engine import review
-from forecast_review_workbench.example import example_request
+from forecast_review_workbench.example import example_request, origin_example_request
 from forecast_review_workbench.experiments import (
     experiment_example,
     experiment_result,
@@ -34,7 +34,9 @@ def _payload(raw):
 
 def dispatch(action, raw):
     payload = _payload(raw)
-    if action == "/api/example":
+    if action == "/api/origin-example":
+        result = origin_example_request()
+    elif action == "/api/example":
         result = example_request()
     elif action == "/api/experiments/example":
         result = experiment_example()

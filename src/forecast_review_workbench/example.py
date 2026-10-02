@@ -67,3 +67,49 @@ def example_request():
         "accept_common_sample": False,
         "segments": [{"name": "Later half", "start": "2024-07", "end": "2024-12"}],
     }
+
+
+def origin_example_request():
+    """An original two-horizon example whose preferred candidate depends on horizon."""
+    declaration = {"target": "Revenue", "unit": "USD", "transformation": "none", "frequency": "monthly"}
+    origins = ["2024-01", "2024-01", "2024-02", "2024-02"]
+    targets = ["2024-02", "2024-03", "2024-03", "2024-04"]
+    horizons = [1, 2, 1, 2]
+    candidates = []
+    for identifier, values in (("a", [101, 112, 109, 118]), ("b", [102, 111, 111, 119])):
+        candidates.append(
+            {
+                "id": identifier,
+                "name": "Candidate " + identifier.upper(),
+                "file": _file(
+                    identifier + ".csv",
+                    ["Origin", "Target", "Horizon", "Value"],
+                    zip(origins, targets, horizons, values),
+                ),
+                "mapping": {
+                    "date": "Target",
+                    "value": "Value",
+                    "entity": None,
+                    "origin": "Origin",
+                    "horizon": "Horizon",
+                },
+                "contract": {**declaration, "horizons": [1, 2]},
+                "source_note": "Independently invented rolling-origin illustration.",
+            }
+        )
+    return {
+        "schema_version": 2,
+        "title": "A different winner at each horizon",
+        "scope": {"origin_start": "2024-01", "origin_end": "2024-02", "frequency": "monthly", "entities": []},
+        "contract": {"target": "Revenue", "unit": "USD", "transformation": "none", "horizons": [1, 2]},
+        "actual": {
+            "file": _file(
+                "actual.csv", ["Target", "Value"], [["2024-02", 100], ["2024-03", 110], ["2024-04", 120]]
+            ),
+            "mapping": {"date": "Target", "value": "Value", "entity": None},
+            "contract": declaration,
+            "source_note": "Independently invented actuals, each target appears once.",
+        },
+        "candidates": candidates,
+        "accept_common_sample": False,
+    }
