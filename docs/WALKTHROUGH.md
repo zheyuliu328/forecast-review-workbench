@@ -56,7 +56,7 @@ Download the bundle and use evaluation-rows.csv to recompute the average score. 
 
 ## Explain event probabilities: an unavailable label is not a correct forecast
 
-The browser implementation is available locally at /probabilities; its public deployment is pending. Check publication.json before describing it as live. The installed commands and invented inputs are documented in EVENT_PROBABILITY_REVIEW.md.
+The browser implementation is published at /probabilities/. Exact source and verification are recorded in publication.json. The installed commands and invented inputs are documented in EVENT_PROBABILITY_REVIEW.md.
 
 With cutoff January 3, two of three planned labels are observable. A's probabilities 0.25 and 0.75 against outcomes 0 and 1 give Brier score 0.0625 and log loss ln(4/3); the constant 0.5 baseline gives 0.25 and ln(2). The remaining label is pending, not an error-free prediction.
 

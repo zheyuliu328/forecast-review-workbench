@@ -52,7 +52,7 @@ Verified implementation and reproducible test evidence can be described as proje
 | Offline interpretation | Participant finds declarations, excluded/common rows and file digests | Digests identify bytes, not authenticity. config.json is metadata, not a replay request containing original source bytes. |
 | Narrow screen | Comparison and export completed, or an actionable recorded blocker | Completion after hints must remain recorded as assisted. |
 
-The worked independent checker in examples/entity-horizon/verify_export.py is optional follow-up after the unassisted task. It checks consistency of this one invented exported fixture; it does not authenticate sources or validate arbitrary models. The interval and probability task cards below extend this kit. Probability browser deployment is pending; do not record a public trial before its publication receipt confirms release.
+The worked independent checker in examples/entity-horizon/verify_export.py is optional follow-up after the unassisted task. It checks consistency of this one invented exported fixture; it does not authenticate sources or validate arbitrary models. The interval and probability task cards below extend this kit. Probability browser deployment is verified in publication.json; unassisted human trials remain pending.
 
 ## Interval task card — public workflow, human trial pending
 
@@ -66,9 +66,9 @@ Give the participant the public /intervals/ URL and the invented files in exampl
 
 Observer answers: four common keys; A/B coverage 1 and widths/scores 1/20; C width 0.5, coverage 0.25 and score 4.25. Wider containment is not evidence of calibration. A reversed bound excludes its key globally; restoring the file requires a new acceptance. Do not mark a human pass from automated execution.
 
-## Probability task card — local implementation, public release pending
+## Probability task card — public workflow, human trial pending
 
-Use /probabilities on the local tool until publication.json records a verified public release. Public trial status remains pending. Use only the invented event-probability files; do not introduce personal or customer records.
+Use the public /probabilities/ workflow. Human trial status remains pending. Use only the invented event-probability files; do not introduce personal or customer records.
 
 1. Load the example at January 3. Identify which planned observation cannot yet be evaluated and why.
 2. Accept the shared sample, compare A with the baseline, then change the cutoff to January 4. Check that old scores and acceptance disappear before accepting the new sample.

@@ -4,12 +4,12 @@
   "access": "public",
   "deployment_status": "succeeded",
   "project_id": "appgprj_6aaa9988f594819186c04f6c14871488",
-  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_7b779e5f5080819190f1a4a2e290202a",
-  "deployment_id": "appgdep_6ac0872856c881919f4a43f20061498b",
-  "sites_source_sha": "837af51dfaebff849d3623894d3dfe256611c60f",
-  "github_runtime_sha": "837af51dfaebff849d3623894d3dfe256611c60f",
-  "runtime_ci": 37096783358,
-  "verification": "Version 7 deployed successfully. Public interval example confirmed four planned/common keys and A/B/C interval scores 1/20/4.25. Replacing A with an invented reversed-bounds CSV excluded one key for every candidate; replacement with corrected own-bounds.csv restored four. Both actual browser ZIP downloads matched native recomputation and all manifest digests. Desktop and 390px layouts inspected; document width 375px, tables scroll locally. Existing point-forecast, experiment and reconciliation regressions passed on this exact runtime. Native event-probability review remains outside the browser. Human acceptance remains pending.",
+  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_3b606cd27f288191998b4cf008f564ed",
+  "deployment_id": "appgdep_6ac09844d1a48191882a5a7daa86ad7a",
+  "sites_source_sha": "8a0e4bb9cec575be17d0d3af6d3d80638553e9ce",
+  "github_runtime_sha": "8a0e4bb9cec575be17d0d3af6d3d80638553e9ce",
+  "runtime_ci": 37100468301,
+  "verification": "Version 8 deployed successfully. Live probability example: January 3 n=2, Brier=0.0625; January 4 n=3, Brier=0.375, infinite log loss and one impossible event. Cutoff edit cleared acceptance and export. Actual invented file selection with probability1.2 identified invalid original row2; replacement restored n=3 and Brier0.36. Actual downloaded ZIP equals native recomputation and all artifact digests pass. Narrow390px document width375px has no page overflow, but numeric cells wrap and need a readability fix. Exact runtime CI covers worker and loopback own CSV/XLSX, cancellation and original workflows. External human and owner acceptance remain pending.",
   "external_human_trial": "pending",
   "owner_explanation": "pending"
 }

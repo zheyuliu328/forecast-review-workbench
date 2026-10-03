@@ -188,9 +188,9 @@ The [rolling-origin review](docs/ROLLING_ORIGIN.md) keeps origin, target and hor
 
 The native review and offline report now split the accepted common sample by entity and horizon, including coverage and supplied-baseline MAE/RMSE gains. An original counterexample shows pooled improvement alongside 100% worse error for a smaller entity. [Run the task and read its limits](docs/ENTITY_HORIZON_REVIEW.md). The public browser provides entity search, horizon filtering and pagination; filters change the view while exports retain every group.
 
-### Native event-probability review
+### Event-probability review
 
-Review fixed binary-event probabilities with explicit expected keys, label-availability dates and an evaluation cutoff. Brier/log loss use one accepted common sample, preserve pending and invalid rows, and report impossible probability endpoints without clipping. See [the original example and input contract](docs/EVENT_PROBABILITY_REVIEW.md). This optional task is not yet exposed in the public browser.
+Review fixed binary-event probabilities with explicit expected keys, label-availability dates and an evaluation cutoff. Brier/log loss use one accepted common sample, preserve pending and invalid rows, and report impossible probability endpoints without clipping. See [the original example and input contract](docs/EVENT_PROBABILITY_REVIEW.md). The [public probability workflow](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/probabilities/) uses the same engine; see docs/publication.json for exact release evidence.
 
 ## Review probabilities with a label-availability cutoff
 
