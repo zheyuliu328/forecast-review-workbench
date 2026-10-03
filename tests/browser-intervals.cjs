@@ -20,7 +20,7 @@ const {spawn, execFileSync} = require("node:child_process"), {chromium} = requir
     await page.locator("#example-button").click();await ready();
     assert.match(await page.locator("#notice").innerText(),/Invented example loaded/);
     await page.locator("#check-sample").click();await ready();
-    assert.match(await page.locator("#sample-summary").innerText(),/4/);assert(await page.locator("#scores").isHidden());
+    assert.match(await page.locator("#sample-summary").innerText(),/4/);assert(await page.locator("#interval-form").isHidden());assert.equal(await page.locator("#exclusions tbody tr").count(),4);assert(await page.locator("#scores").isHidden());
     await page.locator("#accept-common").check();await ready();
     assert(await page.locator("#scores").isVisible());
     const table=await page.locator("#metrics tbody tr").allTextContents();assert.equal(table.length,3);assert.match(table[2],/4.25/);
@@ -34,17 +34,21 @@ with zipfile.ZipFile(sys.argv[1]) as z:
  assert [r['metrics'][s]['mean_interval_score'] for s in ('A','B','C')]==['1','20','4.25']
  assert r['common']==4
  print(json.dumps({'common':r['common'],'native_equal':True,'manifest_valid':True}))`,zip],{encoding:"utf8"});
+    await page.locator("#edit-inputs").click();
     await page.locator("#B-definition-nominal_coverage").fill("0.95");assert(await page.locator("#sample").isHidden());assert(await page.locator("#export").isDisabled());assert(!await page.locator("#accept-common").isChecked());
     await page.locator("#check-sample").click();await ready();assert.match(await page.locator("#conflicts").innerText(),/nominal coverage/);assert(await page.locator("#accept-common").isDisabled());
+    await page.locator("#edit-inputs").click();
     await page.locator("#B-definition-nominal_coverage").fill("0.8");
     const bad=path.join(output,"bad.csv"), good=path.join(output,"good.csv");
     fs.writeFileSync(bad,"Origin,Target,Lower,Upper\n2024-01-01,2024-01-02,2,1\n2024-01-01,2024-01-03,0.5,1.5\n2024-01-01,2024-01-04,1.5,2.5\n2024-01-01,2024-01-05,2.5,3.5\n");
     fs.writeFileSync(good,fs.readFileSync(bad,"utf8").replace(",2,1\n",",-0.5,0.5\n"));
     await page.locator("#A-file").setInputFiles(bad);await ready();await page.locator("#check-sample").click();await ready();
     assert.match(await page.locator("#exclusions").innerText(),/2024-01-02/);await page.locator("#accept-common").check();await ready();assert.equal(await page.locator("#metrics tbody tr").first().locator("td").nth(1).innerText(),"3");
+    await page.locator("#edit-inputs").click();
     await page.locator("#A-file").setInputFiles(good);await ready();await page.locator("#check-sample").click();await ready();await page.locator("#accept-common").check();await ready();assert.equal(await page.locator("#metrics tbody tr").first().locator("td").nth(1).innerText(),"4");
     // A user-owned workbook: non-first worksheet and a header below title rows.
     const xlsx=path.join(output,"own.xlsx");execFileSync(python,["-c","from openpyxl import Workbook; import sys; w=Workbook(); w.active.title='Notes'; w.active.append(['Invented test']); s=w.create_sheet('Bounds'); s.append(['Invented bounds']); s.append([]); s.append(['Origin','Target','Lower','Upper']); [s.append(['2024-01-01','2024-01-%02d'%(i+2),i-.5,i+.5]) for i in range(4)]; w.save(sys.argv[1])",xlsx]);
+    await page.locator("#edit-inputs").click();
     await page.locator("#A-file").setInputFiles(xlsx);await ready();
     const sheetDetails=page.locator("#A-sheet").locator("xpath=ancestor::details[1]"); if(!await sheetDetails.evaluate(n=>n.open))await sheetDetails.locator("summary").click();
     await page.locator("#A-sheet").selectOption("Bounds");await ready();
@@ -52,6 +56,7 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     await page.locator("#A-header-row").fill("3");await page.locator("#A-header-row").press("Tab");await ready();
     await page.locator("#check-sample").click();await ready();await page.locator("#accept-common").check();await ready();assert.equal(await page.locator("#metrics tbody tr").first().locator("td").nth(4).innerText(),"1");
     await page.screenshot({path:path.join(output,"desktop.png"),fullPage:true});await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),"narrow overflow");await page.screenshot({path:path.join(output,"narrow.png"),fullPage:true});
+    await page.locator("#edit-inputs").click();
     // Delay one real inspection to check that remounting actions are locked.
     await page.evaluate(() => {const host=window.FrwBrowser || window; const key=window.FrwBrowser ? "request" : "fetch"; const original=host[key].bind(host);window.__holdInspection=null;host[key]=async (...args)=>{if(args[0]==="/api/inspect"){await new Promise(resolve=>window.__holdInspection=resolve);host[key]=original;}return original(...args);};});
     await page.locator("#A-file").setInputFiles(good);await page.waitForFunction(()=>Boolean(window.__holdInspection));

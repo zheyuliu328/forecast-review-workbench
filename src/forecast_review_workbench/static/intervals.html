@@ -19,7 +19,7 @@
 <label class="field">Report title<input id="title" value="Prediction interval review" maxlength="160"></label>
 <button id="check-sample" class="button button-primary" type="submit">Check files and common sample</button></section>
 </fieldset></form>
-<section id="sample" hidden><h2>3. Confirm the shared sample</h2><div id="sample-summary" class="extension-summary"></div><div id="conflicts" role="status"></div><div id="exclusions"></div>
+<section id="sample" hidden><button id="edit-inputs" class="button" type="button">Edit inputs</button><h2>3. Confirm the shared sample</h2><div id="sample-summary" class="extension-summary"></div><div id="conflicts" role="status"></div><h3>Planned keys and exclusions</h3><div id="exclusions"></div>
 <label class="check-label"><input type="checkbox" id="accept-common"><span>I accept the eligible shared forecast keys shown above for this comparison. Exclusions may change the conclusion.</span></label>
 <div id="scores" hidden><h2>4. Compare interval performance</h2><p id="score-context"></p><p>Containment is the observed fraction inside the supplied bounds. Width and interval score use the declared value unit; lower score is better on this accepted sample. Score adds a penalty for misses; high containment alone can reward unhelpfully wide bounds. These results do not establish calibration, independent training, future performance or statistical significance.</p><div id="metrics"></div><details class="panel"><summary>By entity and forecast horizon</summary><div id="groups"></div></details></div>
 <details class="panel"><summary>Inspect every original input row</summary><div id="input-rows"></div></details>

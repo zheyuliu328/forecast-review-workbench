@@ -9,6 +9,8 @@
   function update() {
     const loading = sources.some(s => s.loading);
     $("interval-fields").disabled = busy || loading;
+    $("interval-form").hidden = Boolean(result) || (busy && !$("sample").hidden);
+    $("edit-inputs").disabled = busy || loading;
     $("example-button").disabled = busy || loading;
     $("check-sample").disabled = busy || loading;
     $("add-candidate").disabled = busy || loading || sources.length >= 6;
@@ -56,7 +58,7 @@
     $("sample").hidden = false;
     $("sample-summary").replaceChildren(U.stat("Expected", result.expected, "Planned forecast keys"), U.stat("Eligible shared keys", result.common, "Same sample across all candidates"), U.stat("Excluded", result.excluded, "Retained below and in exports"));
     $("conflicts").replaceChildren(...result.contract_errors.map(x => U.el("p", {className: "notice notice-error"}, x)));
-    U.pagedTable($("exclusions"), result.evaluation_rows.filter(r => !r.included), [{key:"origin",label:"Origin"},{key:"target",label:"Target"},{key:"entity",label:"Entity"},{key:"states",label:"Source status"}]);
+    U.pagedTable($("exclusions"), result.evaluation_rows, [{key:"included",label:"Eligible"},{key:"origin",label:"Origin"},{key:"target",label:"Target"},{key:"entity",label:"Entity"},{key:"states",label:"Source status"}]);
     U.pagedTable($("input-rows"), result.input_rows, [{key:"source",label:"Source"},{key:"row",label:"Original row"},{key:"status",label:"Status"},{key:"reason",label:"Reason"},{key:"raw",label:"Original cells"}]);
     $("scores").hidden = !result.comparison_ready;
     $("accept-common").checked = result.accepted_common_sample;
@@ -73,6 +75,7 @@
     catch(e) {if (revision === current) {$("sample").hidden = true; $("accept-common").checked = false; U.message(e.message, true);}}
     finally {busy = false; update();}
   }
+  $("edit-inputs").addEventListener("click", invalidate);
   $("interval-form").addEventListener("submit", e => {e.preventDefault(); run(false);});
   $("accept-common").addEventListener("change", e => run(e.target.checked));
   ["expected-keys", "title"].forEach(id => $(id).addEventListener("input", invalidate));
