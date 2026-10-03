@@ -86,6 +86,24 @@ Open `replayed-review/report.html` and inspect `replay-verification.json`. Exit 
 
 The verification records both archived and installed code hashes. Archived browser build metadata is preserved as provenance; the new run explicitly records its native Python environment. Unknown extra artifacts are reported as differences. This uses the installed engine, so reproduction is not independent numerical validation, source authentication, or evidence of leakage-free training. An unaccepted or conflicting report can reproduce exactly while still having no valid comparison. Legacy bundles without an explicit schema version, training/reconciliation bundles and event-probability bundles are not supported by this command.
 
+## Review supplied prediction intervals (installed tool)
+
+The installed tool can compare already-generated central prediction intervals. It does not train, calibrate or construct intervals. This workflow is not yet available on the public website.
+
+```sh
+python -m forecast_review_workbench.intervals examples/interval-review/request.json --output interval-review
+```
+
+The original invented example has three candidates at nominal 80% coverage. A and B both contain all four outcomes, but average widths are 1 and 20; their mean interval scores are 1 and 20. C is narrower (0.5) but misses three outcomes and scores 4.25. A tiny sample with 100% containment does not prove good calibration. Inspect coverage, width and missed-outcome penalties together.
+
+Supply one actual CSV/XLSX and one to five interval files. The JSON maps actual target/entity/value and candidate origin/target/entity/lower/upper columns; only entity may be null for an unnamed single series. Every source declares target, unit and transformation; each candidate additionally declares the same `nominal_coverage` decimal string, such as `"0.8"`. Explicit ISO-date origin/target/entity keys define the expected scope independently of surviving rows. Targets must follow origins; horizons are calendar days. Excel sheet and header-row selection follow the existing file reader.
+
+Inspect a run with `accept_common_sample: false` first, then explicitly set it to true after reviewing exclusions. All candidates use exactly the same valid keys. Invalid, missing, duplicate and out-of-scope observations remain visible; reversed bounds are never swapped. A duplicated actual excludes every forecast origin referencing that outcome. Contract conflicts block scoring. Zero-width intervals are allowed and still penalized when they miss.
+
+Open `report.html` offline. `evaluation-rows.csv` contains bounds and per-key scores; `input-rows.csv` and `results.json` retain diagnostics. The bundle includes original file bytes in `request.json`: keep it as carefully as the source files. Nothing is uploaded. Rerun that frozen request into a new directory to reproduce the review. `manifest.json` records artifact and calculation-source hashes. The point-forecast ZIP replay command is a separate workflow and does not handle these interval bundles.
+
+The interval score is width plus `2 / (1 - nominal_coverage)` times the distance outside the interval. Endpoints count as contained. Width and score use the target unit; containment is a ratio. The tool reports pooled and entity-by-day-horizon results from the global common sample, with no significance test, automatic winner or independent-observation assumption. Calculations preserve decimal inputs internally before rounding final metrics to 40 significant digits.
+
 ## Train candidates and review the holdout
 
 Select **Training experiments**. Choose a CSV or an Excel sheet/header, map a monthly date and target, and declare one to five raw features with their lags and release delays. Set the development end, forecast horizon and forward validation windows. Prepare development results before explicitly revealing the holdout.

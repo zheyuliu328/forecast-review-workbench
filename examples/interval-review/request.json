@@ -1,0 +1,113 @@
+{
+  "task": "interval_review",
+  "schema_version": 1,
+  "title": "Equal containment can hide very wide intervals",
+  "contract": {
+    "target": "Invented net cash flow",
+    "unit": "USD",
+    "transformation": "none",
+    "nominal_coverage": "0.8"
+  },
+  "expected_keys": [
+    {
+      "origin": "2024-01-01",
+      "target": "2024-01-02",
+      "entity": ""
+    },
+    {
+      "origin": "2024-01-01",
+      "target": "2024-01-03",
+      "entity": ""
+    },
+    {
+      "origin": "2024-01-01",
+      "target": "2024-01-04",
+      "entity": ""
+    },
+    {
+      "origin": "2024-01-01",
+      "target": "2024-01-05",
+      "entity": ""
+    }
+  ],
+  "accept_common_sample": true,
+  "actual": {
+    "id": "actual",
+    "contract": {
+      "target": "Invented net cash flow",
+      "unit": "USD",
+      "transformation": "none"
+    },
+    "source_note": "Original invented observations; no financial records.",
+    "mapping": {
+      "target": "Target",
+      "entity": null,
+      "actual": "Actual"
+    },
+    "file": {
+      "path": "actual.csv"
+    }
+  },
+  "candidates": [
+    {
+      "id": "A",
+      "file": {
+        "path": "A.csv"
+      },
+      "contract": {
+        "target": "Invented net cash flow",
+        "unit": "USD",
+        "transformation": "none",
+        "nominal_coverage": "0.8"
+      },
+      "source_note": "Original invented bounds; not fitted forecasts.",
+      "mapping": {
+        "origin": "Origin",
+        "target": "Target",
+        "entity": null,
+        "lower": "Lower",
+        "upper": "Upper"
+      }
+    },
+    {
+      "id": "B",
+      "file": {
+        "path": "B.csv"
+      },
+      "contract": {
+        "target": "Invented net cash flow",
+        "unit": "USD",
+        "transformation": "none",
+        "nominal_coverage": "0.8"
+      },
+      "source_note": "Original invented bounds; not fitted forecasts.",
+      "mapping": {
+        "origin": "Origin",
+        "target": "Target",
+        "entity": null,
+        "lower": "Lower",
+        "upper": "Upper"
+      }
+    },
+    {
+      "id": "C",
+      "file": {
+        "path": "C.csv"
+      },
+      "contract": {
+        "target": "Invented net cash flow",
+        "unit": "USD",
+        "transformation": "none",
+        "nominal_coverage": "0.8"
+      },
+      "source_note": "Original invented bounds; not fitted forecasts.",
+      "mapping": {
+        "origin": "Origin",
+        "target": "Target",
+        "entity": null,
+        "lower": "Lower",
+        "upper": "Upper"
+      }
+    }
+  ]
+}
