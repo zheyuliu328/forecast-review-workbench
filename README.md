@@ -60,6 +60,32 @@ The optional **Try an example** uses newly invented files with 12 expected month
 
 The tool does not depend on this fixture: the same file pickers and mappings accept external CSV/XLSX. [Example files](examples) can also be selected manually.
 
+## Replay a received report from original files
+
+The installed Python tool can now replay a downloaded forecast-review ZIP (schema 1 or 2), including browser exports. This is a local command, not a new website control. Obtain the original CSV/XLSX files separately; the ZIP does not embed them. Keep its `config.json` source IDs, and create a `sources.json` beside your files:
+
+```json
+{
+  "schema_version": 1,
+  "sources": {
+    "actual": {"path": "actual.csv"},
+    "model-a": {"path": "candidate-a.csv"},
+    "model-b": {"path": "candidate-b.csv"},
+    "baseline": {"path": "baseline.csv"}
+  }
+}
+```
+
+Use exactly the IDs present in that report. Paths are relative to `sources.json`; filenames may change because identification uses source IDs and original byte hashes. Sheet, header, mappings, scope, contracts and common-sample acceptance are restored from the report, without accepting any new sample.
+
+```sh
+python -m forecast_review_workbench.replay received-report.zip --sources sources.json --output replayed-review
+```
+
+Open `replayed-review/report.html` and inspect `replay-verification.json`. Exit 0 means the supplied original bytes reproduced all calculation/report artifacts; exit 1 preserves a recomputed report and lists differences; exit 2 means input/integrity validation failed. Existing output directories are refused. The original ZIP and files are read-only. Each source is limited to 10 MiB, combined sources to 40 MiB, and the ZIP to 50 MiB compressed/expanded and 100 members; no archive entries are extracted.
+
+The verification records both archived and installed code hashes. Archived browser build metadata is preserved as provenance; the new run explicitly records its native Python environment. Unknown extra artifacts are reported as differences. This uses the installed engine, so reproduction is not independent numerical validation, source authentication, or evidence of leakage-free training. An unaccepted or conflicting report can reproduce exactly while still having no valid comparison. Legacy bundles without an explicit schema version, training/reconciliation bundles and event-probability bundles are not supported by this command.
+
 ## Train candidates and review the holdout
 
 Select **Training experiments**. Choose a CSV or an Excel sheet/header, map a monthly date and target, and declare one to five raw features with their lags and release delays. Set the development end, forecast horizon and forward validation windows. Prepare development results before explicitly revealing the holdout.
