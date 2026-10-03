@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="__CSRF_TOKEN__"><meta name="color-scheme" content="light">
+<title>Event probabilities · Forecast Review</title>
+<link rel="stylesheet" href="/static/styles.css"><link rel="stylesheet" href="/static/extensions.css">
+<script src="/static/extension-common.js" defer></script><script src="/static/probabilities.js" defer></script>
+</head><body><a class="skip-link" href="#main">Skip to workspace</a>
+<header class="app-header"><a class="brand" href="/">Forecast Review</a><div class="header-actions"><span class="local-badge">Local processing</span><button id="example-button" type="button" class="button">Try an example</button></div></header>
+<nav class="workbench-nav review-primary-nav" aria-label="Task navigation"><a href="/">Compare existing forecasts</a><a href="/probabilities" aria-current="page">Review event probabilities</a></nav>
+<main id="main">
+<section class="intro"><h1>Review fixed event probabilities</h1><p class="lead">Compare fixed event probabilities using only labels known by your evaluation cutoff. Keep pending outcomes visible and accept the same observations for every source.</p><p>CSV and Excel · Files stay local · No model fitting</p></section>
+<div id="notice" class="notice hidden" role="status"></div><div id="error" class="notice notice-error hidden" role="alert"></div>
+<form id="probability-form" novalidate><fieldset id="probability-fields" class="extension-form-lock">
+<h2>1. Select labels and probability files</h2><p>Use calendar dates (YYYY-MM-DD). Labels need an origin, binary outcome and availability date. Probability files need origin and a probability between 0 and 1, not a percentage. Same-day availability is unsupported.</p>
+<div id="sources"></div><button id="add-candidate" class="button" type="button">Add a probability file</button>
+<button id="add-baseline" class="button" type="button">Add optional baseline</button><section class="panel"><h2>2. Define the event and cutoff</h2><label class="field">Event definition<textarea id="event-definition" rows="3" maxlength="2000" placeholder="Positive class, observation window and exact label rule"></textarea></label><label class="field">Evaluation cutoff<input id="evaluation-as-of" type="date"></label>
+<button id="copy-contract" class="button" type="button">Apply these definitions to all files</button><p>Use this only after checking every file. Each source declaration remains editable above.</p>
+<label class="field">Expected origin schedule<textarea id="expected-keys" rows="6" spellcheck="false" placeholder="2025-01-01&#10;2025-01-02&#10;2025-01-03"></textarea><small>Paste origin date and optional exact entity ID as tab-separated columns, no header, up to 5,000 lines. Use your full planned schedule, including origins missing from every file.</small></label>
+
+<button id="check-sample" class="button button-primary" type="submit">Check files and common sample</button></section>
+</fieldset></form>
+<section id="sample" hidden><button id="edit-inputs" class="button" type="button">Edit inputs</button><h2>3. Confirm the shared sample</h2><div id="sample-summary" class="extension-summary"></div><div id="conflicts" role="status"></div><h3>Planned keys and exclusions</h3><div id="exclusions"></div>
+<label class="check-label"><input type="checkbox" id="accept-common"><span>I accept the eligible shared origin keys shown above for this comparison. Exclusions may change the conclusion.</span></label>
+<div id="scores" hidden><h2>4. Compare probability scores</h2><p id="score-context"></p><p>Lower Brier and log loss are better on the accepted sample. A probability of zero for an event that happens gives infinite log loss; it is not a missing result and is never clipped or removed. Changing the cutoff may change the sample, so score changes alone do not show a model change. No fitting, calibration or threshold selection is performed.</p><div id="metrics"></div></div>
+<details class="panel"><summary>Inspect every original input row</summary><div id="input-rows"></div></details>
+<p>The report includes all mapped input rows, excluded keys, source definitions, methods and limitations. The replay request contains the selected source files; review it before sharing.</p>
+<button id="export" type="button" class="button button-primary" disabled>Download report and replay inputs</button>
+</section><footer class="app-footer"><span>Forecast Review</span><span>Fixed probabilities · Declared label availability</span></footer>
+</main></body></html>

@@ -191,3 +191,7 @@ The native review and offline report now split the accepted common sample by ent
 ### Native event-probability review
 
 Review fixed binary-event probabilities with explicit expected keys, label-availability dates and an evaluation cutoff. Brier/log loss use one accepted common sample, preserve pending and invalid rows, and report impossible probability endpoints without clipping. See [the original example and input contract](docs/EVENT_PROBABILITY_REVIEW.md). This optional task is not yet exposed in the public browser.
+
+## Review probabilities with a label-availability cutoff
+
+The event-probability workflow reviews already-generated probabilities against labels known by a declared date. It keeps pending labels visible, requires the same accepted sample across candidates and the optional baseline, and reports Brier plus explicit infinite log loss for impossible assigned events. No fitting or threshold selection. See [the task and original counterexample](docs/EVENT_PROBABILITY_REVIEW.md) and the publication receipt for deployment status.

@@ -14,6 +14,9 @@ from forecast_review_workbench.experiments import (
 )
 from forecast_review_workbench.exporter import build_bundle, bundle_zip
 from forecast_review_workbench.intervals import review_intervals
+from forecast_review_workbench.probabilities import review_probabilities
+from forecast_review_workbench.probability_exports import build_probability_bundle
+from forecast_review_workbench.example import probability_example
 from forecast_review_workbench.interval_exports import build_interval_bundle
 from forecast_review_workbench.reconciliation import reconcile, reconciliation_example
 from forecast_review_workbench.tableio import inspect_table
@@ -36,7 +39,11 @@ def _payload(raw):
 
 def dispatch(action, raw):
     payload = _payload(raw)
-    if action == "/api/intervals/example":
+    if action == "/api/probabilities/example":
+        result = probability_example()
+    elif action == "/api/probabilities/review":
+        result = review_probabilities(payload)
+    elif action == "/api/intervals/example":
         result = interval_example()
     elif action == "/api/intervals/review":
         result = review_intervals(payload)
@@ -79,7 +86,9 @@ def dispatch(action, raw):
 
 def download(action, raw):
     payload = _payload(raw)
-    if action == "/api/intervals/export":
+    if action == "/api/probabilities/export":
+        files, _ = build_probability_bundle(payload.get("request"), payload.get("fingerprint"))
+    elif action == "/api/intervals/export":
         files, _ = build_interval_bundle(payload.get("request"), payload.get("fingerprint"))
     elif action == "/api/export":
         files, _ = build_bundle(payload.get("request"), payload.get("fingerprint"), payload.get("notes", []))

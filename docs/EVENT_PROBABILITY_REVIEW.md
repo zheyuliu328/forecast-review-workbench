@@ -1,6 +1,6 @@
 # Frozen binary-event probability review
 
-This optional native task reviews caller-supplied probabilities for one explicitly declared binary event. It does not fit a model, choose a classification threshold or force an observation-based event into a calendar forecast horizon. The existing numeric-forecast schemas and browser workflow are unchanged. There is no public browser entry for this task yet.
+This optional native task reviews caller-supplied probabilities for one explicitly declared binary event. It does not fit a model, choose a classification threshold or force an observation-based event into a calendar forecast horizon. The existing numeric-forecast schemas and browser workflow are unchanged. A browser workflow now reuses this engine; publication status is recorded separately in publication.json.
 
 ## Complete an original task
 
@@ -35,3 +35,11 @@ All duplicate key occurrences are excluded. Missing, invalid, pending, not-yet-i
 ## Interpretation limits
 
 Expected keys must come from a declared universe; using surviving prediction keys cannot reveal dates absent from every source. Origin and availability dates are declarations, not proof of when forecasts were created or of historical market-data authenticity. Event descriptions must identify the positive class, observation window and label rule consistently; this tool does not certify label construction. Overlapping events are not independent trials. This is a descriptive software review, not a significance test, trading strategy, model approval or external user study.
+
+## Browser workflow
+
+Select labels and candidate CSV/XLSX files; optionally add baseline probabilities. Map origin, entity and values, with an additional label availability date. Declare the positive event, its window and label rule consistently across sources. Supply a planned origin/entity schedule and evaluation cutoff, inspect every key, then explicitly accept the shared sample. Editing files, mapping, definition or cutoff clears prior acceptance and scores.
+
+The example begins at January3 with two common keys and candidate Brier0.0625. Move cutoff to January4, inspect and accept the new sample: all three keys enter, candidate Brier is0.375 and log loss is Infinite because one realised event was assigned zero probability. This is a changed sample, not proof of a changed model.
+
+Download the report bundle with request.json, results.json, readable HTML, input/evaluation CSVs and an artifact/source hash manifest. The request embeds the selected file bytes; inspect it before sharing. The existing native CLI can recompute request.json into its normal three files. It does not reconstruct the entire browser ZIP or prove source authenticity.

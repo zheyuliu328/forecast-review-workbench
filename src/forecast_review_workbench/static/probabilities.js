@@ -1,0 +1,42 @@
+"use strict";
+(function () {
+  const U=window.WorkbenchUI,$=id=>document.getElementById(id);
+  let sources=[],cards=[],revision=0,busy=false,result=null,request=null,nextId=1;
+  function fresh(id,name,role){return Object.assign(U.source(id,name),{role,event_definition:$("event-definition").value,source_note:""});}
+  function invalidate(){revision++;result=null;request=null;$("accept-common").checked=false;$("sample").hidden=true;U.clearMessages();update();}
+  function update(){const loading=sources.some(s=>s.loading);$("probability-fields").disabled=busy||loading;$("probability-form").hidden=Boolean(result)||(busy&&!$("sample").hidden);for(const id of ["edit-inputs","example-button","check-sample"])$(id).disabled=busy||loading;$("add-candidate").disabled=busy||loading||sources.filter(s=>s.role==="candidate").length>=5;$("add-baseline").disabled=busy||loading||sources.some(s=>s.role==="baseline");$("accept-common").disabled=busy||loading||!result||!result.common||result.contract_errors.length>0;$("export").disabled=busy||loading||!result||!result.comparison_ready;}
+  function mappingKeys(s){return s.role==="labels"?["origin","label","available","entity"]:["origin","probability","entity"];}
+  function mount(){
+    $("sources").replaceChildren();cards=[];
+    sources.forEach(item=>{
+      const host=U.el("div",{className:"panel"});$("sources").append(host);
+      cards.push(U.fileCard(host,item,{changed:invalidate,updated:update,
+        inspected:s=>{const patterns={origin:/^(origin|forecast[_ ]?origin|cutoff)$/i,entity:/^(entity|series|entity[_ ]?id)$/i,label:/^(label|outcome|event)$/i,available:/^(available|available[_ ]?date|label[_ ]?available)$/i,probability:/^(probability|prob|p)$/i};Object.entries(patterns).forEach(([k,re])=>{if(!s.headers.includes(s.mapping[k]))s.mapping[k]=s.headers.find(h=>re.test(h))||null;});},
+        mapping:(s,disabled)=>U.el("div",{className:"form-grid"},mappingKeys(s).map(key=>U.field(key==="entity"?"Entity (optional)":key==="available"?"Label available date":key[0].toUpperCase()+key.slice(1),U.select(U.columns(s,key==="entity"?"Single series":"Select a column"),s.mapping[key],e=>{s.mapping[key]=e.target.value||null;invalidate();},{id:s.id+"-"+key,disabled}))))
+      }));
+      const details=U.el("details",{className:"panel",open:true},[U.el("summary",{},item.name+" definition"),U.field("Source event definition",U.el("textarea",{id:item.id+"-event",value:item.event_definition,rows:2,oninput:e=>{item.event_definition=e.target.value;invalidate();}})),U.field("Source note (required)",U.el("input",{id:item.id+"-note",value:item.source_note,oninput:e=>{item.source_note=e.target.value;invalidate();}}))]);
+      if(item.role!=="labels")details.append(U.button("Remove "+item.name,()=>{item.epoch++;sources=sources.filter(s=>s!==item);invalidate();mount();},{disabled:item.role==="candidate"&&sources.filter(s=>s.role==="candidate").length<=1}));
+      $("sources").append(details);
+    });update();
+  }
+  function buildRequest(accepted){
+    const rows=$("expected-keys").value.split(/\r?\n/).filter(line=>line!=="");if(!rows.length||rows.length>5000)throw Error("Expected schedule: supply 1 to 5,000 origin rows.");
+    const expected=rows.map((line,i)=>{const parts=line.split("\t");if(parts.length>2)throw Error("Expected schedule line "+(i+1)+": use origin and optional entity, separated by a tab.");return {origin:parts[0],entity:parts[1]||""};});
+    const payloads=sources.map(s=>{U.requireSource(s);if(!s.source_note.trim())throw Error(s.name+": describe the source of these values.");const mapping=Object.fromEntries(mappingKeys(s).map(k=>{if(k!=="entity"&&!s.mapping[k])throw Error(s.name+": select the "+k+" column.");return [k,s.mapping[k]||null];}));return {id:s.id,file:s.file,sheet:s.sheet,header_row:s.header_row,mapping,event_definition:s.event_definition,source_note:s.source_note};});
+    const req={task:"binary_event_review",schema_version:1,event_definition:$("event-definition").value,evaluation_as_of:$("evaluation-as-of").value,expected_keys:expected,labels:payloads[sources.findIndex(s=>s.role==="labels")],candidates:payloads.filter((s,i)=>sources[i].role==="candidate"),accept_common_sample:accepted};const baseline=sources.findIndex(s=>s.role==="baseline");if(baseline>=0)req.baseline=payloads[baseline];return req;
+  }
+  function render(){
+    $("sample").hidden=false;$("sample-summary").replaceChildren(U.stat("Expected",result.expected,"Planned origin keys"),U.stat("Eligible shared keys",result.common,"Available labels and every probability source"),U.stat("Excluded",result.excluded,"Pending, missing or invalid records remain below"));$("conflicts").replaceChildren(...result.contract_errors.map(x=>U.el("p",{className:"notice notice-error"},x)));
+    U.pagedTable($("exclusions"),result.evaluation_rows,[{key:"included",label:"Eligible"},{key:"origin",label:"Origin"},{key:"entity",label:"Entity"},{key:"states",label:"Source status"}]);U.pagedTable($("input-rows"),result.input_rows,[{key:"source",label:"Source"},{key:"row",label:"Original row"},{key:"status",label:"Status"},{key:"reason",label:"Reason"},{key:"raw",label:"Original cells"}]);
+    $("scores").hidden=!result.comparison_ready;$("accept-common").checked=result.accepted_common_sample;$("score-context").textContent="Cutoff: "+result.evaluation_as_of+". Event: "+result.event_definition;
+    $("metrics").replaceChildren(U.table(["Source","Role","Common n","Brier","Log loss (nats)","Impossible events"],Object.entries(result.metrics).map(([id,m])=>U.el("tr",{},[U.cell(id),U.cell(result.sources.find(s=>s.id===id).role),U.cell(m?m.n:"Not scored"),U.cell(m?m.brier:"Not scored"),U.cell(m?(m.log_loss_status==="infinite"?"Infinite":m.log_loss):"Not scored"),U.cell(m?m.impossible_events:"Not scored")]))));
+  }
+  async function run(accepted){if(busy)return;U.clearMessages();result=null;request=null;if(!accepted)$("sample").hidden=true;$("scores").hidden=true;const current=revision;busy=true;update();try{const req=buildRequest(accepted),res=await U.api("/api/probabilities/review",req);if(revision!==current)return;request=req;result=res;render();}catch(e){if(revision===current){$("sample").hidden=true;$("accept-common").checked=false;U.message(e.message,true);}}finally{busy=false;update();}}
+  $("edit-inputs").onclick=invalidate;$("probability-form").onsubmit=e=>{e.preventDefault();run(false);};$("accept-common").onchange=e=>run(e.target.checked);
+  for(const id of ["expected-keys","event-definition","evaluation-as-of"])$(id).addEventListener("input",invalidate);
+  $("copy-contract").onclick=()=>{sources.forEach(s=>s.event_definition=$("event-definition").value);invalidate();mount();};
+  $("add-candidate").onclick=()=>{const id="candidate-"+nextId++;sources.push(fresh(id,id,"candidate"));invalidate();mount();};$("add-baseline").onclick=()=>{sources.push(fresh("baseline","Baseline probabilities","baseline"));invalidate();mount();};
+  $("example-button").onclick=async()=>{invalidate();busy=true;update();const current=revision;try{const req=await U.api("/api/probabilities/example");if(revision!==current)return;sources.forEach(s=>s.epoch++);$("event-definition").value=req.event_definition;$("evaluation-as-of").value=req.evaluation_as_of;sources=[req.labels,...req.candidates,...(req.baseline?[req.baseline]:[])].map((entry,i)=>Object.assign(U.restoreSource(entry.id,i===0?"Event labels":entry.id===req.baseline?.id?"Baseline probabilities":"Candidate "+entry.id,entry),{role:i===0?"labels":entry.id===req.baseline?.id?"baseline":"candidate",event_definition:entry.event_definition,source_note:entry.source_note}));$("expected-keys").value=req.expected_keys.map(k=>[k.origin,k.entity].join("\t")).join("\n");mount();for(const card of cards)await card.inspect(true);U.message("Invented example loaded. At January 3, one label is still pending. Move cutoff to January 4 to include a zero-probability event that occurred. Different samples do not isolate model deterioration.");}catch(e){U.message(e.message,true);}finally{busy=false;update();}};
+  $("export").onclick=async()=>{if(!result||!result.comparison_ready||busy)return;const current=revision;busy=true;update();try{await U.download("/api/probabilities/export",{request,fingerprint:result.fingerprint},"event-probability-review",()=>revision===current&&Boolean(result));}catch(e){U.message(e.message,true);}finally{busy=false;update();}};
+  sources=[fresh("labels","Event labels","labels"),fresh("a","Candidate A","candidate")];mount();
+})();

@@ -20,6 +20,7 @@ STATIC = [
     "experiments.js",
     "reconcile.js",
     "intervals.js",
+    "probabilities.js",
     "styles.css",
     "extensions.css",
 ]
@@ -27,6 +28,7 @@ PAGES = {
     "index.html": "index.html",
     "experiments/index.html": "experiments.html",
     "reconcile/index.html": "reconcile.html",
+    "probabilities/index.html": "probabilities.html",
     "intervals/index.html": "intervals.html",
 }
 PACKAGE_FILES = [
@@ -35,6 +37,7 @@ PACKAGE_FILES = [
     "intervals.py",
     "interval_exports.py",
     "probabilities.py",
+    "probability_exports.py",
     "example.py",
     "experiments.py",
     "exporter.py",
@@ -97,7 +100,7 @@ def build():
     for path in OUTPUT.rglob("*"):
         if path.is_symlink() or (path.is_file() and str(path.relative_to(OUTPUT)) not in allowed):
             raise ValueError(f"Unexpected output; refusing to package: {path}")
-    for name in ("static", "runtime", "experiments", "reconcile", "intervals"):
+    for name in ("static", "runtime", "experiments", "reconcile", "intervals", "probabilities"):
         (OUTPUT / name).mkdir(parents=True, exist_ok=True)
     for name in STATIC:
         shutil.copyfile(PACKAGE / "static" / name, OUTPUT / "static" / name)

@@ -209,3 +209,47 @@ def interval_example():
         },
         "candidates": candidates,
     }
+
+
+def probability_example():
+    """Original labels becoming available over time, including an impossible prediction."""
+    event = "Invented event: count exceeds a fixed threshold within two observation steps."
+    origins = ["2025-01-01", "2025-01-02", "2025-01-03"]
+
+    def source(sid, fields, rows, mapping):
+        return {
+            "id": sid,
+            "file": _file(sid + ".csv", fields, rows),
+            "mapping": mapping,
+            "event_definition": event,
+            "source_note": "Original invented test; no model fit.",
+        }
+
+    return {
+        "task": "binary_event_review",
+        "schema_version": 1,
+        "event_definition": event,
+        "evaluation_as_of": "2025-01-03",
+        "expected_keys": [{"origin": origin, "entity": ""} for origin in origins],
+        "accept_common_sample": False,
+        "labels": source(
+            "labels",
+            ["Origin", "Label", "Available"],
+            zip(origins, [0, 1, 1], ["2025-01-02", "2025-01-03", "2025-01-04"]),
+            {"origin": "Origin", "entity": None, "label": "Label", "available": "Available"},
+        ),
+        "candidates": [
+            source(
+                "a",
+                ["Origin", "Probability"],
+                zip(origins, ["0.25", "0.75", "0"]),
+                {"origin": "Origin", "entity": None, "probability": "Probability"},
+            )
+        ],
+        "baseline": source(
+            "baseline",
+            ["Origin", "Probability"],
+            zip(origins, ["0.5"] * 3),
+            {"origin": "Origin", "entity": None, "probability": "Probability"},
+        ),
+    }
