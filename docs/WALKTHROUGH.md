@@ -45,3 +45,21 @@ A target month can have several forecasts issued at different origins. Comparing
 The invented two-horizon example has four forecast keys but only three actual target periods. A has smaller MAE one period ahead; B has smaller MAE two periods ahead. The report leads with separate horizons, and the chart displays one horizon and entity at a time. Aggregates weight forecast keys equally and do not imply independent errors.
 
 Owner explanation remains pending: explain why March can appear twice in predictions but once in actuals; why origin labels cannot prove absence of leakage; and why the aggregate winner need not win at every horizon. Do not claim these points are personally mastered until the owner can answer them.
+
+## Explain supplied intervals: coverage alone can reward useless width
+
+Open the published interval workflow and load its invented example. All candidates declare central 80% intervals over four shared keys. Inspect the planned keys before accepting them. A and B both contain every outcome, but A has mean width and interval score 1, while B has width and score 20. C has width 0.5, misses three outcomes and has score 4.25. Coverage alone hides B's lack of precision; width alone hides C's misses.
+
+For nominal coverage 0.8, the interval score is width plus ten times the distance of an outcome outside its bounds. Endpoints count as contained. Width and score are in the target unit; coverage is a ratio. Four outcomes cannot establish calibration, and repeated origins or overlapping horizons are not independent evidence. The tool reviews supplied intervals; it does not estimate or calibrate them.
+
+Download the bundle and use evaluation-rows.csv to recompute the average score. Explain why reversed bounds exclude a key for every candidate rather than being automatically swapped. Explain why a smaller score on the accepted sample does not establish future superiority. These explanations remain an owner-assessment task, not a recorded pass.
+
+## Explain event probabilities: an unavailable label is not a correct forecast
+
+The browser implementation is available locally at /probabilities; its public deployment is pending. Check publication.json before describing it as live. The installed commands and invented inputs are documented in EVENT_PROBABILITY_REVIEW.md.
+
+With cutoff January 3, two of three planned labels are observable. A's probabilities 0.25 and 0.75 against outcomes 0 and 1 give Brier score 0.0625 and log loss ln(4/3); the constant 0.5 baseline gives 0.25 and ln(2). The remaining label is pending, not an error-free prediction.
+
+Change the cutoff to January 4 and explicitly accept the new sample. The third realised outcome is 1 but A assigned probability 0. Brier becomes 0.375; log loss is infinite, with one impossible event. The implementation does not clip the probability or remove that observation. JSON represents this with a null numeric value plus an explicit infinite status, rather than silently treating it as missing. The sample changed; this comparison does not isolate a change in model quality.
+
+Use the frozen request in the downloaded bundle to recompute results with the native probability command. This reproduces calculation results, not every file of the browser ZIP. The request includes original file bytes and should be handled like those files. Explain why declared availability dates cannot prove historical issuance and why a missing baseline row removes that key from every candidate's comparison. Owner explanation remains pending.
