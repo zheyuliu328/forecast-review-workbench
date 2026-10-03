@@ -24,3 +24,8 @@
 .first-use-intro h1{font-size:26px;font-weight:650;letter-spacing:0}
 .source-head{background:#fafbfc}
 @media(max-width:760px){.task-picker{gap:14px}.task-picker a{padding:12px 0}.first-use-intro h1{font-size:23px}.input-progress{padding:8px 0}}
+
+/* Keep exact score values on one line; the existing table wrapper scrolls locally. */
+.probability-metrics table{table-layout:auto;min-width:100%;width:max-content}
+.probability-metrics th,.probability-metrics td{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.probability-metrics td:nth-child(n+3){font-variant-numeric:tabular-nums}

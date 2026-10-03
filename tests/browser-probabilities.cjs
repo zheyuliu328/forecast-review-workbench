@@ -36,7 +36,12 @@ with zipfile.ZipFile(sys.argv[1]) as z:
     await page.locator("#edit-inputs").click();await page.locator("#baseline-event").fill("Different event");await page.locator("#check-sample").click();await ready();assert(await page.locator("#accept-common").isDisabled());assert.match(await page.locator("#conflicts").innerText(),/differs/);
     await page.locator("#edit-inputs").click();await page.locator("#copy-contract").click();
     const missing=path.join(output,"missing-baseline.csv");fs.writeFileSync(missing,"Origin,Probability\n2025-01-01,0.5\n2025-01-02,0.5\n");await page.locator("#baseline-file").setInputFiles(missing);await ready();await accept();assert.equal(await page.locator("#metrics tbody tr").first().locator("td").nth(2).innerText(),"2");
-    await page.screenshot({path:path.join(output,"desktop.png"),fullPage:true});await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await page.screenshot({path:path.join(output,"narrow.png"),fullPage:true});
+    await page.screenshot({path:path.join(output,"desktop.png"),fullPage:true});await page.setViewportSize({width:390,height:844});assert(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));assert(await page.locator("#metrics td").evaluateAll(cells=>cells.every(cell=>{
+      const range=document.createRange();range.selectNodeContents(cell);
+      const lines=new Set([...range.getClientRects()].map(r=>Math.round(r.top)));
+      return lines.size<=1;
+    })),"Probability cells must not split across lines on narrow screens");
+    await page.screenshot({path:path.join(output,"narrow.png"),fullPage:true});
     // Fresh own files, blank pending label and Excel non-first sheet/header3.
     await page.reload();const labels=path.join(output,"own-labels.csv"), probs=path.join(output,"own.xlsx");fs.writeFileSync(labels,"Origin,Label,Available\n2025-01-01,0,2025-01-02\n2025-01-02,1,2025-01-03\n2025-01-03,,2025-01-04\n");
     execFileSync(python,["-c","from openpyxl import Workbook;import sys;w=Workbook();w.active.title='Notes';w.active.append(['Invented task']);s=w.create_sheet('Probabilities');s.append(['Original invented probabilities']);s.append([]);s.append(['Origin','Probability']);s.append(['2025-01-01',.2]);s.append(['2025-01-02',.8]);s.append(['2025-01-03',0]);w.save(sys.argv[1])",probs]);
