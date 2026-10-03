@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="csrf-token" content="__CSRF_TOKEN__"><meta name="color-scheme" content="light">
+<title>Prediction intervals · Forecast Review</title>
+<link rel="stylesheet" href="/static/styles.css"><link rel="stylesheet" href="/static/extensions.css">
+<script src="/static/extension-common.js" defer></script><script src="/static/intervals.js" defer></script>
+</head><body><a class="skip-link" href="#main">Skip to workspace</a>
+<header class="app-header"><a class="brand" href="/">Forecast Review</a><div class="header-actions"><span class="local-badge">Local processing</span><button id="example-button" type="button" class="button">Try an example</button></div></header>
+<nav class="workbench-nav review-primary-nav" aria-label="Task navigation"><a href="/">Compare existing forecasts</a><a href="/intervals" aria-current="page">Compare prediction intervals</a></nav>
+<main id="main">
+<section class="intro"><h1>Are the intervals useful, or just wide?</h1><p class="lead">Compare supplied lower and upper bounds on the same observations. Check containment, width and the penalty for missed observations together.</p><p>CSV and Excel · Files stay local · No model fitting</p></section>
+<div id="notice" class="notice hidden" role="status"></div><div id="error" class="notice notice-error hidden" role="alert"></div>
+<form id="interval-form" novalidate><fieldset id="interval-fields" class="extension-form-lock">
+<h2>1. Select actuals and interval files</h2><p>Use calendar dates (YYYY-MM-DD). Actuals need a target date and value. Each interval also needs its forecast origin, lower bound and upper bound.</p>
+<div id="sources"></div><button id="add-candidate" class="button" type="button">Add an interval file</button>
+<section class="panel"><h2>2. Define the comparison</h2><div id="common-contract" class="form-grid"></div>
+<button id="copy-contract" class="button" type="button">Apply these definitions to all files</button><p>Use this only after checking every file. Each source declaration remains editable above.</p>
+<label class="field">Expected forecast schedule<textarea id="expected-keys" rows="6" spellcheck="false" placeholder="2024-01-01&#9;2024-01-02&#10;2024-01-01&#9;2024-01-03"></textarea><small>Paste two or three tab-separated columns from a spreadsheet: origin date, target date, optional exact entity ID. One forecast per line, no header, up to 5,000 lines. Leave entity empty for a single series. Use your planned schedule, including forecasts missing from the files.</small></label>
+<label class="field">Report title<input id="title" value="Prediction interval review" maxlength="160"></label>
+<button id="check-sample" class="button button-primary" type="submit">Check files and common sample</button></section>
+</fieldset></form>
+<section id="sample" hidden><h2>3. Confirm the shared sample</h2><div id="sample-summary" class="extension-summary"></div><div id="conflicts" role="status"></div><div id="exclusions"></div>
+<label class="check-label"><input type="checkbox" id="accept-common"><span>I accept the eligible shared forecast keys shown above for this comparison. Exclusions may change the conclusion.</span></label>
+<div id="scores" hidden><h2>4. Compare interval performance</h2><p id="score-context"></p><p>Containment is the observed fraction inside the supplied bounds. Width and interval score use the declared value unit; lower score is better on this accepted sample. Score adds a penalty for misses; high containment alone can reward unhelpfully wide bounds. These results do not establish calibration, independent training, future performance or statistical significance.</p><div id="metrics"></div><details class="panel"><summary>By entity and forecast horizon</summary><div id="groups"></div></details></div>
+<details class="panel"><summary>Inspect every original input row</summary><div id="input-rows"></div></details>
+<p>The report includes all mapped input rows, excluded keys, source definitions, methods and limitations. The replay request contains the selected source files; review it before sharing.</p>
+<button id="export" type="button" class="button button-primary" disabled>Download report and replay inputs</button>
+</section><footer class="app-footer"><span>Forecast Review</span><span>Supplied central intervals · Explicit common sample</span></footer>
+</main></body></html>

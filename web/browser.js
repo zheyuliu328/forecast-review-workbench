@@ -2,8 +2,8 @@
 (() => {
   let worker = null, serial = 0;
   const pending = new Map();
-  const actions = new Set(["/api/group-example", "/api/origin-example", "/api/example", "/api/experiments/example", "/api/reconcile/example", "/api/inspect", "/api/review", "/api/experiments/prepare", "/api/experiments/reveal", "/api/experiments/transfer", "/api/reconcile"]);
-  const exports = new Set(["/api/export", "/api/experiments/export", "/api/reconcile/export"]);
+  const actions = new Set(["/api/intervals/example", "/api/intervals/review", "/api/group-example", "/api/origin-example", "/api/example", "/api/experiments/example", "/api/reconcile/example", "/api/inspect", "/api/review", "/api/experiments/prepare", "/api/experiments/reveal", "/api/experiments/transfer", "/api/reconcile"]);
+  const exports = new Set(["/api/intervals/export", "/api/export", "/api/experiments/export", "/api/reconcile/export"]);
   function notify(active, message = "") {
     const host = document.getElementById("runtime-status");
     if (host) { host.hidden = !active; host.querySelector("span").textContent = message; }

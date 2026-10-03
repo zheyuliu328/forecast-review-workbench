@@ -3,9 +3,9 @@
   "private": true,
   "version": "0.3.0",
   "scripts": {
-    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-extensions.cjs && node tests/browser-loaders.cjs",
+    "test:browser": "node tests/browser-smoke.cjs && node tests/browser-extensions.cjs && node tests/browser-loaders.cjs && node tests/browser-intervals.cjs --local",
     "build:web": "python3 scripts/build_web.py",
-    "test:web": "node tests/browser-web.cjs"
+    "test:web": "node tests/browser-web.cjs && node tests/browser-intervals.cjs"
   },
   "devDependencies": {
     "playwright": "1.62.1",

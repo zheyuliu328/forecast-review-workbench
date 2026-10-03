@@ -14,15 +14,27 @@ OUTPUT = ROOT / "out"
 PACKAGE = ROOT / "src/forecast_review_workbench"
 RUNTIME = ROOT / "node_modules/pyodide"
 PYODIDE_VERSION = "314.0.6"
-STATIC = ["app.js", "extension-common.js", "experiments.js", "reconcile.js", "styles.css", "extensions.css"]
+STATIC = [
+    "app.js",
+    "extension-common.js",
+    "experiments.js",
+    "reconcile.js",
+    "intervals.js",
+    "styles.css",
+    "extensions.css",
+]
 PAGES = {
     "index.html": "index.html",
     "experiments/index.html": "experiments.html",
     "reconcile/index.html": "reconcile.html",
+    "intervals/index.html": "intervals.html",
 }
 PACKAGE_FILES = [
     "__init__.py",
     "engine.py",
+    "intervals.py",
+    "interval_exports.py",
+    "probabilities.py",
     "example.py",
     "experiments.py",
     "exporter.py",
@@ -85,7 +97,7 @@ def build():
     for path in OUTPUT.rglob("*"):
         if path.is_symlink() or (path.is_file() and str(path.relative_to(OUTPUT)) not in allowed):
             raise ValueError(f"Unexpected output; refusing to package: {path}")
-    for name in ("static", "runtime", "experiments", "reconcile"):
+    for name in ("static", "runtime", "experiments", "reconcile", "intervals"):
         (OUTPUT / name).mkdir(parents=True, exist_ok=True)
     for name in STATIC:
         shutil.copyfile(PACKAGE / "static" / name, OUTPUT / "static" / name)
@@ -99,9 +111,9 @@ def build():
         html = html.replace("<head>", '<head><meta name="frw-runtime" content="browser">')
         html = html.replace(
             '<meta name="color-scheme" content="light">',
-            "<meta name=\"color-scheme\" content=\"light\">"
-            "<meta name=\"referrer\" content=\"no-referrer\">"
-            "<meta http-equiv=\"Content-Security-Policy\" content=\"default-src 'self'; "
+            '<meta name="color-scheme" content="light">'
+            '<meta name="referrer" content="no-referrer">'
+            '<meta http-equiv="Content-Security-Policy" content="default-src \'self\'; '
             "script-src 'self' 'wasm-unsafe-eval'; style-src 'self' 'unsafe-inline'; "
             "worker-src 'self'; connect-src 'self'; img-src 'self' data:; "
             "object-src 'none'; base-uri 'self'; form-action 'none'\">",

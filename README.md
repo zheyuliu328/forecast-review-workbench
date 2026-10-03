@@ -86,9 +86,11 @@ Open `replayed-review/report.html` and inspect `replay-verification.json`. Exit 
 
 The verification records both archived and installed code hashes. Archived browser build metadata is preserved as provenance; the new run explicitly records its native Python environment. Unknown extra artifacts are reported as differences. This uses the installed engine, so reproduction is not independent numerical validation, source authentication, or evidence of leakage-free training. An unaccepted or conflicting report can reproduce exactly while still having no valid comparison. Legacy bundles without an explicit schema version, training/reconciliation bundles and event-probability bundles are not supported by this command.
 
-## Review supplied prediction intervals (installed tool)
+## Review supplied prediction intervals
 
-The installed tool can compare already-generated central prediction intervals. It does not train, calibrate or construct intervals. This workflow is not yet available on the public website.
+The installed tool can compare already-generated central prediction intervals. It does not train, calibrate or construct intervals. The source checkout includes a `/intervals` browser workflow and the installed CLI below. The public deployment status is recorded separately in `docs/publication.json`; do not infer that the latest source is already deployed.
+
+In the browser, select actuals and interval CSV/XLSX files, confirm each source definition, and paste the planned origin/target/entity schedule from a spreadsheet (tab-separated, no header). Check excluded keys before explicitly accepting the common sample. Changing files, mappings, definitions or scope clears prior results and acceptance. Download the report with its frozen input request.
 
 ```sh
 python -m forecast_review_workbench.intervals examples/interval-review/request.json --output interval-review

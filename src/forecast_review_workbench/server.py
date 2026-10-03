@@ -15,9 +15,11 @@ from urllib.parse import urlsplit
 
 from . import __version__
 from .engine import review
-from .example import example_request, group_example_request, origin_example_request
+from .example import example_request, group_example_request, interval_example, origin_example_request
 from .experiments import experiment_example, experiment_result, reveal_experiment, transfer_experiment
 from .exporter import build_bundle, bundle_zip, write_bundle
+from .interval_exports import build_interval_bundle
+from .intervals import review_intervals
 from .reconciliation import reconcile, reconciliation_example
 from .tableio import inspect_table
 from .workflow_exports import build_experiment_bundle, build_reconciliation_bundle
@@ -33,10 +35,11 @@ ASSETS = {
 ASSETS.update(
     {
         "/experiments": ("experiments.html", "text/html; charset=utf-8"),
+        "/intervals": ("intervals.html", "text/html; charset=utf-8"),
         "/reconcile": ("reconcile.html", "text/html; charset=utf-8"),
         **{
             f"/{name}": (name, "text/javascript; charset=utf-8")
-            for name in ("experiments.js", "reconcile.js", "extension-common.js")
+            for name in ("experiments.js", "reconcile.js", "intervals.js", "extension-common.js")
         },
         "/extensions.css": ("extensions.css", "text/css; charset=utf-8"),
     }
@@ -138,6 +141,9 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
         if not self._local_request():
             return
         path = urlsplit(self.path).path
+        if path == "/api/intervals/example":
+            self._send(200, interval_example())
+            return
         if path == "/api/group-example":
             self._send(200, group_example_request())
             return
@@ -214,6 +220,16 @@ class WorkbenchHandler(BaseHTTPRequestHandler):
                 self._send(
                     200,
                     inspect_table(payload.get("file"), payload.get("sheet"), payload.get("header_row", 1)),
+                )
+            elif path == "/api/intervals/review":
+                self._send(200, review_intervals(payload))
+            elif path == "/api/intervals/export":
+                files, result = build_interval_bundle(payload.get("request"), payload.get("fingerprint"))
+                self._send(
+                    200,
+                    bundle_zip(files),
+                    "application/zip",
+                    download=f"interval-review-{result['fingerprint'][:12]}.zip",
                 )
             elif path == "/api/review":
                 self._send(200, review(payload))

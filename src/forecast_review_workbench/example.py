@@ -159,3 +159,53 @@ def group_example_request():
         "baseline": source("baseline", {"Large": 1100, "Small": 11}),
         "accept_common_sample": False,
     }
+
+
+def interval_example():
+    """Original wide/narrow/missed-bound counterexample, not fitted forecasts."""
+    contract = {
+        "target": "Invented net cash flow",
+        "unit": "USD",
+        "transformation": "none",
+        "nominal_coverage": "0.8",
+    }
+    targets = [f"2024-01-{i:02d}" for i in range(2, 6)]
+    candidates = []
+    for sid in ("A", "B", "C"):
+        rows = []
+        for i, target in enumerate(targets):
+            lo, hi = (i - 0.5, i + 0.5) if sid == "A" else (i - 10, i + 10)
+            if sid == "C":
+                lo, hi = max(0, i - 1), max(0, i - 1) + 0.5
+            rows.append(["2024-01-01", target, lo, hi])
+        candidates.append(
+            {
+                "id": sid,
+                "file": _file(sid + ".csv", ["Origin", "Target", "Lower", "Upper"], rows),
+                "mapping": {
+                    "origin": "Origin",
+                    "target": "Target",
+                    "entity": None,
+                    "lower": "Lower",
+                    "upper": "Upper",
+                },
+                "contract": dict(contract),
+                "source_note": "Original invented bounds; not fitted forecasts.",
+            }
+        )
+    return {
+        "task": "interval_review",
+        "schema_version": 1,
+        "title": "Equal containment can hide very wide intervals",
+        "contract": contract,
+        "accept_common_sample": False,
+        "expected_keys": [{"origin": "2024-01-01", "target": t, "entity": ""} for t in targets],
+        "actual": {
+            "id": "actual",
+            "file": _file("actual.csv", ["Target", "Actual"], zip(targets, range(4))),
+            "mapping": {"target": "Target", "entity": None, "actual": "Actual"},
+            "contract": {k: v for k, v in contract.items() if k != "nominal_coverage"},
+            "source_note": "Original invented observations; no financial records.",
+        },
+        "candidates": candidates,
+    }

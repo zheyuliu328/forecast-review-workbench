@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 from forecast_review_workbench.engine import review
-from forecast_review_workbench.example import example_request, group_example_request, origin_example_request
+from forecast_review_workbench.example import example_request, group_example_request, interval_example, origin_example_request
 from forecast_review_workbench.experiments import (
     experiment_example,
     experiment_result,
@@ -13,6 +13,8 @@ from forecast_review_workbench.experiments import (
     transfer_experiment,
 )
 from forecast_review_workbench.exporter import build_bundle, bundle_zip
+from forecast_review_workbench.intervals import review_intervals
+from forecast_review_workbench.interval_exports import build_interval_bundle
 from forecast_review_workbench.reconciliation import reconcile, reconciliation_example
 from forecast_review_workbench.tableio import inspect_table
 from forecast_review_workbench.workflow_exports import (
@@ -34,7 +36,11 @@ def _payload(raw):
 
 def dispatch(action, raw):
     payload = _payload(raw)
-    if action == "/api/group-example":
+    if action == "/api/intervals/example":
+        result = interval_example()
+    elif action == "/api/intervals/review":
+        result = review_intervals(payload)
+    elif action == "/api/group-example":
         result = group_example_request()
     elif action == "/api/origin-example":
         result = origin_example_request()
@@ -73,7 +79,9 @@ def dispatch(action, raw):
 
 def download(action, raw):
     payload = _payload(raw)
-    if action == "/api/export":
+    if action == "/api/intervals/export":
+        files, _ = build_interval_bundle(payload.get("request"), payload.get("fingerprint"))
+    elif action == "/api/export":
         files, _ = build_bundle(payload.get("request"), payload.get("fingerprint"), payload.get("notes", []))
     elif action == "/api/experiments/export":
         files, _ = build_experiment_bundle(
