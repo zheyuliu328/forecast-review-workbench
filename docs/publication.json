@@ -4,12 +4,12 @@
   "access": "public",
   "deployment_status": "succeeded",
   "project_id": "appgprj_6aaa9988f594819186c04f6c14871488",
-  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_41b579ef689c8191abde12994b11bb72",
-  "deployment_id": "appgdep_6ac00f4b38b881919b7bda20ff8bd697",
-  "sites_source_sha": "6b98362a7b2c021ecbe0a268847851120d222fe3",
-  "github_runtime_sha": "6b98362a7b2c021ecbe0a268847851120d222fe3",
-  "runtime_ci": 37055501656,
-  "verification": "Version 5 deployed successfully. Public hidden-deterioration example, explicit four-key common-sample acceptance, pooled results, Small entity filter and ZIP export exercised. Small A gain -100% and B +50%; filtered export retained all six entity/model rows. Every exported manifest file digest verified. Native binary-event probability review is not a browser entry. Human acceptance remains pending.",
+  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_7b779e5f5080819190f1a4a2e290202a",
+  "deployment_id": "appgdep_6ac0872856c881919f4a43f20061498b",
+  "sites_source_sha": "837af51dfaebff849d3623894d3dfe256611c60f",
+  "github_runtime_sha": "837af51dfaebff849d3623894d3dfe256611c60f",
+  "runtime_ci": 37096783358,
+  "verification": "Version 7 deployed successfully. Public interval example confirmed four planned/common keys and A/B/C interval scores 1/20/4.25. Replacing A with an invented reversed-bounds CSV excluded one key for every candidate; replacement with corrected own-bounds.csv restored four. Both actual browser ZIP downloads matched native recomputation and all manifest digests. Desktop and 390px layouts inspected; document width 375px, tables scroll locally. Existing point-forecast, experiment and reconciliation regressions passed on this exact runtime. Native event-probability review remains outside the browser. Human acceptance remains pending.",
   "external_human_trial": "pending",
   "owner_explanation": "pending"
 }

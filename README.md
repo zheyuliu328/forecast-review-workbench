@@ -88,7 +88,7 @@ The verification records both archived and installed code hashes. Archived brows
 
 ## Review supplied prediction intervals
 
-The installed tool can compare already-generated central prediction intervals. It does not train, calibrate or construct intervals. The source checkout includes a `/intervals` browser workflow and the installed CLI below. The public deployment status is recorded separately in `docs/publication.json`; do not infer that the latest source is already deployed.
+The installed tool can compare already-generated central prediction intervals. It does not train, calibrate or construct intervals. The [public interval workflow](https://forecast-review-zheyuliu.mystic-pear-2111.chatgpt.site/intervals/) and the installed CLI below use the same calculation engine. Exact deployed source and verification are recorded in `docs/publication.json`.
 
 In the browser, select actuals and interval CSV/XLSX files, confirm each source definition, and paste the planned origin/target/entity schedule from a spreadsheet (tab-separated, no header). Check excluded keys before explicitly accepting the common sample. Changing files, mappings, definitions or scope clears prior results and acceptance. Download the report with its frozen input request.
 
