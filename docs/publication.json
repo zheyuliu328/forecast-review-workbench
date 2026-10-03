@@ -4,12 +4,12 @@
   "access": "public",
   "deployment_status": "succeeded",
   "project_id": "appgprj_6aaa9988f594819186c04f6c14871488",
-  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_3b606cd27f288191998b4cf008f564ed",
-  "deployment_id": "appgdep_6ac09844d1a48191882a5a7daa86ad7a",
-  "sites_source_sha": "8a0e4bb9cec575be17d0d3af6d3d80638553e9ce",
-  "github_runtime_sha": "8a0e4bb9cec575be17d0d3af6d3d80638553e9ce",
-  "runtime_ci": 37100468301,
-  "verification": "Version 8 deployed successfully. Live probability example: January 3 n=2, Brier=0.0625; January 4 n=3, Brier=0.375, infinite log loss and one impossible event. Cutoff edit cleared acceptance and export. Actual invented file selection with probability1.2 identified invalid original row2; replacement restored n=3 and Brier0.36. Actual downloaded ZIP equals native recomputation and all artifact digests pass. Narrow390px document width375px has no page overflow, but numeric cells wrap and need a readability fix. Exact runtime CI covers worker and loopback own CSV/XLSX, cancellation and original workflows. External human and owner acceptance remain pending.",
+  "version_id": "appgprj_6aaa9988f594819186c04f6c14871488~appgver_562f339abbc88191ab53140a290fcadd",
+  "deployment_id": "appgdep_6ac09ba975b48191aeaf486c8f56a7d0",
+  "sites_source_sha": "e3bb69b86ac5a169acd7302b700570ed51368d27",
+  "github_runtime_sha": "e3bb69b86ac5a169acd7302b700570ed51368d27",
+  "runtime_ci": 37101656482,
+  "verification": "Version 9 deployed successfully; probability display fix only. Live 390px inspection confirmed all 12 example score cells remain on one line, including exact log-loss decimals; document and scroll widths both375px. Actual horizontal scrolling exposed the final Impossible events column. Source and worker/loopback regression cover exact export equality, source-file recovery and cancellation on this runtime. Prior v8 live own-file ZIP matched native results and all manifest digests; this CSS-only fix does not change the engine or bundle. External human trials and owner explanation remain pending.",
   "external_human_trial": "pending",
   "owner_explanation": "pending"
 }
